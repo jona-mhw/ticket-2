@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Ticket - Ticket Home{% endblock %}
+{% block page_title %}Crear Ticket Home{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto pb-80">
+    <form method="POST" class="space-y-8">
+        <!-- Clinic Selection (Superuser Only) -->
+        {% if current_user.is_superuser %}
+        <div class="bg-blue-50 border-l-4 border-blue-500 shadow rounded-r-lg p-6">
+            <h3 class="text-lg font-medium text-blue-900 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                Selección de Clínica
+            </h3>
+            <div>
+                <label for="clinic_id" class="block text-sm font-medium text-gray-700 mb-1">
+                    Clínica <span class="text-red-500">*</span>
+                </label>
+                <select id="clinic_id" name="clinic_id" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Seleccionar clínica</option>
+                    {% for clinic in clinics %}
+                    <option value="{{ clinic.id }}" data-clinic-id="{{ clinic.id }}">{{ clinic.name }}</option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-sm text-blue-700">Seleccione primero la clínica para cargar los datos correspondientes.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Patient Information -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-6">Información del Paciente</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="rut" class="block text-sm font-medium text-gray-700 mb-1">
+                        RUT <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="rut" name="rut" required
+                           placeholder="12.345.678-9"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                </div>
+                
+                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="primer_nombre" class="block text-sm font-medium text-gray-700 mb-1">
+                            Primer Nombre <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="primer_nombre" name="primer_nombre" required
+                               placeholder="Juan"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label for="segundo_nombre" class="block text-sm font-medium text-gray-700 mb-1">
+                            Segundo Nombre
+                        </label>
+                        <input type="text" id="segundo_nombre" name="segundo_nombre"
+                               placeholder="Carlos"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label for="apellido_paterno" class="block text-sm font-medium text-gray-700 mb-1">
+                            Apellido Paterno <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="apellido_paterno" name="apellido_paterno" required
+                               placeholder="Pérez"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label for="apellido_materno" class="block text-sm font-medium text-gray-700 mb-1">
+                            Apellido Materno
+                        </label>
+                        <input type="text" id="apellido_materno" name="apellido_materno"
+                               placeholder="González"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="age" class="block text-sm font-medium text-gray-700 mb-1">
+                        Edad <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" id="age" name="age" required min="0" max="120"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                </div>
+                
+                <div>
+                    <label for="sex" class="block text-sm font-medium text-gray-700 mb-1">
+                        Sexo <span class="text-red-500">*</span>
+                    </label>
+                    <select id="sex" name="sex" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                        <option value="">Seleccionar sexo</option>
+                        <option value="Male">Masculino</option>
+                        <option value="Female">Femenino</option>
+                        <option value="Other">Otro</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="episode_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        ID del Episodio
+                    </label>
+                    <input type="text" id="episode_id" name="episode_id"
+                           placeholder="Identificador único del episodio hospitalario"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    <p class="mt-1 text-sm text-gray-500">Opcional. Se valida que no exista otro ticket vigente para el mismo episodio.</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="room" class="block text-sm font-medium text-gray-700 mb-1">
+                        Habitación/Cama
+                    </label>
+                    <input type="text" id="room" name="room"
+                           placeholder="Ej: 304B"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    <p class="mt-1 text-sm text-gray-500">Opcional. Ubicación física del paciente.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Surgery Information -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-6">Información Quirúrgica</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="specialty_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Especialidad <span class="text-red-500">*</span>
+                    </label>
+                    <select id="specialty_id" name="specialty_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                            {% if current_user.is_superuser %}disabled{% endif %}>
+                        <option value="">{% if current_user.is_superuser %}Primero seleccione una clínica{% else %}Seleccionar especialidad{% endif %}</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="surgery_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Cirugía <span class="text-red-500">*</span>
+                    </label>
+                    <select id="surgery_id" name="surgery_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary" disabled>
+                        <option value="">Primero seleccione una especialidad</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="pavilion_end_time" class="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha y Hora de Cirugía <span class="text-red-500">*</span>
+                    </label>
+                    <input type="datetime-local" id="pavilion_end_time" name="pavilion_end_time" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="medical_discharge_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha Posible de Alta (Indicación Médica) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="medical_discharge_date" name="medical_discharge_date" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    <p id="system-fpa-helper" class="mt-1 text-sm text-gray-500"></p>
+                </div>
+
+                <div>
+                    <label for="doctor_id" class="block text-sm font-medium text-gray-700 mb-1">Médico Tratante</label>
+                    <select id="doctor_id" name="doctor_id"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                            {% if current_user.is_superuser %}disabled{% endif %}>
+                        <option value="">{% if current_user.is_superuser %}Primero seleccione una clínica{% else %}Seleccione un médico (opcional){% endif %}</option>
+                    </select>
+                </div>
+
+                
+            </div>
+        </div>
+
+
+
+        <!-- Justification Section (Initially Hidden) -->
+        <div id="justification-section" class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-lg space-y-4 hidden">
+            <h3 class="text-lg font-medium text-yellow-900">Justificación de Cambio de FPA</h3>
+            <p class="text-sm text-yellow-800">
+                La fecha de alta médica que seleccionaste es <strong>diferente</strong> a la sugerida por el sistema. Por favor, proporciona una razón.
+            </p>
+            <div>
+                <label for="initial_reason" class="block text-sm font-medium text-gray-700 mb-1">
+                    Razón de Discrepancia Inicial <span class="text-red-500">*</span>
+                </label>
+                <select id="initial_reason" name="initial_reason" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    <option value="">Seleccione una razón...</option>
+                    <!-- Opciones cargadas dinámicamente por JavaScript según clínica seleccionada -->
+                </select>
+            </div>
+            <div>
+                <label for="initial_justification" class="block text-sm font-medium text-gray-700 mb-1">
+                    Justificación Adicional (Opcional)
+                </label>
+                <textarea id="initial_justification" name="initial_justification" rows="3" 
+                          placeholder="Detalles adicionales sobre la decisión médica..."
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"></textarea>
+            </div>
+        </div>
+
+        <!-- FPA Preview -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t-4 border-primary z-10">
+            <div class="max-w-4xl mx-auto px-6 py-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-900">Previsualización de FPA</h3>
+                </div>
+                <div id="fpa-preview" class="text-sm text-gray-700">
+                    <!-- Preview content will be injected by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="flex justify-end space-x-4">
+            <a href="{{ url_for('tickets.list') }}" 
+               class="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="px-6 py-2 bg-primary hover:bg-opacity-90 text-white rounded-md text-sm font-medium">
+                Crear Ticket
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clinicSelect = document.getElementById('clinic_id');
+    const specialtySelect = document.getElementById('specialty_id');
+    const surgerySelect = document.getElementById('surgery_id');
+    const doctorSelect = document.getElementById('doctor_id');
+    const pavilionEndTimeInput = document.getElementById('pavilion_end_time');
+    const medicalDischargeDateInput = document.getElementById('medical_discharge_date');
+    const fpaPreview = document.getElementById('fpa-preview');
+    const submitButton = document.querySelector('form button[type="submit"]');
+
+    const justificationSection = document.getElementById('justification-section');
+    const initialReasonSelect = document.getElementById('initial_reason');
+
+    const allSpecialties = {{ specialties_data | tojson }};
+    const allSurgeries = {{ surgeries_data | tojson }};
+    const allDoctors = {{ doctors_data | tojson }};
+    const allInitialReasons = {{ initial_reasons_data | tojson }};
+    const isSuperuser = {{ 'true' if current_user.is_superuser else 'false' }};
+    let medicalDateManuallySet = false;
+    let currentClinicId = isSuperuser ? null : {{ current_user.clinic_id if not current_user.is_superuser else 'null' }};
+
+    // --- Functions ---
+    function populateSpecialties() {
+        const clinicId = currentClinicId || (isSuperuser && clinicSelect ? parseInt(clinicSelect.value) : null);
+        specialtySelect.innerHTML = '<option value="">Seleccionar especialidad</option>';
+        specialtySelect.disabled = true;
+
+        if (isSuperuser && !clinicId) {
+            specialtySelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
+            return;
+        }
+
+        const clinicSpecialties = allSpecialties.filter(s => s.clinic_id === clinicId);
+        if (clinicSpecialties.length > 0) {
+            clinicSpecialties.forEach(specialty => {
+                const option = new Option(specialty.name, specialty.id);
+                specialtySelect.add(option);
+            });
+            specialtySelect.disabled = false;
+        } else {
+            specialtySelect.innerHTML = '<option value="">No hay especialidades</option>';
+        }
+    }
+
+    function populateSurgeries() {
+        const specialtyId = parseInt(specialtySelect.value);
+        const clinicId = currentClinicId || (isSuperuser ? parseInt(clinicSelect.value) : null);
+
+        surgerySelect.innerHTML = '<option value="">Seleccionar cirugía</option>';
+        surgerySelect.disabled = true;
+
+        if (!specialtyId) return;
+
+        let specialtySurgeries = allSurgeries.filter(s => s.specialty_id === specialtyId);
+
+        // Filtrar por clínica si es necesario
+        if (clinicId) {
+            specialtySurgeries = specialtySurgeries.filter(s => s.clinic_id === clinicId);
+        }
+
+        if (specialtySurgeries.length > 0) {
+            specialtySurgeries.forEach(surgery => {
+                const option = new Option(`${surgery.name} (${surgery.base_stay_hours}h base)`, surgery.id);
+                surgerySelect.add(option);
+            });
+            surgerySelect.disabled = false;
+        } else {
+            surgerySelect.innerHTML = '<option value="">No hay cirugías</option>';
+        }
+    }
+
+    function populateDoctors() {
+        const clinicId = currentClinicId || (isSuperuser && clinicSelect ? parseInt(clinicSelect.value) : null);
+        doctorSelect.innerHTML = '<option value="">Seleccione un médico (opcional)</option>';
+        doctorSelect.disabled = true;
+
+        if (isSuperuser && !clinicId) {
+            doctorSelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
+            return;
+        }
+
+        const clinicDoctors = allDoctors.filter(d => d.clinic_id === clinicId);
+        if (clinicDoctors.length > 0) {
+            clinicDoctors.forEach(doctor => {
+                const option = new Option(`${doctor.name} - ${doctor.specialty}`, doctor.id);
+                doctorSelect.add(option);
+            });
+            doctorSelect.disabled = false;
+        } else {
+            doctorSelect.innerHTML = '<option value="">No hay médicos</option>';
+            doctorSelect.disabled = false; // Dejar enabled porque es opcional
+        }
+    }
+
+    function populateInitialReasons() {
+        const clinicId = currentClinicId || (isSuperuser && clinicSelect ? parseInt(clinicSelect.value) : null);
+
+        if (!initialReasonSelect) return; // El select puede no existir si no hay discrepancia
+
+        initialReasonSelect.innerHTML = '<option value="">Seleccione una razón...</option>';
+
+        if (isSuperuser && !clinicId) {
+            initialReasonSelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
+            return;
+        }
+
+        const clinicReasons = allInitialReasons.filter(r => r.clinic_id === clinicId);
+        if (clinicReasons.length > 0) {
+            clinicReasons.forEach(reason => {
+                const option = new Option(reason.reason, reason.reason);
+                initialReasonSelect.add(option);
+            });
+        } else {
+            initialReasonSelect.innerHTML = '<option value="">No hay razones disponibles</option>';
+        }
+    }
+
+    async function updateFpaPreview() {
+        const surgeryId = surgerySelect.value;
+        const pavilionEndValue = pavilionEndTimeInput.value;
+        const clinicId = currentClinicId || (isSuperuser && clinicSelect ? parseInt(clinicSelect.value) : null);
+        const systemFpaHelper = document.getElementById('system-fpa-helper');
+
+        if (!surgeryId || !pavilionEndValue) {
+            systemFpaHelper.innerHTML = '';
+            fpaPreview.innerHTML = '<p class="text-gray-500"><svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Seleccione una cirugía y fecha para calcular la FPA.</p>';
+            return;
+        }
+
+        if (!clinicId) {
+            systemFpaHelper.innerHTML = '<span class="text-red-500">Seleccione una clínica primero</span>';
+            fpaPreview.innerHTML = '<p class="text-red-600"><svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Seleccione una clínica para calcular la FPA.</p>';
+            return;
+        }
+
+        try {
+            const response = await fetch('{{ url_for("tickets.api_calculate_fpa") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    surgery_id: surgeryId,
+                    pavilion_end_time: pavilionEndValue,
+                    clinic_id: clinicId
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+
+            const data = await response.json();
+
+            // Update helper text and set initial medical date
+            systemFpaHelper.innerHTML = `Sugerencia del sistema: <span class="font-semibold text-gray-700">${data.fpa_display_str}</span>`;
+            if (!medicalDateManuallySet) {
+                 medicalDischargeDateInput.value = data.fpa_date_iso;
+            }
+
+            // Show/hide justification section
+            const medicalDischargeDate = new Date(medicalDischargeDateInput.value + 'T00:00:00');
+            const systemFpaDate = new Date(data.fpa_date_iso + 'T00:00:00');
+
+            if (medicalDischargeDate.getTime() !== systemFpaDate.getTime()) {
+                justificationSection.style.display = 'block';
+                initialReasonSelect.required = true;
+            } else {
+                justificationSection.style.display = 'none';
+                initialReasonSelect.required = false;
+            }
+
+            // Update preview panel with detailed breakdown
+            const pavilionDate = new Date(pavilionEndValue);
+            const fpaDate = new Date(data.fpa_date_iso + 'T' + data.fpa_time);
+            const daysDiff = Math.ceil((fpaDate - pavilionDate) / (1000 * 60 * 60 * 24));
+
+            fpaPreview.innerHTML = `
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs font-medium text-gray-600 mb-1">FPA Calculada</p>
+                            <p class="text-lg font-bold text-primary">${data.fpa_display_str}</p>
+                            <p class="text-xs text-gray-500 mt-1">${data.fpa_date_iso} a las ${data.fpa_time}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-600 mb-1">Estancia Calculada</p>
+                            <p class="text-lg font-bold text-blue-700">${daysDiff} día${daysDiff !== 1 ? 's' : ''}</p>
+                            <p class="text-xs text-gray-500 mt-1">Desde cirugía hasta alta prevista</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-blue-200">
+                        <p class="text-xs font-medium text-gray-600 mb-2">Cálculo Base:</p>
+                        <div class="flex items-center gap-2 text-xs text-gray-700">
+                            <span class="px-2 py-1 bg-white rounded border border-gray-300">Cirugía: ${pavilionDate.toLocaleString('es-CL', {dateStyle: 'short', timeStyle: 'short'})}</span>
+                            <span>+</span>
+                            <span class="px-2 py-1 bg-white rounded border border-gray-300">${data.surgery_base_stay_hours || 0}h de estancia base</span>
+                            <span>=</span>
+                            <span class="px-2 py-1 bg-blue-100 rounded border border-blue-300 font-semibold">${data.fpa_display_str}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+        } catch (error) {
+            console.error('Error fetching FPA:', error);
+            systemFpaHelper.innerHTML = '<span class="text-red-500">Error al calcular FPA.</span>';
+            fpaPreview.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-lg p-3"><p class="text-red-700 text-sm"><svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>No se pudo calcular la FPA. Verifique los datos ingresados.</p></div>';
+        }
+    }
+
+    // --- Initial Setup & Event Listeners ---
+    // Clinic change (superuser only)
+    if (isSuperuser && clinicSelect) {
+        clinicSelect.addEventListener('change', () => {
+            currentClinicId = parseInt(clinicSelect.value) || null;
+            medicalDateManuallySet = false;
+
+            // Reset dependent selects
+            surgerySelect.innerHTML = '<option value="">Primero seleccione una especialidad</option>';
+            surgerySelect.disabled = true;
+
+            // Populate based on clinic
+            populateSpecialties();
+            populateDoctors();
+            populateInitialReasons();
+            updateFpaPreview();
+        });
+    }
+
+    specialtySelect.addEventListener('change', () => {
+        medicalDateManuallySet = false;
+        populateSurgeries();
+        updateFpaPreview();
+    });
+    surgerySelect.addEventListener('change', () => {
+        medicalDateManuallySet = false;
+        updateFpaPreview();
+    });
+    pavilionEndTimeInput.addEventListener('change', () => {
+        medicalDateManuallySet = false;
+        updateFpaPreview();
+    });
+    medicalDischargeDateInput.addEventListener('change', () => {
+        medicalDateManuallySet = true;
+        updateFpaPreview();
+    });
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    pavilionEndTimeInput.value = now.toISOString().slice(0, 16);
+
+    // Initial population for non-superusers
+    if (!isSuperuser) {
+        populateSpecialties();
+        populateDoctors();
+        populateInitialReasons();
+        populateSurgeries();
+        updateFpaPreview();
+    }
+});
+</script>
+{% endblock %}

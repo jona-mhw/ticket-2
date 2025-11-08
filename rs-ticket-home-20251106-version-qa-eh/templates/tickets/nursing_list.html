@@ -1,0 +1,698 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Enfermería - Ticket Home{% endblock %}
+
+{% block content %}
+<!-- STICKY HEADER -->
+<div class="sticky-header bg-white shadow-md border-b border-gray-200 -mt-6 -mx-6 px-6 py-4 mb-4">
+    <!-- Title Row -->
+    <div class="flex items-center justify-between mb-3">
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            Lista de Enfermería
+            <span class="text-sm font-normal text-gray-500">({{ stats.total }} pacientes)</span>
+        </h1>
+
+        <!-- View Switcher & Column Selector -->
+        <div class="flex gap-2">
+            <!-- Column Selector -->
+            <div class="relative column-selector-wrapper">
+                <button type="button" id="columnSelectorBtn"
+                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 0v10m0-10a2 2 0 012 2h2a2 2 0 012-2M9 7a2 2 0 00-2-2H5a2 2 0 00-2 2"></path>
+                    </svg>
+                    Columnas
+                </button>
+
+                <!-- Column Selector Dropdown -->
+                <div id="columnSelectorDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-4">
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Mostrar columnas:</div>
+                    <div class="space-y-2" id="columnCheckboxes">
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="patient" checked>
+                            <span class="text-sm text-gray-700">Paciente</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="rut" checked>
+                            <span class="text-sm text-gray-700">RUT</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="room" checked>
+                            <span class="text-sm text-gray-700">Cama</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="ticket_id">
+                            <span class="text-sm text-gray-700">ID Ticket</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="fpa" checked>
+                            <span class="text-sm text-gray-700">FPA</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="time_slot" checked>
+                            <span class="text-sm text-gray-700">Horario</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="status" checked>
+                            <span class="text-sm text-gray-700">Estado</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="countdown" checked>
+                            <span class="text-sm text-gray-700">Tiempo Restante</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="flex border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                <a href="{{ url_for('tickets.nursing_board') }}"
+                   class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium flex items-center gap-2 border-r border-gray-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                    </svg>
+                    Tablero
+                </a>
+                <a href="{{ url_for('tickets.nursing_list') }}"
+                   class="px-4 py-2 bg-blue-600 text-white text-sm font-medium flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    Lista
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="flex items-center gap-3 flex-wrap">
+        <!-- Status Filters -->
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado:</span>
+            <div class="flex gap-2">
+                <a href="{{ url_for('tickets.nursing_list') }}"
+                   class="filter-pill {% if not filters.urgency %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                    </svg>
+                    <span>Todos</span>
+                    <span class="filter-count">{{ stats.total }}</span>
+                </a>
+                <a href="{{ url_for('tickets.nursing_list', urgency='normal') }}"
+                   class="filter-pill filter-pill-normal {% if filters.urgency == 'normal' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Vigente</span>
+                    <span class="filter-count">{{ stats.normal }}</span>
+                </a>
+                <a href="{{ url_for('tickets.nursing_list', urgency='expired') }}"
+                   class="filter-pill filter-pill-expired {% if filters.urgency == 'expired' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Vencido</span>
+                    <span class="filter-count">{{ stats.expired }}</span>
+                </a>
+                <a href="{{ url_for('tickets.nursing_list', urgency='scheduled') }}"
+                   class="filter-pill filter-pill-scheduled {% if filters.urgency == 'scheduled' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Programado</span>
+                    <span class="filter-count">{{ stats.scheduled }}</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Search Filter -->
+        <div class="flex items-center gap-2 ml-auto">
+            <div class="relative">
+                <input type="search" name="search" value="{{ filters.search }}"
+                       placeholder="Buscar paciente, RUT, cama..."
+                       class="pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-72">
+                <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABLE VIEW -->
+{% if tickets %}
+<div class="overflow-x-auto bg-white rounded-lg shadow">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gradient-to-r from-blue-50 to-indigo-50 sticky-table-header">
+            <tr>
+                <th class="px-0 py-3" style="width: 4px;"></th>
+                <th class="column-ticket_id px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    ID Ticket
+                </th>
+                <th class="column-patient px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Paciente
+                </th>
+                <th class="column-rut px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    RUT
+                </th>
+                <th class="column-room px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Cama
+                </th>
+                <th class="column-fpa px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Fecha Probable Alta
+                </th>
+                <th class="column-time_slot px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Horario
+                </th>
+                <th class="column-status px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Estado
+                </th>
+                <th class="column-countdown px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Tiempo Restante
+                </th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Acciones
+                </th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for ticket in tickets %}
+            <tr class="table-row hover:bg-gray-50 transition-colors urgency-{{ ticket.urgency_level }}" data-fpa="{{ ticket.current_fpa.isoformat() if ticket.current_fpa else '' }}">
+                <!-- Urgency Indicator -->
+                <td class="urgency-indicator urgency-{{ ticket.urgency_level }}" style="width: 4px; padding: 0;"></td>
+
+                <!-- Ticket ID -->
+                <td class="column-ticket_id px-4 py-4">
+                    <div class="text-sm font-mono text-gray-600">{{ ticket.id }}</div>
+                </td>
+
+                <!-- Patient Name -->
+                <td class="column-patient px-4 py-4">
+                    <div class="flex items-center">
+                        <div>
+                            <div class="text-sm font-semibold text-gray-900">
+                                {{ ticket.patient.primer_nombre }}
+                                {% if ticket.patient.segundo_nombre %}{{ ticket.patient.segundo_nombre }}{% endif %}
+                                {{ ticket.patient.apellido_paterno }}
+                                {% if ticket.patient.apellido_materno %}{{ ticket.patient.apellido_materno }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- RUT -->
+                <td class="column-rut px-4 py-4">
+                    <div class="text-sm text-gray-700">{{ ticket.patient.rut }}</div>
+                </td>
+
+                <!-- Room (Editable) -->
+                <td class="column-room px-4 py-4">
+                    <div class="room-badge-list editable-room" data-ticket-id="{{ ticket.id }}" data-current-room="{{ ticket.room or '' }}" title="Haz clic para editar">
+                        <svg class="w-4 h-4 room-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        <span class="room-display">{{ ticket.room or 'Sin cama' }}</span>
+                        <input type="text" class="room-input" value="{{ ticket.room or '' }}" placeholder="Ej: 201" style="display: none;" maxlength="10">
+                        <svg class="w-3 h-3 edit-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity: 0.5;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </div>
+                </td>
+
+                <!-- FPA Date -->
+                <td class="column-fpa px-4 py-4">
+                    <div class="text-sm font-medium text-gray-900">{{ ticket.current_fpa.strftime('%d/%m/%Y') if ticket.current_fpa else 'N/A' }}</div>
+                </td>
+
+                <!-- Time Slot -->
+                <td class="column-time_slot px-4 py-4">
+                    <div class="text-sm text-gray-700">{{ ticket.discharge_time_slot.name if ticket.discharge_time_slot else 'Sin horario' }}</div>
+                </td>
+
+                <!-- Status Badge -->
+                <td class="column-status px-4 py-4">
+                    <span class="status-badge status-{{ ticket.urgency_level }}">
+                        {% if ticket.urgency_level == 'scheduled' %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Programado
+                        {% elif ticket.urgency_level == 'expired' %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Vencido
+                        {% elif ticket.urgency_level == 'critical' %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            Urgente
+                        {% elif ticket.urgency_level == 'warning' %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Próximo
+                        {% else %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Vigente
+                        {% endif %}
+                    </span>
+                </td>
+
+                <!-- Countdown -->
+                <td class="column-countdown px-4 py-4">
+                    {% if ticket.is_scheduled %}
+                        <div class="countdown-list countdown-scheduled">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="text-xs font-medium">Programado</span>
+                        </div>
+                    {% elif ticket.time_remaining %}
+                        <div class="countdown-list" data-countdown="{{ ticket.current_fpa.isoformat() }}">
+                            <span class="countdown-value text-sm font-semibold"></span>
+                        </div>
+                    {% else %}
+                        <span class="text-xs text-gray-400">Sin FPA</span>
+                    {% endif %}
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-4 text-right whitespace-nowrap">
+                    <a href="{{ url_for('tickets.detail', ticket_id=ticket.id) }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        Ver detalle
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-12 bg-white rounded-lg shadow">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-gray-900">No hay tickets vigentes</h3>
+    <p class="mt-1 text-sm text-gray-500">Todos los tickets han sido procesados o no hay coincidencias con tus filtros.</p>
+</div>
+{% endif %}
+
+<style>
+/* Sticky Header */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+/* Filter Pills */
+.filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.filter-pill-active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.filter-pill-inactive {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.filter-pill-inactive:hover {
+    background-color: #e5e7eb;
+}
+
+.filter-count {
+    background-color: rgba(255, 255, 255, 0.25);
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.filter-pill-active .filter-count {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.filter-pill-inactive .filter-count {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+/* Color coding for urgency levels */
+.filter-pill-normal { border: 2px solid #10b981; }
+.filter-pill-normal.filter-pill-active { background-color: #10b981; border-color: #10b981; }
+
+.filter-pill-expired { border: 2px solid #ef4444; }
+.filter-pill-expired.filter-pill-active { background-color: #ef4444; border-color: #ef4444; }
+
+.filter-pill-scheduled { border: 2px solid #8b5cf6; }
+.filter-pill-scheduled.filter-pill-active { background-color: #8b5cf6; border-color: #8b5cf6; }
+
+/* Table Styling */
+.table-row {
+    position: relative;
+}
+
+.urgency-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.urgency-indicator.urgency-critical { background-color: #dc2626; }
+.urgency-indicator.urgency-warning { background-color: #f59e0b; }
+.urgency-indicator.urgency-normal { background-color: #10b981; }
+.urgency-indicator.urgency-expired { background-color: #ef4444; }
+.urgency-indicator.urgency-scheduled { background-color: #8b5cf6; }
+
+/* Room Badge for List */
+.room-badge-list {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: #f3f4f6;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+}
+
+.room-badge-list:hover {
+    background: #e5e7eb;
+    border-color: #3b82f6;
+}
+
+.room-badge-list:hover .edit-icon {
+    opacity: 1 !important;
+}
+
+.room-badge-list .room-input {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    border: 1px solid #3b82f6;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: white;
+    outline: none;
+}
+
+.room-badge-list.editing {
+    background: white;
+    border-color: #3b82f6;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-badge.status-scheduled {
+    background-color: #ede9fe;
+    color: #7c3aed;
+}
+
+.status-badge.status-expired {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.status-badge.status-critical {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
+.status-badge.status-warning {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-badge.status-normal {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+/* Countdown in List */
+.countdown-list {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.countdown-list.countdown-scheduled {
+    color: #7c3aed;
+}
+
+/* Column Selector */
+.column-selector-wrapper {
+    position: relative;
+}
+
+#columnSelectorDropdown {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Real-time Search */
+input[type="search"] {
+    background-image: none;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+}
+</style>
+
+<script>
+// Column Selector Toggle
+document.getElementById('columnSelectorBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('columnSelectorDropdown');
+    dropdown.classList.toggle('hidden');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('columnSelectorDropdown');
+    const btn = document.getElementById('columnSelectorBtn');
+    if (!dropdown.contains(e.target) && e.target !== btn) {
+        dropdown.classList.add('hidden');
+    }
+});
+
+// Column Toggle Functionality
+document.querySelectorAll('.column-toggle').forEach(checkbox => {
+    const column = checkbox.dataset.column;
+    const isVisible = {{ visible_columns|tojson }}.includes(column);
+    checkbox.checked = isVisible;
+
+    // Set initial visibility
+    toggleColumn(column, isVisible);
+
+    // Toggle on change
+    checkbox.addEventListener('change', function() {
+        toggleColumn(column, this.checked);
+    });
+});
+
+function toggleColumn(columnName, visible) {
+    const cells = document.querySelectorAll(`.column-${columnName}`);
+    cells.forEach(cell => {
+        cell.style.display = visible ? '' : 'none';
+    });
+}
+
+// Countdown Updates
+function updateCountdowns() {
+    document.querySelectorAll('[data-countdown]').forEach(el => {
+        const fpaIso = el.dataset.countdown;
+        if (!fpaIso) return;
+
+        const fpaDate = new Date(fpaIso);
+        const now = new Date();
+        const diff = fpaDate - now;
+
+        if (diff < 0) {
+            // Expired
+            el.innerHTML = '<span class="text-red-600 font-semibold text-xs">VENCIDO</span>';
+            el.classList.add('countdown-expired');
+            return;
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        let displayText = '';
+        if (days > 0) {
+            displayText = `${days}d ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            displayText = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        el.querySelector('.countdown-value').textContent = displayText;
+
+        // Color coding
+        const totalHours = days * 24 + hours;
+        el.classList.remove('countdown-critical', 'countdown-warning', 'countdown-normal');
+        if (totalHours <= 1) {
+            el.classList.add('countdown-critical');
+            el.querySelector('.countdown-value').className = 'countdown-value text-sm font-semibold text-red-600';
+        } else if (totalHours <= 6) {
+            el.classList.add('countdown-warning');
+            el.querySelector('.countdown-value').className = 'countdown-value text-sm font-semibold text-yellow-600';
+        } else {
+            el.classList.add('countdown-normal');
+            el.querySelector('.countdown-value').className = 'countdown-value text-sm font-semibold text-green-600';
+        }
+    });
+}
+
+// Inline Room Editing
+document.addEventListener('DOMContentLoaded', function() {
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000); // Update every second
+
+    // Setup inline editing for room badges
+    document.querySelectorAll('.editable-room').forEach(roomBadge => {
+        const display = roomBadge.querySelector('.room-display');
+        const input = roomBadge.querySelector('.room-input');
+        const ticketId = roomBadge.dataset.ticketId;
+
+        roomBadge.addEventListener('click', function(e) {
+            if (roomBadge.classList.contains('editing')) return;
+            roomBadge.classList.add('editing');
+            display.style.display = 'none';
+            input.style.display = 'block';
+            input.focus();
+            input.select();
+        });
+
+        const saveRoom = async function() {
+            const newRoom = input.value.trim();
+            const currentRoom = roomBadge.dataset.currentRoom;
+
+            if (newRoom === currentRoom) {
+                exitEditMode();
+                return;
+            }
+
+            try {
+                const response = await fetch('{{ url_for("tickets.api_update_room") }}', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ticket_id: ticketId, room: newRoom})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    display.textContent = data.room;
+                    roomBadge.dataset.currentRoom = newRoom;
+                    roomBadge.style.background = '#d4edda';
+                    setTimeout(() => { roomBadge.style.background = ''; }, 1000);
+                } else {
+                    alert('Error: ' + (data.error || 'No se pudo actualizar la cama'));
+                    input.value = currentRoom;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar la cama');
+                input.value = currentRoom;
+            }
+
+            exitEditMode();
+        };
+
+        const exitEditMode = function() {
+            roomBadge.classList.remove('editing');
+            display.style.display = 'inline';
+            input.style.display = 'none';
+        };
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveRoom();
+            } else if (e.key === 'Escape') {
+                input.value = roomBadge.dataset.currentRoom;
+                exitEditMode();
+            }
+        });
+
+        input.addEventListener('blur', function() {
+            setTimeout(saveRoom, 100);
+        });
+
+        input.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+
+    // Real-time Search
+    const searchInput = document.querySelector('input[name="search"]');
+    const rows = document.querySelectorAll('.table-row');
+
+    if (searchInput && rows.length > 0) {
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+
+            searchTimeout = setTimeout(() => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+
+                if (!searchTerm) {
+                    rows.forEach(row => { row.style.display = ''; });
+                    return;
+                }
+
+                rows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    if (rowText.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }, 300);
+        });
+    }
+});
+</script>
+{% endblock %}

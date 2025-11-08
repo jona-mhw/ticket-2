@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Gestionar Mis Tickets - Ticket Home{% endblock %}
+{% block page_title %}Gestionar Mis Tickets{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <form method="GET" action="{{ url_for('tickets.manage_my_tickets') }}">
+        <div class="flex items-center">
+            <input type="text" name="search" value="{{ search_query or '' }}" placeholder="Buscar por ID, RUT o nombre de paciente..."
+                   class="w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-primary focus:border-primary">
+            <button type="submit"
+                    class="px-4 py-2 bg-primary text-white rounded-r-md hover:bg-opacity-90">
+                Buscar
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="bg-white shadow rounded-lg p-6">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Ticket</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RUT</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre Paciente</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FPA Actual</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th scope="col" class="relative px-6 py-3">
+                        <span class="sr-only">Acciones</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for ticket in tickets %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ ticket.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ticket.patient.rut }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ticket.patient.full_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.current_fpa.strftime('%d/%m/%Y') }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if ticket.status == 'Vigente' %}bg-blue-100 text-blue-800
+                            {% elif ticket.status == 'Anulado' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ ticket.status }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{{ url_for('tickets.edit_ticket', ticket_id=ticket.id) }}" class="text-secondary hover:text-opacity-80">Editar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

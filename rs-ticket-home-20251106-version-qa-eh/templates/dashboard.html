@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Ticket Home{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- KPIs Cards - Primary Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Tickets Vigentes</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ kpis.active_tickets }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Tickets Anulados</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ kpis.annulled_tickets }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total de Tickets</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ kpis.total_tickets }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Cards - Secondary Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Próximos a Vencer</dt>
+                            <dd class="text-lg font-medium text-orange-600">{{ kpis.near_deadline }}</dd>
+                            <dd class="text-xs text-gray-500">En 24 horas</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Este Mes</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ kpis.monthly_tickets }}</dd>
+                            <dd class="text-xs text-gray-500">Tickets creados</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Esta Semana</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ kpis.weekly_tickets }}</dd>
+                            <dd class="text-xs text-gray-500">Tickets creados</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Status Distribution Chart -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Distribución por Estado
+                </h3>
+                <div class="relative h-64">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Trend Chart -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Tendencia Semanal (Últimos 7 días)
+                </h3>
+                <div class="relative h-64">
+                    <canvas id="weeklyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Modification Stats -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Activity -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Actividad Reciente
+                </h3>
+                <div class="space-y-3 max-h-80 overflow-y-auto">
+                    {% for ticket in recent_tickets %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">{{ ticket.id }}</p>
+                            <p class="text-sm text-gray-500">{{ ticket.patient.full_name }}</p>
+                            <p class="text-xs text-gray-400">{{ ticket.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                        </div>
+                        <div class="flex-shrink-0 flex flex-col items-end">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if ticket.status == 'Vigente' %}bg-blue-100 text-blue-800
+                                {% elif ticket.status == 'Anulado' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ ticket.status }}
+                            </span>
+                            <a href="{{ url_for('tickets.detail', ticket_id=ticket.id) }}" 
+                               class="text-xs text-primary hover:text-opacity-80 mt-1">Ver detalle</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if not recent_tickets %}
+                    <div class="text-center py-4">
+                        <p class="text-sm text-gray-500">No hay actividad reciente</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="mt-4 text-center">
+                    <a href="{{ url_for('tickets.nursing_board') }}" class="text-sm text-primary hover:text-opacity-80">
+                        Ver todos los tickets →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modification Statistics -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Estadísticas de Modificaciones
+                </h3>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-gray-900">{{ modification_stats.total_modifications }}</div>
+                        <div class="text-sm text-gray-500">Total Modificaciones</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-orange-600">{{ modification_stats.avg_modifications_per_ticket }}</div>
+                        <div class="text-sm text-gray-500">Promedio por Ticket</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-purple-600">{{ modification_stats.tickets_with_modifications }}</div>
+                        <div class="text-sm text-gray-500">Tickets Modificados</div>
+                        <div class="text-xs text-gray-400">
+                            {{ "%.1f"|format((modification_stats.tickets_with_modifications / kpis.total_tickets * 100) if kpis.total_tickets > 0 else 0) }}% del total
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Acciones Rápidas</h4>
+                    <div class="flex flex-col space-y-2">
+                        <a href="{{ url_for('tickets.create') }}" 
+                           class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary hover:bg-opacity-90">
+                            Crear Nuevo Ticket
+                        </a>
+                        <a href="{{ url_for('tickets.nursing_board') }}" 
+                           class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Ver Tickets Vigentes
+                        </a>
+                        {% if kpis.overdue_tickets > 0 %}
+                        <a href="{{ url_for('tickets.nursing_board') }}?urgency=expired" 
+                           class="inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100">
+                            Ver Tickets Vencidos ({{ kpis.overdue_tickets }})
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Get chart data from backend
+const chartData = {{ chart_data|tojson }};
+
+// Status Distribution Chart
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Vigentes', 'Vencidos', 'Anulados'],
+        datasets: [{
+            data: [{{ kpis.active_tickets }}, {{ kpis.overdue_tickets }}, {{ kpis.annulled_tickets }}],
+            backgroundColor: [
+                '#3B82F6',  // Blue for Vigente
+                '#F97316',  // Orange for Vencido
+                '#EF4444'   // Red for Anulado
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Weekly Trend Chart
+const weeklyCtx = document.getElementById('weeklyTrendChart').getContext('2d');
+const weeklyChart = new Chart(weeklyCtx, {
+    type: 'line',
+    data: {
+        labels: chartData.weekly_trend.map(item => item.date),
+        datasets: [{
+            label: 'Tickets Creados',
+            data: chartData.weekly_trend.map(item => item.tickets),
+            borderColor: '#14B8A6',
+            backgroundColor: 'rgba(20, 184, 166, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Surgery Distribution Chart
+const surgeryCtx = document.getElementById('surgeryChart').getContext('2d');
+const surgeryChart = new Chart(surgeryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: chartData.surgery_distribution.map(item => item.surgery),
+        datasets: [{
+            data: chartData.surgery_distribution.map(item => item.count),
+            backgroundColor: [
+                '#14B8A6',  // Teal
+                '#3B82F6',  // Blue
+                '#8B5CF6',  // Purple
+                '#F59E0B',  // Yellow
+                '#EF4444'   // Red
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    generateLabels: function(chart) {
+                        const data = chart.data;
+                        if (data.labels.length && data.datasets.length) {
+                            return data.labels.map((label, i) => {
+                                const count = data.datasets[0].data[i];
+                                return {
+                                    text: `${label} (${count})`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].borderColor,
+                                    lineWidth: data.datasets[0].borderWidth,
+                                    hidden: false,
+                                    index: i
+                                };
+                            });
+                        }
+                        return [];
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Auto-refresh dashboard every 5 minutes
+setInterval(function() {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}

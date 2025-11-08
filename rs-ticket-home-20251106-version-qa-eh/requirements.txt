@@ -1,0 +1,18 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+Werkzeug==2.3.7
+python-dateutil==2.8.2
+reportlab==4.0.8
+openpyxl==3.1.2
+xlsxwriter==3.1.9
+gunicorn==22.0.0
+python-dotenv==1.0.1
+psycopg2-binary
+pytz
+
+# Dependencias para autenticación IAP
+PyJWT==2.10.1
+requests==2.31.0
+cryptography==41.0.7

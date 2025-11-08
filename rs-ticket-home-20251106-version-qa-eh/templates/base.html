@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ticket Home{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/searchhighlight/1.3.0/css/searchHighlight.dataTables.min.css">
+    
+    <!-- Bootstrap CSS for DataTables styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    },
+                    colors: {
+                        'primary': '#14B8A6',
+                        'success': '#10B981',
+                        'warning': '#F59E0B',
+                        'danger': '#EF4444',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+        .bg-primary { background-color: #14B8A6 !important; }
+        .text-primary { color: #14B8A6 !important; }
+        .border-primary { border-color: #14B8A6 !important; }
+        .hover\:bg-primary:hover { background-color: #14B8A6 !important; }
+        .focus\:ring-primary:focus { --tw-ring-color: #14B8A6 !important; }
+        .focus\:border-primary:focus { border-color: #14B8A6 !important; }
+        .bg-success { background-color: #10B981 !important; }
+        .text-success { color: #10B981 !important; }
+        .bg-warning { background-color: #F59E0B !important; }
+        .text-warning { color: #F59E0B !important; }
+        .bg-danger { background-color: #EF4444 !important; }
+        .text-danger { color: #EF4444 !important; }
+        
+        /* Custom utilities */
+        .bg-opacity-90 { background-color: rgba(20, 184, 166, 0.9) !important; }
+        .hover\:bg-opacity-90:hover { background-color: rgba(20, 184, 166, 0.9) !important; }
+
+        /* Sidebar transition */
+        #sidebar {
+            transition: width 0.3s ease-in-out;
+        }
+        .sidebar-collapsed {
+            width: 4rem; /* 64px */
+        }
+        .sidebar-expanded {
+            width: 16rem; /* 256px */
+        }
+        .sidebar-collapsed .sidebar-text {
+            display: none;
+        }
+        .sidebar-collapsed .sidebar-title {
+            display: none;
+        }
+        .sidebar-collapsed .sidebar-icon {
+            margin: 0 auto;
+        }
+
+        /* DATATABLE CUSTOM STYLES - EXCEL-LIKE */
+        .datatable-wrapper {
+            width: 100%;
+            max-width: 100vw;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: white;
+            padding: 1rem;
+            margin: 0;
+        }
+        
+        /* DataTables styling integration */
+        table.dataTable {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+            font-size: 13px;
+            width: 100% !important;
+        }
+        
+        /* STICKY HEADERS - FIXED VERSION */
+        .dataTables_scrollHead {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+            background: white !important;
+        }
+
+        .dataTables_scrollHead table.dataTable thead th {
+            background-color: #f9fafb !important;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #374151;
+            letter-spacing: 0.05em;
+            padding: 10px 12px;
+            border-bottom: 2px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        /* Shadow when scrolling */
+        .dataTables_scrollBody {
+            border-top: none !important;
+        }
+
+        /* Fix scroll container */
+        .dataTables_scroll {
+            position: relative;
+        }
+
+        .dataTables_scrollHeadInner {
+            width: 100% !important;
+        }
+
+        .dataTables_scrollHeadInner table {
+            width: 100% !important;
+        }
+        
+        table.dataTable tbody td {
+            padding: 10px 12px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        
+        /* RESPONSIVE ZOOM ADAPTATIONS */
+        @media screen and (max-width: 768px) {
+            .datatable-wrapper { padding: 0.5rem; }
+            table.dataTable { font-size: 12px; }
+            table.dataTable thead th { padding: 8px 10px; font-size: 10px; }
+            table.dataTable tbody td { padding: 8px 10px; }
+        }
+        
+        /* High DPI / Zoom out adaptations */
+        @media screen and (min-resolution: 150dpi) {
+            .datatable-wrapper { max-width: none; }
+            table.dataTable { font-size: 12px; }
+        }
+        
+        /* Controls styling */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 1rem;
+        }
+        
+        /* DataTables Toolbar */
+        .dt-toolbar {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .dt-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.813rem;
+            margin: 0;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-sm:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary { background-color: #14B8A6; color: white; }
+        .btn-outline-primary { background-color: white; color: #14B8A6; border: 1.5px solid #14B8A6; }
+        .btn-outline-primary:hover { background-color: #f0fdfa; }
+        .btn-secondary { background-color: #6b7280; color: white; }
+        .btn-outline-secondary { background-color: transparent; color: #6b7280; border: 1px solid #6b7280; }
+        .btn-success { background-color: #10b981; color: white; }
+        .btn-info { background-color: #0ea5e9; color: white; }
+        .btn-dark { background-color: #374151; color: white; }
+
+        /* DataTables Buttons Collection (dropdown menu) */
+        div.dt-button-collection {
+            border: 1px solid #e5e7eb !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05) !important;
+            padding: 0.5rem !important;
+            background: white !important;
+            max-height: 400px !important;
+            overflow-y: auto !important;
+        }
+
+        div.dt-button-collection button,
+        div.dt-button-collection a.dt-button {
+            margin: 2px !important;
+            border-radius: 0.25rem !important;
+            padding: 0.5rem 1rem !important;
+            text-align: left !important;
+            width: calc(100% - 4px) !important;
+            background: white !important;
+            border: none !important;
+            cursor: pointer !important;
+            color: #374151 !important;
+            font-size: 0.875rem !important;
+            transition: all 0.15s !important;
+        }
+
+        div.dt-button-collection button:hover,
+        div.dt-button-collection a.dt-button:hover {
+            background-color: #f0fdfa !important;
+            color: #14B8A6 !important;
+        }
+
+        div.dt-button-collection button.active,
+        div.dt-button-collection a.dt-button.active {
+            background-color: #14B8A6 !important;
+            color: white !important;
+        }
+
+        /* Checkbox styling in column visibility */
+        div.dt-button-collection span.dt-button-down-arrow {
+            display: none !important;
+        }
+        
+        /* Column reordering visual feedback */
+        .DTCR_pointer { cursor: grab !important; }
+        .DTCR_pointer:active { cursor: grabbing !important; }
+        
+        /* Fixed columns styling */
+        table.dataTable.fixedColumns-left tbody tr:hover,
+        table.dataTable.fixedColumns-right tbody tr:hover {
+            background-color: #f0f9ff !important;
+        }
+        
+        /* Scroll container improvements */
+        .dataTables_scrollBody {
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .pagination-info {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #374151;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .pagination-btn.active {
+            background: #14B8A6;
+            color: white;
+            border-color: #14B8A6;
+        }
+
+        .pagination-btn.disabled {
+            color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-vigente { 
+            background: #dbeafe; 
+            color: #1e40af; 
+        }
+        
+        .status-vencido { 
+            background: #fef3c7; 
+            color: #92400e; 
+        }
+        
+        .status-anulado { 
+            background: #fee2e2; 
+            color: #dc2626; 
+        }
+
+        /* STANDARDIZED TEXT STYLES - CONSISTENT FONT FAMILY */
+        .text-priority-high {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 600;
+            color: #111827;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .text-priority-medium {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 500;
+            color: #374151;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .text-priority-low {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 400;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .text-accent {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            color: #14B8A6;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .text-warning-emphasis {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            color: #dc2626;
+            font-weight: 600;
+            background: #fef2f2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        .countdown-display {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+            min-width: 70px;
+            line-height: 1.2;
+        }
+
+        .countdown-normal {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .countdown-warning {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .countdown-critical {
+            background: #fee2e2;
+            color: #b91c1c;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* PATIENT INFO WITH CONSISTENT FONTS */
+        .patient-primary {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 600;
+            color: #111827;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .patient-secondary {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 400;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .ticket-id {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 700;
+            color: #111827;
+            font-size: 13px;
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            line-height: 1.2;
+        }
+
+        /* MEDICAL INFO WITH CONSISTENT FONTS */
+        .medical-info {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 500;
+            color: #111827;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .medical-detail {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-weight: 400;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+
+        /* STATUS BADGES WITH CONSISTENT FONTS */
+        .status-badge {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.2;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    {% if current_user.is_authenticated %}
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div id="sidebar" class="relative flex flex-col bg-white border-r">
+            <!-- Toggle button -->
+            <button id="sidebar-toggle" class="absolute top-5 -right-3 z-20 p-1 rounded-full bg-primary text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
+            <div class="flex flex-col flex-grow pt-5 overflow-y-auto">
+                <div class="flex flex-col items-center flex-shrink-0 px-4 mb-4 sidebar-title">
+                    <div class="bg-gray-100 rounded-lg px-4 py-3 shadow-sm mb-2">
+                        <img src="{{ url_for('static', filename='images/logo-redsalud.svg') }}" alt="RedSalud Logo" class="h-10 w-auto">
+                    </div>
+                    <div class="bg-gradient-to-r from-gray-700 to-gray-800 rounded-md px-4 py-2 shadow-sm">
+                        <p class="text-white text-sm font-semibold text-center">
+                            <span class="text-teal-300">Ticket Home</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex-grow flex flex-col">
+                    <nav class="flex-1 px-2 pb-4 space-y-1">
+                        {% if current_user.role != 'visualizador' %}
+                        <a href="{{ url_for('dashboard.index') }}" 
+                           class="{% if request.endpoint == 'dashboard.index' %}bg-primary text-white{% else %}text-gray-900 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <svg class="mr-3 h-6 w-6 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+                            </svg>
+                            <span class="sidebar-text">Dashboard</span>
+                        </a>
+                        
+
+
+                        <a href="{{ url_for('tickets.nursing_board') }}"
+                           class="{% if request.endpoint == 'tickets.nursing_board' %}bg-primary text-white{% else %}text-gray-900 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <svg class="mr-3 h-6 w-6 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                            </svg>
+                            <span class="sidebar-text">Tablero Enfermería</span>
+                        </a>
+
+                        <a href="{{ url_for('tickets.create') }}" 
+                           class="{% if request.endpoint == 'tickets.create' %}bg-primary text-white{% else %}text-gray-900 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <svg class="mr-3 h-6 w-6 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            <span class="sidebar-text">Crear Ticket Home</span>
+                        </a>
+                        
+                        <a href="{{ url_for('tickets.manage_my_tickets') }}"
+                           class="{% if request.endpoint == 'tickets.manage_my_tickets' %}bg-primary text-white{% else %}text-gray-900 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <svg class="mr-3 h-6 w-6 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            <span class="sidebar-text">Gestionar Mis Tickets</span>
+                        </a>
+                        {% endif %}
+                        
+                        {% if current_user.role in ['admin', 'visualizador'] %}
+                        <a href="{{ url_for('visualizador.dashboard') }}"
+                           class="{% if request.endpoint == 'visualizador.dashboard' %}bg-primary text-white{% else %}text-gray-900 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <svg class="mr-3 h-6 w-6 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                            <span class="sidebar-text">Panel Visualizador</span>
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.is_admin() %}
+                        <a href="{{ url_for('admin.manage_tickets') }}" 
+                           class="{% if request.endpoint == 'admin.manage_tickets' %}bg-primary text-white{% else %}text-gray-900 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <svg class="mr-3 h-6 w-6 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            <span class="sidebar-text">Editar Tickets</span>
+                        </a>
+                        <a href="{{ url_for('admin.index') }}" 
+                           class="{% if request.endpoint in ['admin.index', 'admin.users', 'admin.master_data'] %}bg-primary text-white{% else %}text-gray-900 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <svg class="mr-3 h-6 w-6 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span class="sidebar-text">Administración</span>
+                        </a>
+                        <a href="{{ url_for('admin.login_audit') }}" 
+                           class="{% if request.endpoint == 'admin.login_audit' %}bg-primary text-white{% else %}text-gray-900 hover:bg-gray-50{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <svg class="mr-3 h-6 w-6 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="sidebar-text">Auditoría</span>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Top navigation -->
+            <header class="bg-white shadow">
+                <div class="h-16 flex items-center justify-end px-4 sm:px-6 lg:px-8">
+                    <!-- User info and logout: pushed to the right -->
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm text-right">
+                            <div class="font-medium text-gray-900">
+                                {{ current_user.username }}
+                                {% if current_user.is_superuser %}
+                                    <span class="ml-2 px-2 py-0.5 text-xs font-semibold text-white bg-red-600 rounded-full">Superuser</span>
+                                {% endif %}
+                            </div>
+                            {% if current_user.clinic %}
+                            <div class="text-xs text-gray-500">{{ current_user.clinic.name }}</div>
+                            {% endif %}
+                        </div>
+                        <a href="{{ url_for('auth.logout') }}" 
+                           class="bg-primary hover:bg-opacity-90 text-white px-4 py-2 rounded-md text-sm font-medium">
+                            Cerrar Sesión
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page content -->
+            <main class="flex-1 overflow-y-auto bg-gray-50">
+                <div class="px-6 py-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 text-center mb-6">
+                        {% block page_title %}{% endblock %}
+                    </h2>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="mb-4 p-4 rounded-md {% if category == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif category == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif category == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+            
+            <!-- Footer - Sticky at bottom -->
+            <footer class="bg-white border-t border-gray-200 px-6 py-3 mt-auto">
+                <div class="text-center text-xs text-gray-500">
+                    <p class="font-semibold">Plataforma Ticket Home</p>
+                    <p>0.1 rs</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    {% else %}
+    <!-- Login page content -->
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if category == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif category == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif category == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block login_content %}{% endblock %}
+    </main>
+    {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const toggleButton = document.getElementById('sidebar-toggle');
+
+            // Function to toggle sidebar
+            const toggleSidebar = () => {
+                sidebar.classList.toggle('sidebar-collapsed');
+                sidebar.classList.toggle('sidebar-expanded');
+                localStorage.setItem('sidebarState', sidebar.classList.contains('sidebar-collapsed') ? 'collapsed' : 'expanded');
+            };
+
+            // Set initial state from localStorage
+            const savedState = localStorage.getItem('sidebarState');
+            if (savedState === 'collapsed') {
+                sidebar.classList.add('sidebar-collapsed');
+                sidebar.classList.remove('sidebar-expanded');
+            } else {
+                sidebar.classList.add('sidebar-expanded');
+                sidebar.classList.remove('sidebar-collapsed');
+            }
+
+            // Add event listener
+            if (toggleButton) {
+                toggleButton.addEventListener('click', toggleSidebar);
+            }
+        });
+    </script>
+    <!-- jQuery (required for DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+
+    <script src="https://cdn.datatables.net/searchhighlight/1.3.0/js/dataTables.searchHighlight.min.js"></script>
+    <script src="https://cdn.datatables.net/colresize/0.0.4/js/dataTables.colResize.min.js"></script>
+    
+    <!-- JSZip for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <script src="{{ url_for('static', filename='js/tickets.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+
+    <!-- Enhanced Tickets CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-tickets.css') }}">
+</body>
+</html>

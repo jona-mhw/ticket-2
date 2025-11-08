@@ -1,0 +1,77 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Iniciar todas las terminales",
+      "dependsOn": [
+        "gemini flash",
+        "gemini",
+        "claude",
+        "run local",
+        "deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "gemini flash",
+      "type": "shell",
+      "command": "gemini --model gemini-2.5-flash",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "gemini",
+      "type": "shell",
+      "command": "gemini",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "claude",
+      "type": "shell",
+      "command": "claude",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "run local",
+      "type": "shell",
+      "command": "echo ''",
+      "isBackground": true,
+      "presentation": {
+        "echo": false,
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "deploy",
+      "type": "shell",
+      "command": "echo ''",
+      "isBackground": true,
+      "presentation": {
+        "echo": false,
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false
+      }
+    }
+  ]
+}
+

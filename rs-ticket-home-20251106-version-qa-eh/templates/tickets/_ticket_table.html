@@ -1,0 +1,408 @@
+{% macro render_ticket_table(tickets, show_actions, page=1, per_page=20, total=0, current_user=None) %}
+<div class="enhanced-datatable-wrapper">
+    <!-- Collapsible Column Visibility Controls -->
+    <div class="column-controls-wrapper">
+        <div class="column-controls-toggle bg-white border-b border-gray-200">
+            <button id="toggle-column-controls" class="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-2">
+                    <svg id="toggle-icon" class="w-5 h-5 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">Columnas visibles</span>
+                    <span class="text-xs text-gray-500">(haz clic para expandir/colapsar)</span>
+                </div>
+                <svg id="chevron-icon" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div id="column-controls-panel" class="column-controls bg-white border-b border-gray-200 p-4">
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">Selecciona las columnas a mostrar:</span>
+                </div>
+
+                <div class="flex flex-wrap gap-2" id="column-toggles">
+                    <!-- Column toggles will be dynamically generated here -->
+                </div>
+
+                <div class="flex gap-2 ml-auto">
+                    <button id="show-all-columns" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">
+                        Mostrar todas
+                    </button>
+                    <button id="reset-columns" class="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors">
+                        Restaurar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Table Container -->
+    <div class="table-container relative">
+        <table id="tickets-table" class="enhanced-datatable display nowrap compact" style="width:100%">
+            <thead class="sticky-header">
+                <tr class="header-row">
+                    {% if show_actions %}
+                    <th data-column="actions" data-priority="1" class="sticky-col sticky-actions">
+                        <div class="header-content">
+                            <span>Acciones</span>
+                        </div>
+                    </th>
+                    {% endif %}
+                    <th data-column="status_countdown" data-priority="2" class="sticky-col sticky-status">
+                        <div class="header-content">
+                            <span>Estado / Tiempo</span>
+                        </div>
+                    </th>
+                    <th data-column="fpa" data-priority="4">
+                        <div class="header-content">
+                            <span>FPA Actual</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="ticket_id" data-priority="5">
+                        <div class="header-content">
+                            <span>ID Ticket</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    {% if current_user and current_user.is_superuser %}
+                    <th data-column="clinic" data-priority="5">
+                        <div class="header-content">
+                            <span>Clínica</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    {% endif %}
+                    <th data-column="rut" data-priority="6">
+                        <div class="header-content">
+                            <span>RUT Paciente</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="first_name" data-priority="7">
+                        <div class="header-content">
+                            <span>Primer Nombre</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="second_name" data-priority="8">
+                        <div class="header-content">
+                            <span>Segundo Nombre</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="last_name_father" data-priority="9">
+                        <div class="header-content">
+                            <span>Apellido Paterno</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="last_name_mother" data-priority="10">
+                        <div class="header-content">
+                            <span>Apellido Materno</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="room" data-priority="11">
+                        <div class="header-content">
+                            <span>Cama</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="medical_discharge" data-priority="12">
+                        <div class="header-content">
+                            <span>Alta Médica Indicada</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="doctor" data-priority="13">
+                        <div class="header-content">
+                            <span>Médico Tratante</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="surgery" data-priority="14">
+                        <div class="header-content">
+                            <span>Cirugía</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                    <th data-column="created_at" data-priority="15">
+                        <div class="header-content">
+                            <span>Fecha Creación</span>
+                            <div class="sort-indicator"></div>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr>
+                {% if show_actions %}
+                <td>
+                    <a href="{{ url_for('tickets.detail', ticket_id=ticket.id) }}" 
+                       class="text-blue-600 hover:text-blue-800 font-medium">Ver detalle</a>
+                </td>
+                {% endif %}
+                <td class="status-countdown-cell">
+                    {% set is_expired = ticket.time_remaining and ticket.time_remaining.expired %}
+                    {% if ticket.is_scheduled %}
+                        <div class="status-time-container">
+                            <div class="status-badge status-programado">PROGRAMADO</div>
+                        </div>
+                    {% elif ticket.status == 'Vigente' and not is_expired %}
+                        <div class="status-time-container">
+                            <div class="status-badge status-vigente">VIGENTE</div>
+                            <div class="countdown-timer countdown-display" data-fpa="{{ ticket.current_fpa.isoformat() }}">
+                                <!-- El tiempo restante se calculará aquí -->
+                            </div>
+                        </div>
+                    {% elif ticket.status == 'Vigente' and is_expired %}
+                        <div class="status-time-container">
+                            <div class="status-badge status-vencido">VENCIDO</div>
+                        </div>
+                    {% elif ticket.status == 'Anulado' %}
+                        <div class="status-time-container">
+                            <div class="status-badge status-anulado">ANULADO</div>
+                        </div>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="font-semibold">{{ ticket.current_fpa.strftime('%d/%m/%Y') }}</div>
+                    <div class="text-sm text-gray-500">{{ ticket.discharge_time_slot.name if ticket.discharge_time_slot else 'Sin horario' }}</div>
+                    {% if ticket.get_modification_count() > 0 %}
+                    <div class="text-yellow-600 text-sm">{{ ticket.get_modification_count() }} modificación(es)</div>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">{{ ticket.id }}</span>
+                </td>
+                {% if current_user and current_user.is_superuser %}
+                <td>
+                    <div class="font-medium">{{ ticket.clinic.name if ticket.clinic else 'N/A' }}</div>
+                </td>
+                {% endif %}
+                <td>
+                    <div class="font-medium">{{ ticket.patient.rut }}</div>
+                </td>
+                <td>
+                    <div class="font-medium">{{ ticket.patient.primer_nombre }}</div>
+                </td>
+                <td>
+                    <div class="text-gray-600">{{ ticket.patient.segundo_nombre or '-' }}</div>
+                </td>
+                <td>
+                    <div class="font-medium">{{ ticket.patient.apellido_paterno }}</div>
+                </td>
+                <td>
+                    <div class="text-gray-600">{{ ticket.patient.apellido_materno or '-' }}</div>
+                </td>
+                <td>
+                    <div class="text-gray-700 font-medium">{{ ticket.patient.room or '-' }}</div>
+                </td>
+                <td>
+                    <div class="text-gray-700">{{ ticket.medical_discharge_date.strftime('%d/%m/%Y') if ticket.medical_discharge_date else 'No definida' }}</div>
+                </td>
+                <td>
+                    <div class="font-medium">{{ ticket.attending_doctor.name if ticket.attending_doctor else 'Sin asignar' }}</div>
+                    <div class="text-sm text-gray-500">{{ ticket.attending_doctor.specialty if ticket.attending_doctor else '' }}</div>
+                </td>
+                <td>
+                    <div class="font-medium">{{ ticket.surgery.name }}</div>
+                    <div class="text-sm text-gray-500">{{ ticket.surgery.specialty.name }}</div>
+                </td>
+                <td>
+                    <div class="text-gray-700">{{ ticket.created_at.strftime('%d/%m/%Y') }}</div>
+                    <div class="text-sm text-gray-500">{{ ticket.created_by }}</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+</div>
+
+<script>
+// Initialize DataTable - SIMPLIFIED VERSION
+$(document).ready(function() {
+    var table = $('#tickets-table').DataTable({
+        // SCROLLING - Keep it simple
+        scrollX: true,
+        scrollY: 'calc(100vh - 320px)',
+        scrollCollapse: true,
+
+        // SORTING
+        order: [[{% if show_actions %}4{% else %}3{% endif %}, 'desc']],
+
+        // LAYOUT
+        dom: '<"dt-toolbar"Bf>rtip',
+
+        // BUTTONS - Column visibility and export
+        buttons: [
+            {
+                extend: 'colvis',
+                text: '<i class="fas fa-eye"></i> Columnas',
+                className: 'btn btn-primary btn-sm',
+                columns: ':gt(0)',
+                postfixButtons: ['colvisRestore']
+            },
+            '|',
+            {
+                extend: 'excel',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                className: 'btn btn-success btn-sm',
+                exportOptions: { columns: ':visible' }
+            },
+            {
+                extend: 'csv',
+                text: '<i class="fas fa-file-csv"></i> CSV',
+                className: 'btn btn-info btn-sm',
+                exportOptions: { columns: ':visible' }
+            },
+            {
+                extend: 'print',
+                text: '<i class="fas fa-print"></i> Imprimir',
+                className: 'btn btn-dark btn-sm',
+                exportOptions: { columns: ':visible' }
+            }
+        ],
+
+        // PAGINATION
+        paging: true,
+        pageLength: 50,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+
+        // NO fixed columns - causes issues with sticky headers
+        fixedColumns: false,
+
+        // STYLING
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+        },
+
+        // COLUMN DEFINITIONS
+        columnDefs: [
+            { targets: '_all', className: 'dt-left' }
+        ],
+
+        // Save column visibility
+        initComplete: function() {
+            var api = this.api();
+
+            // Load saved column visibility
+            var saved = localStorage.getItem('tickets_columns_visible');
+            if (saved) {
+                var visible = JSON.parse(saved);
+                api.columns().every(function(idx) {
+                    if (visible[idx] !== undefined) {
+                        this.visible(visible[idx]);
+                    }
+                });
+            }
+
+            // Save on change
+            api.on('column-visibility.dt', function() {
+                var visibility = api.columns().visible().toArray();
+                localStorage.setItem('tickets_columns_visible', JSON.stringify(visibility));
+            });
+        }
+    });
+    
+    // COUNTDOWN TIMER FUNCTIONALITY
+    function updateCountdownTimers() {
+        const timers = document.querySelectorAll('.countdown-timer');
+        const now = new Date();
+
+        timers.forEach(timer => {
+            const fpaDate = new Date(timer.dataset.fpa);
+            const timeDiff = fpaDate - now;
+
+            if (timeDiff <= 0) {
+                timer.textContent = 'VENCIDO';
+                timer.className = 'countdown-display countdown-critical';
+                return;
+            }
+
+            const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+            let display = '';
+            let cssClass = 'countdown-display ';
+
+            if (days > 0) {
+                display = `${days}d ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                cssClass += 'countdown-normal';
+            } else if (hours > 6) {
+                display = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                cssClass += 'countdown-normal';
+            } else if (hours > 1) {
+                display = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                cssClass += 'countdown-warning';
+            } else {
+                display = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                cssClass += 'countdown-critical';
+            }
+
+            timer.textContent = display;
+            timer.className = cssClass;
+        });
+    }
+
+// Update timers immediately and every second
+document.addEventListener('DOMContentLoaded', function() {
+    updateCountdownTimers();
+    setInterval(updateCountdownTimers, 1000); // Update every second for real-time countdown
+    
+    // ENSURE FROZEN COLUMNS STABILITY
+    function enforceFrozenStability() {
+        const table = document.getElementById('tickets-table');
+        if (!table) return;
+        
+        // Force a reflow to ensure sticky positioning is calculated correctly
+        const frozenCols = table.querySelectorAll('.frozen-col');
+        frozenCols.forEach(col => {
+            // Trigger reflow by reading offsetHeight
+            col.offsetHeight;
+            
+            // Ensure backgrounds are properly set (redundant but safe)
+            if (!col.style.backgroundColor) {
+                const row = col.closest('tr');
+                const isEven = Array.from(row.parentNode.children).indexOf(row) % 2 === 1;
+                const isHeader = row.closest('thead') !== null;
+                
+                if (isHeader) {
+                    col.style.backgroundColor = '#f3f4f6';
+                } else if (isEven) {
+                    col.style.backgroundColor = '#fafafa';
+                } else {
+                    col.style.backgroundColor = 'white';
+                }
+            }
+        });
+    }
+    
+    // Apply stability fixes
+    setTimeout(enforceFrozenStability, 50);
+    setTimeout(enforceFrozenStability, 200);
+    setTimeout(enforceFrozenStability, 500);
+    
+    // Re-apply on scroll events (to handle any browser quirks)
+    const container = document.querySelector('.frozen-table-container');
+    if (container) {
+        let scrollTimeout;
+        container.addEventListener('scroll', function() {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(enforceFrozenStability, 100);
+        });
+    }
+});
+</script>
+
+{% endmacro %}
