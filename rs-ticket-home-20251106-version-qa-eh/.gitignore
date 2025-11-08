@@ -1,0 +1,30 @@
+# Local environment
+venv/
+.env.local
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local database instance
+instance/
+
+# Tool-specific directories
+.claude/
+
+# Backup directories
+migrations_bkp/
+venv/
+
+# Logs y screenshots temporales
+_logs/*.json
+_screenshots/*.png
+_screenshots/*.jpg
+_screenshots/*.jpeg
+
+# Mantener READMEs de carpetas organizativas
+!_logs/README.md
+!_screenshots/README.md
+!_config/README.md
+!_docs/README.md
+!_deployment_scripts/README.md 

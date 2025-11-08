@@ -1,0 +1,509 @@
+# 3. Assets Estáticos y CSS
+
+La organización de los archivos estáticos es importante para mantener un proyecto limpio.
+
+## Estructura del Directorio `static/`
+
+```
+/static
+├── css/
+│   └── style.css         # Estilos principales de la aplicación
+├── js/
+│   └── main.js           # Lógica de JavaScript del frontend
+└── images/
+    └── logo.svg          # Logo de la aplicación
+```
+
+## CSS Base
+
+A continuación se muestra el contenido del archivo `enhanced-tickets.css` del proyecto original. Puedes usarlo como base para tu `style.css`. Este CSS está diseñado para dar estilo a tablas de datos complejas con cabeceras y columnas fijas, además de incluir estilos para badges de estado y otros componentes.
+
+```css
+/* Enhanced Tickets Table Styles */
+.enhanced-datatable-wrapper {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.column-controls {
+    background: linear-gradient(to right, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.column-controls .flex {
+    align-items: center;
+}
+
+/* Collapsible Column Controls */
+.column-controls-wrapper {
+    background: white;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.column-controls-toggle {
+    background: linear-gradient(to right, #f8fafc, #f1f5f9);
+}
+
+.column-controls-toggle button {
+    border-radius: 8px 8px 0 0;
+}
+
+.column-controls-toggle:hover {
+    background: #f3f4f6;
+}
+
+#column-controls-panel {
+    max-height: 400px;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+    transform-origin: top;
+}
+
+#column-controls-panel.collapsed {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+#column-controls-panel.expanded {
+    max-height: 400px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Chevron animation */
+#chevron-icon {
+    transition: transform 0.3s ease-in-out;
+}
+
+#chevron-icon.rotated {
+    transform: rotate(180deg);
+}
+
+/* Enhanced Table Container */
+.table-container {
+    position: relative;
+    max-height: calc(100vh - 200px);
+    overflow: auto;
+    background: #f8fafc;
+}
+
+/* Sticky Headers */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.sticky-header th {
+    position: sticky;
+    top: 0;
+    z-index: 110;
+    background: white;
+    border-bottom: 2px solid #e5e7eb;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Header Content Layout */
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    min-height: 40px;
+    position: relative;
+}
+
+.header-content span {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+    text-align: left;
+}
+
+.sort-indicator {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+}
+
+.sort-indicator::after {
+    content: '↕';
+    font-size: 12px;
+    color: #9ca3af;
+    opacity: 0.5;
+}
+
+.header-content:hover .sort-indicator::after {
+    opacity: 1;
+}
+
+
+
+/* Sticky Columns */
+.sticky-col {
+    position: sticky;
+    z-index: 50;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 1px 0 0 0 rgba(0, 0, 0, 0.05);
+}
+
+.sticky-actions {
+    left: 0;
+    z-index: 120;
+    min-width: 120px;
+    background: #f8fafc;
+}
+
+.sticky-status {
+    left: 120px;
+    z-index: 110;
+    min-width: 100px;
+}
+
+/* Combined Status/Countdown Column */
+.status-countdown-cell {
+    vertical-align: top;
+    padding: 8px !important;
+}
+
+.status-time-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.status-time-container .status-badge {
+    margin-bottom: 2px;
+}
+
+.status-time-container .countdown-display {
+    margin-top: 2px;
+    font-size: 0.8rem;
+    min-width: 70px;
+}
+
+/* Enhanced DataTable Styling */
+.enhanced-datatable {
+    background: white;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.enhanced-datatable thead th {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    border-right: 1px solid #e5e7eb;
+    padding: 12px 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.enhanced-datatable tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f3f4f6;
+    border-right: 1px solid #f3f4f6;
+    vertical-align: middle;
+    background: white;
+    transition: background-color 0.15s ease;
+}
+
+.enhanced-datatable tbody tr:nth-child(even) td {
+    background: #fafafa;
+}
+
+.enhanced-datatable tbody tr:hover td {
+    background: #f3f4f6;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-vigente {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-anulado {
+    background: #fecaca;
+    color: #991b1b;
+}
+
+.status-vencido {
+    background: #fed7aa;
+    color: #9a3412;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Countdown Timer Styles */
+.countdown-display {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+}
+
+.countdown-normal {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.countdown-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.countdown-critical {
+    background: #fecaca;
+    color: #991b1b;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.7; }
+}
+
+/* Column Toggle Buttons */
+#column-toggles {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#column-toggles label {
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 2px;
+}
+
+#column-toggles label:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+#column-toggles input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Control Buttons */
+#show-all-columns,
+#reset-columns {
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#show-all-columns:hover {
+    background: #dbeafe;
+    transform: translateY(-1px);
+}
+
+#reset-columns:hover {
+    background: #f3f4f6;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .column-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .column-controls .flex {
+        justify-content: center;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 6px 8px;
+    }
+
+    .header-content span {
+        font-size: 0.75rem;
+    }
+
+    .sticky-actions,
+    .sticky-status,
+    .sticky-countdown {
+        position: static;
+        left: auto;
+        min-width: auto;
+    }
+
+    .table-container {
+        max-height: calc(100vh - 300px);
+    }
+}
+
+/* Loading Animation */
+.enhanced-datatable.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.enhanced-datatable.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f4f6;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scrollbar Styling */
+.table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Export Buttons Enhancement */
+.dt-buttons {
+    gap: 8px;
+}
+
+.dt-buttons .btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.875rem;
+}
+
+.dt-buttons .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced Cell Content */
+.enhanced-datatable tbody td {
+    position: relative;
+}
+
+.enhanced-datatable tbody td:first-child {
+    font-weight: 500;
+}
+
+/* Special styling for ticket ID */
+.enhanced-datatable tbody td:nth-child(5) {
+    font-family: 'Courier New', monospace;
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+/* Doctor and Surgery columns */
+.enhanced-datatable tbody td:nth-last-child(2),
+.enhanced-datatable tbody td:nth-last-child(3) {
+    max-width: 200px;
+}
+
+.enhanced-datatable tbody td:nth-last-child(2) div,
+.enhanced-datatable tbody td:nth-last-child(3) div {
+    white-space: nowrap;
+    overflow: hidden;
+text-overflow: ellipsis;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+    .enhanced-datatable-wrapper {
+        margin: 0 -1rem;
+        border-radius: 0;
+    }
+
+    .table-container {
+        max-height: calc(100vh - 250px);
+        overflow-x: auto;
+    }
+
+    .enhanced-datatable {
+        min-width: 800px;
+    }
+
+    .column-controls {
+        padding: 1rem;
+    }
+
+    #column-toggles {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+        max-height: none;
+    }
+}
+
+.status-programado {
+    background: #e5e7eb;
+    color: #4b5563;
+}
+```
+
+---
+
+**Has completado la guía de diseño.**
+
+**Próximo paso:** [Runbook de Despliegue](../deployment/RUNBOOK.md)

@@ -1,0 +1,19 @@
+steps:
+  # Build the container image with build args
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'BUILD_VERSION=${_BUILD_VERSION}'
+      - '-t'
+      - '${_IMAGE_NAME}'
+      - '.'
+
+# Cloud Build automáticamente hace push de las imágenes listadas aquí
+images:
+  - '${_IMAGE_NAME}'
+
+# Substitutions - valores por defecto (serán reemplazados por el script)
+substitutions:
+  _BUILD_VERSION: 'dev'
+  _IMAGE_NAME: 'us-central1-docker.pkg.dev/dev-ticket-home-redsalud/tickethome-repo/ticket-home:dev'

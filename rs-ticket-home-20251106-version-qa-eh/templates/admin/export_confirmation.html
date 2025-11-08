@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmar Exportación - Ticket Home{% endblock %}
+{% block page_title %}Exportar Base de Datos Completa{% endblock %}
+
+{% block content %}
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+    <h3 class="text-lg font-semibold text-gray-800">Confirmar Exportación</h3>
+    <p class="text-sm text-gray-600 mt-1">
+        Esta acción generará un archivo Excel (.xlsx) que contiene una copia completa de todas las tablas de la base de datos.
+    </p>
+    <p class="text-sm text-gray-600 mt-2">
+        Por favor, maneje este archivo con cuidado ya que contiene información sensible.
+    </p>
+    <div class="mt-6">
+        <a href="{{ url_for('admin.export_full_database_action') }}" class="inline-flex items-center px-6 py-3 bg-primary text-white font-semibold text-base rounded-md shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            Descargar Archivo Excel
+        </a>
+    </div>
+    <div class="mt-4">
+         <a href="{{ url_for('admin.index') }}" class="text-sm text-gray-600 hover:text-gray-800">&larr; Volver al panel de administración</a>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Página de confirmación de exportación cargada para el usuario: {{ current_user.email }}');
+    });
+</script>
+{% endblock %}
