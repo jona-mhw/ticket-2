@@ -1,0 +1,85 @@
+name: 🚀 Deploy to QA
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Manual trigger también
+
+jobs:
+  deploy-qa:
+    name: Deploy to QA Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: QA
+      url: https://qa-ticket-home.mhwdev.dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: 'latest'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_QA }}
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker southamerica-west1-docker.pkg.dev
+
+      - name: Build Docker image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t southamerica-west1-docker.pkg.dev/tickethome-mhw/ticket-home-repo/ticket-home-qa:${IMAGE_TAG} .
+          docker build -t southamerica-west1-docker.pkg.dev/tickethome-mhw/ticket-home-repo/ticket-home-qa:latest .
+
+      - name: Push Docker image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker push southamerica-west1-docker.pkg.dev/tickethome-mhw/ticket-home-repo/ticket-home-qa:${IMAGE_TAG}
+          docker push southamerica-west1-docker.pkg.dev/tickethome-mhw/ticket-home-repo/ticket-home-qa:latest
+
+      - name: Deploy to Cloud Run (QA)
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          gcloud run deploy ticket-home-qa \
+            --image southamerica-west1-docker.pkg.dev/tickethome-mhw/ticket-home-repo/ticket-home-qa:${IMAGE_TAG} \
+            --platform managed \
+            --region southamerica-west1 \
+            --allow-unauthenticated \
+            --set-env-vars ENVIRONMENT=qa,FLASK_ENV=production,ENABLE_IAP=true,ENABLE_DEMO_LOGIN=false,APP_VERSION=${IMAGE_TAG} \
+            --set-secrets DATABASE_URL=tickethome-db-url-qa:latest,SECRET_KEY=tickethome-secret-key-qa:latest,SUPERUSER_EMAILS=superuser-emails:latest \
+            --vpc-connector tckthome-conn-qa-sa-west1 \
+            --min-instances 1 \
+            --max-instances 3 \
+            --cpu 2 \
+            --memory 1Gi \
+            --concurrency 80 \
+            --timeout 900
+
+      - name: Set IAP policy
+        run: |
+          gcloud run services add-iam-policy-binding ticket-home-qa \
+            --region=southamerica-west1 \
+            --member='group:qa-ticket-home-rs@googlegroups.com' \
+            --role='roles/run.invoker'
+
+      - name: Get service URL
+        id: get-url
+        run: |
+          URL=$(gcloud run services describe ticket-home-qa --region southamerica-west1 --format 'value(status.url)')
+          echo "service_url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Deployment to QA successful!"
+          echo "🔗 URL: ${{ steps.get-url.outputs.service_url }}"
+          echo "📦 Image: southamerica-west1-docker.pkg.dev/tickethome-mhw/ticket-home-repo/ticket-home-qa:${{ github.sha }}"
