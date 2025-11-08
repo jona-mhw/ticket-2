@@ -96,9 +96,36 @@ Acceso limitado a su clínica asignada con permisos de gestión de tickets.
 
 ---
 
+## 🧪 Testing
+
+Suite de tests con pytest para garantizar calidad del código.
+
+### Ejecutar Tests
+
+```bash
+# Instalar dependencias de testing
+pip install -r requirements.txt
+
+# Ejecutar todos los tests
+pytest
+
+# Con coverage report
+pytest --cov=. --cov-report=html
+```
+
+### Métricas Actuales
+- **49 tests** implementados
+- **Coverage modelos**: 94.58%
+- **Coverage total**: 27.23%
+
+Ver documentación completa en: `tests/README.md`
+
+---
+
 ## 📖 Documentación Técnica
 
 Para información técnica sobre deployment y desarrollo:
+- `tests/README.md` - Guía completa de testing
 - `_deployment_scripts/README.md` - Guía de deployment
 - `RESUMEN-SEGURIDAD-v1.9.3.md` - Documentación de seguridad
 - `_docs/changelog.md` - Historial de versiones
