@@ -6,6 +6,12 @@ venv/
 __pycache__/
 *.pyc
 
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+*.cover
+
 # Local database instance
 instance/
 
