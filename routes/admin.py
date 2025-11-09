@@ -1,31 +1,24 @@
+"""
+Admin Routes - Controllers for admin operations
+
+This module contains route handlers (controllers) for administrative tasks.
+Uses centralized decorators and services from refactored architecture.
+"""
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort, send_file
 from flask_login import login_required, current_user
-from models import db, User, Surgery, Specialty, StandardizedReason, Doctor, DischargeTimeSlot, Clinic, LoginAudit, Ticket, Patient, REASON_CATEGORY_ANNULMENT, FpaModification, ActionAudit, Superuser, ROLE_SUPERUSER, ROLE_ADMIN
-from functools import wraps
+from models import (
+    db, User, Surgery, Specialty, StandardizedReason, Doctor, DischargeTimeSlot,
+    Clinic, LoginAudit, Ticket, Patient, REASON_CATEGORY_ANNULMENT,
+    FpaModification, ActionAudit, Superuser, ROLE_SUPERUSER, ROLE_ADMIN
+)
 from datetime import datetime, time
-from routes.utils import log_action, _build_tickets_query
+from utils import admin_required, superuser_required
+from services import AuditService, UserService
+from repositories import TicketRepository, AuditRepository
 import openpyxl
 from io import BytesIO
 
 admin_bp = Blueprint('admin', __name__)
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_admin():
-            flash('Acceso denegado. Se requieren permisos de administrador.', 'error')
-            return redirect(url_for('dashboard.index'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-def superuser_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or not hasattr(current_user, 'is_superuser') or not current_user.is_superuser:
-            flash('Acceso denegado. Se requieren permisos de Superusuario.', 'error')
-            return redirect(url_for('admin.index'))
-        return f(*args, **kwargs)
-    return decorated_function
 
 @admin_bp.route('/ticket/<ticket_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -59,7 +52,12 @@ def edit_ticket(ticket_id):
 
             
             if patient_changes:
-                log_action(f"Editó paciente: { ', '.join(patient_changes)}", target_id=ticket.id, target_type='Ticket')
+                AuditService.log_action(
+                    user=current_user,
+                    action=f"Editó paciente: {', '.join(patient_changes)}",
+                    target_id=ticket.id,
+                    target_type='Ticket'
+                )
 
             # --- Ticket Data ---
             ticket_changes = []
@@ -78,7 +76,12 @@ def edit_ticket(ticket_id):
                     ticket.annulled_at = datetime.utcnow()
                     ticket.annulled_by = current_user.username
                     ticket.annulled_reason = annulled_reason
-                    log_action(f"Anuló ticket con razón: {annulled_reason}", target_id=ticket.id, target_type='Ticket')
+                    AuditService.log_action(
+                        user=current_user,
+                        action=f"Anuló ticket con razón: {annulled_reason}",
+                        target_id=ticket.id,
+                        target_type='Ticket'
+                    )
                 
                 if new_status == 'Vigente' and ticket.status == 'Anulado':
                     ticket.annulled_at = None
@@ -100,7 +103,12 @@ def edit_ticket(ticket_id):
             ticket.doctor_id = new_doctor_id
 
             if ticket_changes:
-                log_action(f"Editó ticket: { ', '.join(ticket_changes)}", target_id=ticket.id, target_type='Ticket')
+                AuditService.log_action(
+                    user=current_user,
+                    action=f"Editó ticket: {', '.join(ticket_changes)}",
+                    target_id=ticket.id,
+                    target_type='Ticket'
+                )
 
             db.session.commit()
             flash('Ticket actualizado exitosamente.', 'success')

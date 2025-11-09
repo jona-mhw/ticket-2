@@ -219,25 +219,13 @@ class Ticket(db.Model):
 
     
     def calculate_fpa(self, pavilion_end_time, surgery):
-        base_hours = surgery.base_stay_hours
-        total_hours = base_hours
-        fpa = pavilion_end_time + timedelta(hours=total_hours)
-        
-        if surgery and surgery.is_ambulatory and surgery.ambulatory_cutoff_hour:
-            pavilion_hour = pavilion_end_time.hour
-            cutoff_hour = surgery.ambulatory_cutoff_hour
-            
-            if pavilion_hour < cutoff_hour:
-                next_morning = pavilion_end_time.replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(days=1)
-                if fpa < next_morning:
-                    fpa = next_morning
-        
-        time_diff = fpa - pavilion_end_time
-        overnight_stays = max(0, time_diff.days)
-        if time_diff.seconds > 0:
-            overnight_stays += 1
-            
-        return fpa, overnight_stays
+        """
+        DEPRECATED: Use FPACalculator.calculate() from services instead.
+
+        This method is kept for backward compatibility with existing code.
+        """
+        from services.fpa_calculator import FPACalculator
+        return FPACalculator.calculate(pavilion_end_time, surgery)
     
     def can_be_modified(self):
         return self.status == 'Vigente'
