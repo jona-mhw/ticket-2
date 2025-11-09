@@ -519,3 +519,39 @@ def api_update_room():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@tickets_bp.route('/manage-my-tickets')
+@login_required
+def manage_my_tickets():
+    """Manage tickets created by the current user."""
+    search_query = request.args.get('search', '').strip()
+    
+    # Build query for tickets created by current user
+    query = Ticket.query.filter_by(created_by=current_user.username)
+    
+    # Apply clinic filter for non-superusers
+    if not current_user.is_superuser:
+        query = query.filter_by(clinic_id=current_user.clinic_id)
+    
+    # Apply search filter if provided
+    if search_query:
+        query = query.join(Patient).filter(
+            db.or_(
+                Ticket.id.like(f'%{search_query}%'),
+                Patient.rut.like(f'%{search_query}%'),
+                db.func.concat(
+                    Patient.primer_nombre, ' ',
+                    Patient.segundo_nombre, ' ',
+                    Patient.apellido_paterno, ' ',
+                    Patient.apellido_materno
+                ).like(f'%{search_query}%')
+            )
+        )
+    
+    # Order by creation date descending
+    tickets = query.order_by(Ticket.created_at.desc()).all()
+    
+    return render_template('tickets/manage_my_tickets.html',
+                         tickets=tickets,
+                         search_query=search_query)
