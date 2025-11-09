@@ -9,7 +9,7 @@ from flask_login import login_required, current_user
 from models import (
     db, User, Surgery, Specialty, StandardizedReason, Doctor, DischargeTimeSlot,
     Clinic, LoginAudit, Ticket, Patient, REASON_CATEGORY_ANNULMENT,
-    FpaModification, ActionAudit, Superuser, ROLE_SUPERUSER, ROLE_ADMIN
+    FpaModification, ActionAudit, Superuser, ROLE_SUPERUSER, ROLE_ADMIN, UrgencyThreshold
 )
 from datetime import datetime, time
 from utils import admin_required, superuser_required
@@ -752,3 +752,115 @@ def export_full_database_action():
     except Exception as e:
         flash(f'Ocurrió un error al generar el archivo Excel: {str(e)}', 'error')
         return redirect(url_for('admin.index'))
+
+
+@admin_bp.route('/configuracion/umbrales-colores', methods=['GET'])
+@login_required
+@admin_required
+def color_thresholds():
+    """Configuración de umbrales de colores para tarjetas de tickets."""
+    if current_user.is_superuser:
+        # Superusers can see global and all clinic-specific configurations
+        global_threshold = UrgencyThreshold.query.filter_by(clinic_id=None).first()
+        clinic_thresholds = UrgencyThreshold.query.filter(UrgencyThreshold.clinic_id.isnot(None)).all()
+        clinics = Clinic.query.filter_by(is_active=True).all()
+    else:
+        # Admins can only see their clinic's configuration
+        global_threshold = UrgencyThreshold.query.filter_by(clinic_id=None).first()
+        clinic_thresholds = UrgencyThreshold.query.filter_by(clinic_id=current_user.clinic_id).all()
+        clinics = [current_user.clinic] if current_user.clinic else []
+
+    # Create default if doesn't exist
+    if not global_threshold:
+        global_threshold = UrgencyThreshold(
+            clinic_id=None,
+            green_threshold_hours=8,
+            yellow_threshold_hours=4,
+            red_threshold_hours=2
+        )
+
+    return render_template('admin/color_thresholds.html',
+                         global_threshold=global_threshold,
+                         clinic_thresholds=clinic_thresholds,
+                         clinics=clinics)
+
+
+@admin_bp.route('/configuracion/umbrales-colores/guardar', methods=['POST'])
+@login_required
+@admin_required
+def save_color_thresholds():
+    """Guarda la configuración de umbrales de colores."""
+    try:
+        clinic_id = request.form.get('clinic_id')
+
+        # Validate permissions
+        if clinic_id and clinic_id != 'global':
+            clinic_id = int(clinic_id)
+            if not current_user.is_superuser and clinic_id != current_user.clinic_id:
+                flash('No tiene permisos para modificar esta configuración.', 'error')
+                return redirect(url_for('admin.color_thresholds'))
+        elif clinic_id == 'global':
+            clinic_id = None
+
+        # Validate that only superusers can modify global config
+        if clinic_id is None and not current_user.is_superuser:
+            flash('Solo los superusuarios pueden modificar la configuración global.', 'error')
+            return redirect(url_for('admin.color_thresholds'))
+
+        # Get or create threshold
+        if clinic_id is None:
+            threshold = UrgencyThreshold.query.filter_by(clinic_id=None).first()
+        else:
+            threshold = UrgencyThreshold.query.filter_by(clinic_id=clinic_id).first()
+
+        if not threshold:
+            threshold = UrgencyThreshold(clinic_id=clinic_id)
+            db.session.add(threshold)
+
+        # Update values
+        green_hours = int(request.form.get('green_threshold_hours', 8))
+        yellow_hours = int(request.form.get('yellow_threshold_hours', 4))
+        red_hours = int(request.form.get('red_threshold_hours', 2))
+
+        # Validate threshold order
+        if not (red_hours < yellow_hours < green_hours):
+            flash('Los umbrales deben estar en orden: Rojo < Amarillo < Verde', 'error')
+            return redirect(url_for('admin.color_thresholds'))
+
+        threshold.green_threshold_hours = green_hours
+        threshold.yellow_threshold_hours = yellow_hours
+        threshold.red_threshold_hours = red_hours
+        threshold.updated_at = datetime.utcnow()
+        threshold.updated_by = current_user.username
+
+        db.session.commit()
+
+        # Log the action
+        config_type = "global" if clinic_id is None else f"clínica {clinic_id}"
+        AuditService.log_action(
+            user=current_user,
+            action=f"Configuró umbrales de colores ({config_type}): Verde>{green_hours}h, Amarillo>{yellow_hours}h, Rojo<{red_hours}h",
+            target_id=str(threshold.id),
+            target_type='UrgencyThreshold'
+        )
+
+        flash('Configuración de umbrales guardada exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al guardar configuración: {str(e)}', 'error')
+
+    return redirect(url_for('admin.color_thresholds'))
+
+
+@admin_bp.route('/api/umbrales-colores')
+@login_required
+def get_color_thresholds_api():
+    """API endpoint to get color thresholds for current user's clinic."""
+    clinic_id = current_user.clinic_id if not current_user.is_superuser else request.args.get('clinic_id', type=int)
+    threshold = UrgencyThreshold.get_thresholds_for_clinic(clinic_id)
+
+    return jsonify({
+        'green_threshold_hours': threshold.green_threshold_hours,
+        'yellow_threshold_hours': threshold.yellow_threshold_hours,
+        'red_threshold_hours': threshold.red_threshold_hours
+    })

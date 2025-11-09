@@ -50,9 +50,8 @@ class TicketValidator:
                 form_data.get('pavilion_end_time', ''),
                 '%Y-%m-%dT%H:%M'
             )
-            # Pavilion end time shouldn't be in the future
-            if pavilion_end_time > datetime.now():
-                errors.append('La hora de fin de pabellón no puede estar en el futuro')
+            # Note: Pavilion end time CAN be in the future for scheduled surgeries
+            # Validation removed as per user requirement
         except (ValueError, TypeError):
             errors.append('Hora de fin de pabellón inválida')
 

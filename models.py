@@ -271,3 +271,50 @@ class ActionAudit(db.Model):
     target_type = db.Column(db.String(80), nullable=True)
 
     user = db.relationship('User', backref='action_audits')
+
+
+class UrgencyThreshold(db.Model):
+    """
+    Configuración de umbrales de urgencia para los colores de las tarjetas de tickets.
+    Los superusuarios y administradores pueden configurar estos valores.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    clinic_id = db.Column(db.Integer, db.ForeignKey('clinic.id'), nullable=True)  # Nullable for global config
+
+    # Umbrales en horas
+    # Verde (normal): > green_threshold_hours
+    # Amarillo (warning): entre yellow_threshold_hours y green_threshold_hours
+    # Rojo (critical): < yellow_threshold_hours
+    green_threshold_hours = db.Column(db.Integer, default=8, nullable=False)  # Más de 8 horas = verde
+    yellow_threshold_hours = db.Column(db.Integer, default=4, nullable=False)  # Entre 4-8 horas = amarillo
+    red_threshold_hours = db.Column(db.Integer, default=2, nullable=False)  # Menos de 2 horas = rojo
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = db.Column(db.String(80), nullable=True)
+
+    @staticmethod
+    def get_thresholds_for_clinic(clinic_id=None):
+        """
+        Obtiene los umbrales configurados para una clínica.
+        Si no hay configuración específica, usa la global.
+        Si no hay configuración global, usa valores por defecto.
+        """
+        if clinic_id:
+            threshold = UrgencyThreshold.query.filter_by(clinic_id=clinic_id).first()
+            if threshold:
+                return threshold
+
+        # Buscar configuración global
+        global_threshold = UrgencyThreshold.query.filter_by(clinic_id=None).first()
+        if global_threshold:
+            return global_threshold
+
+        # Crear y retornar valores por defecto
+        default_threshold = UrgencyThreshold(
+            clinic_id=None,
+            green_threshold_hours=8,
+            yellow_threshold_hours=4,
+            red_threshold_hours=2
+        )
+        return default_threshold
