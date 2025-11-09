@@ -1,0 +1,23 @@
+# Config local con credenciales
+config.local.env
+
+# Archivos temporales
+*.tmp
+*.log
+*.swp
+*.bak
+
+# Credenciales y secrets
+*.key
+*.pem
+*.json
+service-account*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.code-workspace
