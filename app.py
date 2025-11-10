@@ -85,9 +85,10 @@ def create_app():
         # Intentar autenticación con IAP si está habilitado
         if hybrid_auth.is_iap_request():
             # IAP está activo, intentar autenticar
-            user, message = hybrid_auth.authenticate_request()
-            if user:
-                login_user(user)
+            # Nota: authenticate_request() retorna (bool, str) y ya hace login_user() internamente
+            success, message = hybrid_auth.authenticate_request()
+            if success:
+                # Usuario ya autenticado por authenticate_request()
                 return None
 
         # El usuario no está autenticado
@@ -100,10 +101,9 @@ def create_app():
             return redirect(url_for('auth.login'))
         else:
             # QA/PROD: Solo SSO, mostrar error 403
-            return render_template('errors/unauthorized.html',
-                message=f"Acceso denegado. Solo autenticación SSO permitida en {environment.upper()}.",
-                contact_admin=True,
-                environment=environment
+            return render_template('unauthorized.html',
+                email=None,
+                message=f"Acceso denegado. Solo autenticación SSO permitida en {environment.upper()}."
             ), 403
 
     @app.context_processor

@@ -73,11 +73,30 @@ class IAPAuthenticator:
         if not self.is_iap_request():
             return None, "No es una solicitud IAP."
 
-        # Obtener el email del usuario validado por IAP
-        email = self.get_user_email()
-        if not email:
-            current_app.logger.warning("No se encontró el email del usuario en la cabecera IAP.")
-            return None, "No se encontró el email del usuario en la cabecera IAP."
+        # Validar JWT de IAP si está disponible
+        iap_jwt = request.headers.get('X-Goog-IAP-JWT-Assertion')
+        if iap_jwt and self.expected_audience:
+            # Validación completa del JWT
+            decoded_jwt, validation_message = self._validate_jwt(iap_jwt)
+            if not decoded_jwt:
+                current_app.logger.error(f"JWT de IAP inválido: {validation_message}")
+                return False, f"Autenticación fallida: {validation_message}"
+
+            # Obtener email del JWT validado
+            email = decoded_jwt.get('email')
+            current_app.logger.info(f"JWT validado correctamente. Usuario: {email}")
+        else:
+            # Fallback: Confiar en el header (solo en desarrollo/testing)
+            # En producción SIEMPRE debería haber JWT con audience configurado
+            email = self.get_user_email()
+            if not email:
+                current_app.logger.warning("No se encontró el email del usuario en la cabecera IAP.")
+                return None, "No se encontró el email del usuario en la cabecera IAP."
+
+            if not iap_jwt:
+                current_app.logger.warning("⚠️ SECURITY: No se encontró JWT de IAP. Confiando solo en header (NO recomendado en producción).")
+            else:
+                current_app.logger.warning("⚠️ SECURITY: JWT encontrado pero audience no configurado. Configure GCP_PROJECT_NUMBER y BACKEND_SERVICE_ID.")
 
         current_app.logger.info(f"Usuario autenticado por IAP: {email}")
 
@@ -159,7 +178,10 @@ class HybridAuthenticator:
             backend_service_id = os.environ.get('BACKEND_SERVICE_ID')
 
             self.iap_auth = IAPAuthenticator(gcp_project_number, backend_service_id)
-            app.logger.info("Autenticación IAP HABILITADA (confiando en Google, sin validación de JWT).")
+            if gcp_project_number and backend_service_id:
+                app.logger.info("Autenticación IAP HABILITADA con validación de JWT (modo seguro).")
+            else:
+                app.logger.warning("⚠️ Autenticación IAP HABILITADA sin validación de JWT. Configure GCP_PROJECT_NUMBER y BACKEND_SERVICE_ID para modo seguro.")
         else:
             app.logger.info("Autenticación IAP DESHABILITADA (usando modo local/tradicional).")
 
