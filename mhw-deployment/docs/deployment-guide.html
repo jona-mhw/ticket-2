@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guía de Deployment - Ticket Home (Ambiente Claudia)</title>
+    <title>Guía de Deployment - Ticket Home (Ambiente MHW (GCP))</title>
     <style>
         * {
             margin: 0;
@@ -451,7 +451,7 @@
     <div class="container">
         <header>
             <h1>🚀 Guía de Deployment</h1>
-            <p>Ticket Home - Ambiente Claudia</p>
+            <p>Ticket Home - Ambiente MHW (GCP)</p>
             <p style="font-size: 0.9em; margin-top: 10px;">Cloud Run + Cloud SQL (IP Pública) + IAP + SSL</p>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
@@ -468,7 +468,7 @@
 
                 <div class="var-input">
                     <label>GCP Project ID:</label>
-                    <input type="text" id="gcpProject" placeholder="claudia-ticket-home-xxxxx" />
+                    <input type="text" id="gcpProject" placeholder="mhw-ticket-home-xxxxx" />
                 </div>
 
                 <div class="var-input">
@@ -478,7 +478,7 @@
 
                 <div class="var-input">
                     <label>Dominio:</label>
-                    <input type="text" id="domain" placeholder="claudia-ticket-home.mhwdev.dev" />
+                    <input type="text" id="domain" placeholder="mhw-ticket-home.mhwdev.dev" />
                 </div>
 
                 <div class="var-input">
@@ -493,12 +493,12 @@
 
                 <div class="var-input">
                     <label>Nombre Base de Datos:</label>
-                    <input type="text" id="dbName" value="claudia_ticket_home" />
+                    <input type="text" id="dbName" value="mhw_ticket_home" />
                 </div>
 
                 <div class="var-input">
                     <label>Usuario DB:</label>
-                    <input type="text" id="dbUser" value="claudia_user" />
+                    <input type="text" id="dbUser" value="mhw_user" />
                 </div>
 
                 <div class="var-input">
@@ -508,7 +508,7 @@
 
                 <div class="var-input">
                     <label>Grupo Google (IAP):</label>
-                    <input type="text" id="iapGroup" placeholder="claudia-ticket-home@googlegroups.com" />
+                    <input type="text" id="iapGroup" placeholder="mhw-ticket-home@googlegroups.com" />
                 </div>
 
                 <button class="btn-primary" onclick="saveConfig()">💾 Guardar Configuración</button>
@@ -769,7 +769,7 @@ docker ps</pre>
                             </div>
                             <div class="code-block">
                                 <pre id="cmd-2-2">echo -n "postgresql://YOUR_DB_USER:YOUR_DB_PASSWORD@YOUR_SQL_PUBLIC_IP:5432/YOUR_DB_NAME?sslmode=require" | \
-gcloud secrets create claudia-database-url \
+gcloud secrets create mhw-database-url \
     --data-file=- \
     --replication-policy=automatic \
     --project=YOUR_PROJECT_ID</pre>
@@ -787,7 +787,7 @@ gcloud secrets create claudia-database-url \
                             </div>
                             <div class="code-block">
                                 <pre id="cmd-2-3">echo -n "YOUR_SECRET_KEY_HERE" | \
-gcloud secrets create claudia-secret-key \
+gcloud secrets create mhw-secret-key \
     --data-file=- \
     --replication-policy=automatic \
     --project=YOUR_PROJECT_ID</pre>
@@ -805,7 +805,7 @@ gcloud secrets create claudia-secret-key \
                             </div>
                             <div class="code-block">
                                 <pre id="cmd-2-4">echo -n "admin@example.com;tu.email@gmail.com" | \
-gcloud secrets create claudia-superuser-emails \
+gcloud secrets create mhw-superuser-emails \
     --data-file=- \
     --replication-policy=automatic \
     --project=YOUR_PROJECT_ID</pre>
@@ -903,19 +903,19 @@ gcloud secrets create claudia-superuser-emails \
                             </div>
                             <div class="code-block">
                                 <pre id="cmd-3-4"># DATABASE_URL
-gcloud secrets add-iam-policy-binding claudia-database-url \
+gcloud secrets add-iam-policy-binding mhw-database-url \
     --member="serviceAccount:ticket-home-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/secretmanager.secretAccessor" \
     --project=YOUR_PROJECT_ID
 
 # SECRET_KEY
-gcloud secrets add-iam-policy-binding claudia-secret-key \
+gcloud secrets add-iam-policy-binding mhw-secret-key \
     --member="serviceAccount:ticket-home-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/secretmanager.secretAccessor" \
     --project=YOUR_PROJECT_ID
 
 # SUPERUSER_EMAILS
-gcloud secrets add-iam-policy-binding claudia-superuser-emails \
+gcloud secrets add-iam-policy-binding mhw-superuser-emails \
     --member="serviceAccount:ticket-home-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/secretmanager.secretAccessor" \
     --project=YOUR_PROJECT_ID</pre>
@@ -996,7 +996,7 @@ gcloud secrets add-iam-policy-binding claudia-superuser-emails \
                             <div class="code-block">
                                 <pre id="cmd-4-3">docker build \
     --platform linux/amd64 \
-    --build-arg BUILD_VERSION="claudia" \
+    --build-arg BUILD_VERSION="mhw" \
     -t us-central1-docker.pkg.dev/YOUR_PROJECT_ID/tickethome-repo/ticket-home:latest \
     .</pre>
                             </div>
@@ -1077,8 +1077,8 @@ gcloud secrets add-iam-policy-binding claudia-superuser-emails \
     --min-instances=0 \
     --max-instances=3 \
     --concurrency=80 \
-    --set-env-vars="ENVIRONMENT=claudia,FLASK_ENV=production,FLASK_DEBUG=false,ENABLE_IAP=true,ENABLE_DEMO_LOGIN=true,RESET_DB_ON_STARTUP=false" \
-    --set-secrets="DATABASE_URL=claudia-database-url:latest,SECRET_KEY=claudia-secret-key:latest,SUPERUSER_EMAILS=claudia-superuser-emails:latest" \
+    --set-env-vars="ENVIRONMENT=mhw,FLASK_ENV=production,FLASK_DEBUG=false,ENABLE_IAP=true,ENABLE_DEMO_LOGIN=true,RESET_DB_ON_STARTUP=false" \
+    --set-secrets="DATABASE_URL=mhw-database-url:latest,SECRET_KEY=mhw-secret-key:latest,SUPERUSER_EMAILS=mhw-superuser-emails:latest" \
     --project=YOUR_PROJECT_ID</pre>
                             </div>
                             <button class="copy-btn" onclick="copyCode(this)">📋 Copiar</button>
@@ -1362,7 +1362,7 @@ https://console.cloud.google.com/apis/credentials/consent?project=YOUR_PROJECT_I
 # Pasos:
 # 1. Click en "CONFIGURAR PANTALLA DE CONSENTIMIENTO"
 # 2. Tipo de usuario: "Externo"
-# 3. Nombre de la aplicación: "Ticket Home - Claudia"
+# 3. Nombre de la aplicación: "Ticket Home - Ambiente MHW"
 # 4. Email de asistencia: tu email
 # 5. Logo (opcional)
 # 6. Dominios autorizados: mhwdev.dev (o tu dominio)
@@ -1485,8 +1485,8 @@ https://groups.google.com/
 
 # Pasos:
 # 1. Crear nuevo grupo
-# 2. Nombre: "Ticket Home - Claudia Users"
-# 3. Email: claudia-ticket-home@googlegroups.com (o tu grupo)
+# 2. Nombre: "Ticket Home - Ambiente MHW Users"
+# 3. Email: mhw-ticket-home@googlegroups.com (o tu grupo)
 # 4. Descripción: Usuarios con acceso a Ticket Home
 # 5. Agregar miembros (emails que tendrán acceso)
 # 6. Configurar como grupo de solo miembros</pre>
@@ -1672,7 +1672,7 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 
         <footer>
             <p>Guía de Deployment - Ticket Home</p>
-            <p style="margin-top: 10px; opacity: 0.8;">Ambiente: Claudia | Cloud Run + Cloud SQL + IAP + SSL</p>
+            <p style="margin-top: 10px; opacity: 0.8;">Ambiente: MHW (GCP) | Cloud Run + Cloud SQL + IAP + SSL</p>
             <p style="margin-top: 10px; font-size: 0.9em;">Creado con ❤️ por Claude Code</p>
         </footer>
     </div>

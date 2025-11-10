@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================
-# DEPLOYMENT MAESTRO - AMBIENTE CLAUDIA
+# DEPLOYMENT MAESTRO - AMBIENTE MHW (GCP)
 # ============================================
 #
 # Este script ejecuta TODO el proceso de deployment
