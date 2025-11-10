@@ -1,4 +1,4 @@
-# 🚀 Deployment Ticket Home - Ambiente Claudia
+# 🚀 Deployment Ticket Home - Ambiente MHW (GCP)
 
 Guía completa y scripts para deployment de Ticket Home en Google Cloud Platform usando Cloud Run, Cloud SQL (IP pública), IAP y SSL.
 
@@ -16,7 +16,7 @@ Guía completa y scripts para deployment de Ticket Home en Google Cloud Platform
 
 ## 📝 Descripción
 
-Este directorio contiene todo lo necesario para desplegar Ticket Home en un nuevo ambiente (Claudia) con la siguiente configuración:
+Este directorio contiene todo lo necesario para desplegar Ticket Home en un nuevo ambiente MHW (nube GCP interna) con la siguiente configuración:
 
 - ✅ **Cloud Run** - Servicio serverless para la aplicación Flask
 - ✅ **Cloud SQL (IP Pública)** - Conexión directa sin VPC
@@ -72,7 +72,7 @@ Usuario → DNS → Load Balancer (HTTPS) → IAP → Cloud Run → Cloud SQL (I
 ### Recursos Pre-existentes
 
 - ✅ **Instancia Cloud SQL** ya creada
-- ✅ **Dominio** configurado (ej: `claudia-ticket-home.mhwdev.dev`)
+- ✅ **Dominio** configurado (ej: `mhw-ticket-home.mhwdev.dev`)
 - ✅ **Acceso al DNS** del dominio para crear registros A
 
 ---
@@ -83,7 +83,7 @@ Usuario → DNS → Load Balancer (HTTPS) → IAP → Cloud Run → Cloud SQL (I
 
 1. **Abrir la guía HTML:**
    ```bash
-   cd claudia-deployment
+   cd mhw-deployment
    open docs/deployment-guide.html  # macOS
    # O
    xdg-open docs/deployment-guide.html  # Linux
@@ -98,7 +98,7 @@ Usuario → DNS → Load Balancer (HTTPS) → IAP → Cloud Run → Cloud SQL (I
 
 1. **Copiar y configurar archivo de variables:**
    ```bash
-   cd claudia-deployment
+   cd mhw-deployment
    cp config.env config.local.env
    nano config.local.env  # O tu editor favorito
    ```
@@ -123,7 +123,7 @@ Usuario → DNS → Load Balancer (HTTPS) → IAP → Cloud Run → Cloud SQL (I
 ## 📁 Archivos Incluidos
 
 ```
-claudia-deployment/
+mhw-deployment/
 ├── README.md                          # Este archivo
 ├── config.env                         # Plantilla de configuración (COPIAR a config.local.env)
 ├── deploy-master.sh                   # Script maestro automatizado
@@ -150,7 +150,7 @@ Copia `config.env` a `config.local.env` y completa:
 
 ```bash
 # Proyecto GCP
-export GCP_PROJECT_ID="claudia-ticket-home-xxxxx"
+export GCP_PROJECT_ID="mhw-ticket-home-xxxxx"
 export GCP_REGION="southamerica-west1"
 
 # Cloud SQL (Instancia EXISTENTE)
@@ -158,19 +158,19 @@ export CLOUDSQL_INSTANCE_NAME="ticket-home-sql-instance"
 export CLOUDSQL_PUBLIC_IP=""  # Se obtendrá automáticamente
 
 # Nueva Base de Datos
-export DB_NAME="claudia_ticket_home"
-export DB_USER="claudia_user"
+export DB_NAME="mhw_ticket_home"
+export DB_USER="mhw_user"
 export DB_PASSWORD=""  # GENERAR UNA CONTRASEÑA SEGURA
 
 # Dominio
-export DOMAIN_NAME="claudia-ticket-home.mhwdev.dev"
+export DOMAIN_NAME="mhw-ticket-home.mhwdev.dev"
 
 # OAuth (se completan después de crear cliente OAuth)
 export OAUTH_CLIENT_ID=""
 export OAUTH_CLIENT_SECRET=""
 
 # Grupo de acceso
-export IAP_ACCESS_GROUP="claudia-ticket-home@googlegroups.com"
+export IAP_ACCESS_GROUP="mhw-ticket-home@googlegroups.com"
 ```
 
 ### 2. Generar Valores Faltantes
@@ -267,7 +267,7 @@ Copia esta IP a `CLOUDSQL_PUBLIC_IP` en tu config.
 1. Ir a: [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
 2. Seleccionar "Tipo de usuario": **Externo**
 3. Completar:
-   - Nombre de la aplicación: `Ticket Home - Claudia`
+   - Nombre de la aplicación: `Ticket Home - Ambiente MHW`
    - Email de asistencia: tu email
    - Logo (opcional)
    - Dominios autorizados: `mhwdev.dev`
@@ -294,7 +294,7 @@ Copia esta IP a `CLOUDSQL_PUBLIC_IP` en tu config.
 
 ### Test 1: DNS
 ```bash
-nslookup claudia-ticket-home.mhwdev.dev
+nslookup mhw-ticket-home.mhwdev.dev
 ```
 Debe retornar la IP reservada.
 
@@ -308,12 +308,12 @@ Estado esperado: `ACTIVE`
 
 ### Test 3: HTTPS
 ```bash
-curl -I https://claudia-ticket-home.mhwdev.dev
+curl -I https://mhw-ticket-home.mhwdev.dev
 ```
 Esperado: HTTP/2 302 (redirect a IAP)
 
 ### Test 4: Aplicación
-Abrir en navegador: `https://claudia-ticket-home.mhwdev.dev`
+Abrir en navegador: `https://mhw-ticket-home.mhwdev.dev`
 
 Flujo esperado:
 1. Redirect a login de Google
@@ -454,7 +454,7 @@ Si encuentras problemas durante el deployment:
 
 Si todos los pasos se completaron exitosamente, tu aplicación estará disponible en:
 
-🌐 **https://claudia-ticket-home.mhwdev.dev** (o tu dominio)
+🌐 **https://mhw-ticket-home.mhwdev.dev** (o tu dominio)
 
 Con:
 - ✅ HTTPS habilitado con certificado administrado
@@ -471,4 +471,4 @@ Con:
 **Creado por:** Claude Code
 **Fecha:** Noviembre 2025
 **Versión:** 1.0.0
-**Ambiente:** Claudia
+**Ambiente:** MHW (GCP)
