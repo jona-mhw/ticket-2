@@ -116,11 +116,23 @@ def logout_success():
     return render_template('logout_success.html', is_iap_logout=is_iap_logout)
 
 @auth_bp.route('/iap-status')
+@login_required
 def iap_status():
-    """Endpoint para verificar estado de IAP"""
+    """
+    Endpoint para verificar estado de IAP.
+    Solo accesible para usuarios autenticados (para debugging/monitoring).
+    """
+    from utils.decorators import admin_required
+
+    # Solo admins y superusers pueden ver este endpoint
+    if not current_user.is_admin():
+        return {'error': 'Acceso denegado'}, 403
+
     return {
         'iap_enabled': hybrid_auth.enable_iap,
-        'is_iap_request': hybrid_auth.iap_auth.is_iap_request(),
-        'user_email': hybrid_auth.get_current_user_email(),
-        'current_user': current_user.username if current_user.is_authenticated else None
+        'is_iap_request': hybrid_auth.iap_auth.is_iap_request() if hybrid_auth.iap_auth else False,
+        'user_email': hybrid_auth.get_current_user_email() if current_user.is_superuser else '[REDACTED]',
+        'current_user': current_user.username,
+        'user_role': current_user.role,
+        'clinic_id': current_user.clinic_id
     }
