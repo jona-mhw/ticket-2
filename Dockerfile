@@ -14,12 +14,18 @@ COPY app.py .
 COPY config.py .
 COPY models.py .
 COPY commands.py .
+COPY db_indexes.py .
+COPY auth_iap.py .
 COPY routes ./routes
+COPY services ./services
+COPY repositories ./repositories
+COPY dto ./dto
+COPY utils ./utils
+COPY validators ./validators
 COPY templates ./templates
 COPY static ./static
 COPY migrations ./migrations
 COPY .env.production .env
-COPY auth_iap.py .
 
 
 # Copia y da permisos al script de inicio
