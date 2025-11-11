@@ -14,6 +14,7 @@
                 <h3 class="text-xl font-semibold text-gray-700">Usuarios</h3>
                 <p class="text-3xl font-bold text-teal-500">{{ stats.users }}</p>
             </a>
+            {% if current_user.is_superuser %}
             <!-- Doctors -->
             <a href="{{ url_for('admin.master_data') }}" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
                 <h3 class="text-xl font-semibold text-gray-700">Médicos</h3>
@@ -24,6 +25,7 @@
                 <h3 class="text-xl font-semibold text-gray-700">Datos Maestros</h3>
                 <p class="text-sm text-gray-500">Cirugías, Técnicas, etc.</p>
             </a>
+            {% endif %}
             <!-- Clinics -->
             {% if current_user.is_superuser %}
             <a href="{{ url_for('admin.clinics') }}" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">

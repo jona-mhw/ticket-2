@@ -87,13 +87,12 @@ def edit_ticket(ticket_id):
                     ticket.annulled_at = None
                     ticket.annulled_by = None
                     ticket.annulled_reason = None
-            
+
             ticket.status = new_status
 
-            new_pavilion_time = datetime.strptime(request.form['pavilion_end_time'], '%Y-%m-%dT%H:%M')
-            if ticket.pavilion_end_time != new_pavilion_time: ticket_changes.append(f"Hora Admisión de '{ticket.pavilion_end_time.strftime('%Y-%m-%d %H:%M')}' a '{new_pavilion_time.strftime('%Y-%m-%d %H:%M')}'")
-            ticket.pavilion_end_time = new_pavilion_time
-            
+            # NOTE: pavilion_end_time is intentionally not modifiable
+            # It's set at ticket creation and should remain unchanged
+
             if ticket.surgery_id != int(request.form['surgery_id']): ticket_changes.append(f"Cirugía ID de '{ticket.surgery_id}' a '{request.form['surgery_id']}'")
             ticket.surgery_id = int(request.form['surgery_id'])
 
@@ -409,7 +408,7 @@ def edit_user(user_id):
 
 @admin_bp.route('/master-data')
 @login_required
-@admin_required
+@superuser_required
 def master_data():
     # Get clinic filter from query string (for superusers)
     selected_clinic_id = None
@@ -455,7 +454,7 @@ def master_data():
 # Master Data Management
 @admin_bp.route('/master-data/specialty', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def create_specialty():
     try:
         name = request.form.get('name', '').strip()
@@ -477,7 +476,7 @@ def create_specialty():
 
 @admin_bp.route('/master-data/specialty/<int:specialty_id>/toggle', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def toggle_specialty(specialty_id):
     specialty = Specialty.query.get_or_404(specialty_id)
     if not current_user.is_superuser and specialty.clinic_id != current_user.clinic_id:
@@ -499,7 +498,7 @@ def toggle_specialty(specialty_id):
 
 @admin_bp.route('/master-data/surgery', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def create_surgery():
     try:
         name = request.form.get('name', '').strip()
@@ -523,7 +522,7 @@ def create_surgery():
 
 @admin_bp.route('/master-data/surgery/<int:surgery_id>/toggle', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def toggle_surgery(surgery_id):
     surgery = Surgery.query.get_or_404(surgery_id)
     if not current_user.is_superuser and surgery.clinic_id != current_user.clinic_id:
@@ -545,7 +544,7 @@ def toggle_surgery(surgery_id):
 
 @admin_bp.route('/master-data/adjustment', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def create_adjustment():
     try:
         name = request.form.get('name', '').strip()
@@ -566,7 +565,7 @@ def create_adjustment():
 
 @admin_bp.route('/master-data/adjustment/<int:adjustment_id>/toggle', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def toggle_adjustment(adjustment_id):
     adjustment = StayAdjustmentCriterion.query.get_or_404(adjustment_id)
     if not current_user.is_superuser and adjustment.clinic_id != current_user.clinic_id:
@@ -584,7 +583,7 @@ def toggle_adjustment(adjustment_id):
 
 @admin_bp.route('/master-data/reason', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def create_reason():
     try:
         reason = request.form.get('reason', '').strip()
@@ -607,7 +606,7 @@ def create_reason():
 
 @admin_bp.route('/master-data/reason/<int:reason_id>/toggle', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def toggle_reason(reason_id):
     reason = StandardizedReason.query.get_or_404(reason_id)
     if not current_user.is_superuser and reason.clinic_id != current_user.clinic_id:
@@ -629,7 +628,7 @@ def toggle_reason(reason_id):
 
 @admin_bp.route('/master-data/doctor', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def create_doctor():
     try:
         name = request.form.get('name', '').strip()
@@ -653,7 +652,7 @@ def create_doctor():
 
 @admin_bp.route('/master-data/doctor/<int:doctor_id>/toggle', methods=['POST'])
 @login_required
-@admin_required
+@superuser_required
 def toggle_doctor(doctor_id):
     doctor = Doctor.query.get_or_404(doctor_id)
     if not current_user.is_superuser and doctor.clinic_id != current_user.clinic_id:
