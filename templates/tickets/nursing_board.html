@@ -138,7 +138,7 @@
         <div class="fpa-section">
             <div class="fpa-label">Fecha Probable de Alta</div>
             <div class="fpa-date">{{ ticket.current_fpa.strftime('%d/%m/%Y') }}</div>
-            <div class="fpa-time">{{ ticket.discharge_time_slot.name if ticket.discharge_time_slot else 'Sin horario' }}</div>
+            <div class="fpa-time">{{ ticket.calculated_discharge_time_block }}</div>
 
             {% if ticket.is_scheduled %}
             <div class="countdown-display countdown-scheduled">

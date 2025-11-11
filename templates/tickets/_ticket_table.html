@@ -175,7 +175,7 @@
                 </td>
                 <td>
                     <div class="font-semibold">{{ ticket.current_fpa.strftime('%d/%m/%Y') }}</div>
-                    <div class="text-sm text-gray-500">{{ ticket.discharge_time_slot.name if ticket.discharge_time_slot else 'Sin horario' }}</div>
+                    <div class="text-sm text-gray-500">{{ ticket.calculated_discharge_time_block }}</div>
                     {% if ticket.get_modification_count() > 0 %}
                     <div class="text-yellow-600 text-sm">{{ ticket.get_modification_count() }} modificación(es)</div>
                     {% endif %}

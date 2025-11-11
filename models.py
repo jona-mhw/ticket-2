@@ -232,6 +232,30 @@ class Ticket(db.Model):
     
     def get_modification_count(self):
         return len(self.modifications)
+    
+    @property
+    def calculated_discharge_time_block(self):
+        """
+        Calcula dinámicamente el bloque de 2 horas basándose en current_fpa.
+        No usa los bloques predefinidos de la DB, sino que calcula bloques de 2 horas
+        desde las 00:00 hasta encontrar el que contiene el FPA.
+        
+        Retorna el nombre del bloque (ej: "08:00 - 10:00").
+        """
+        if not self.current_fpa:
+            return "Sin horario"
+        
+        # Obtener la hora y minutos del FPA
+        fpa_hour = self.current_fpa.hour
+        fpa_minute = self.current_fpa.minute
+        
+        # Calcular el inicio del bloque de 2 horas que contiene el FPA
+        # Los bloques son: 00-02, 02-04, 04-06, 06-08, 08-10, 10-12, 12-14, 14-16, 16-18, 18-20, 20-22, 22-24
+        block_start_hour = (fpa_hour // 2) * 2
+        block_end_hour = block_start_hour + 2
+        
+        # Formatear como "HH:MM - HH:MM"
+        return f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
 
 
 class FpaModification(db.Model):
