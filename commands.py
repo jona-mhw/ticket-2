@@ -329,17 +329,70 @@ def _sync_superusers():
     db.session.commit()
     print("Superuser sync complete.")
 
+def _create_minimal_seed():
+    """Creates only clinics and discharge time slots."""
+    # Check if clinics already exist
+    if Clinic.query.first():
+        print("Clinics already exist. Skipping.")
+        return
+
+    # Create clinics
+    clinic_names = [
+        "Clínica RedSalud Iquique", "Clínica RedSalud Elqui", "Clínica RedSalud Valparaíso",
+        "Clínica RedSalud Providencia", "Clínica RedSalud Santiago", "Clínica RedSalud Vitacura",
+        "Clínica RedSalud Rancagua", "Clínica RedSalud Mayor Temuco", "Clínica RedSalud Magallanes"
+    ]
+    clinics_to_add = [Clinic(name=name) for name in clinic_names]
+    db.session.add_all(clinics_to_add)
+    db.session.commit()
+    print(f"{len(clinics_to_add)} clinics created.")
+
+    # Create discharge time slots for each clinic
+    clinics = Clinic.query.all()
+    total_slots = 0
+
+    for clinic in clinics:
+        # Check if slots already exist for this clinic
+        if DischargeTimeSlot.query.filter_by(clinic_id=clinic.id).first():
+            print(f"  Discharge slots already exist for {clinic.name}. Skipping.")
+            continue
+
+        slots_to_add = []
+        for i in range(0, 24, 2):
+            start_time = datetime.strptime(f'{i:02d}:00', '%H:%M').time()
+            end_hour = i + 2
+            end_time_str = '23:59:59' if end_hour >= 24 else f'{end_hour:02d}:00'
+            end_time = datetime.strptime(end_time_str, '%H:%M:%S' if end_hour >= 24 else '%H:%M').time()
+            slot_name = f"{start_time.strftime('%H:%M')} - {'00:00' if end_hour >= 24 else end_time.strftime('%H:%M')}"
+            slot = DischargeTimeSlot(name=slot_name, start_time=start_time, end_time=end_time, clinic_id=clinic.id)
+            slots_to_add.append(slot)
+
+        db.session.add_all(slots_to_add)
+        total_slots += len(slots_to_add)
+        print(f"  Created {len(slots_to_add)} discharge time slots for {clinic.name}")
+
+    db.session.commit()
+    print(f"Total discharge time slots created: {total_slots}")
+
 # --- Click Commands ---
 
 @click.command('init-db')
 @with_appcontext
 def init_db_command():
-    """Initialize the database with migrations and default data."""
+    """Initialize the database with migrations, clinics, and discharge time slots only."""
     click.echo('Applying all database migrations...')
     alembic_upgrade()
     click.echo('Database tables created via migrations.')
-    seed_db()
-    click.echo("Database initialized with multi-clinic support and sample data.")
+
+    # Sync superusers first
+    click.echo('Syncing superusers from SUPERUSER_EMAILS...')
+    _sync_superusers()
+
+    # Only create clinics and discharge time slots
+    click.echo('Creating clinics and discharge time slots...')
+    _create_minimal_seed()
+
+    click.echo("Database initialized with clinics and discharge time slots only.")
 
 @click.command('reset-db')
 @with_appcontext

@@ -101,7 +101,14 @@ class IAPAuthenticator:
         current_app.logger.info(f"Usuario autenticado por IAP: {email}")
 
         # Buscar el usuario en la base de datos
-        user = User.query.filter_by(email=email).first()
+        # IMPORTANTE: Verificar si existe más de un usuario con el mismo email (prevenir múltiples roles)
+        users_with_email = User.query.filter_by(email=email).all()
+
+        if len(users_with_email) > 1:
+            current_app.logger.error(f"CONFLICTO: El email {email} tiene {len(users_with_email)} usuarios asociados con diferentes roles.")
+            return False, f"Error de configuración: Tu email ({email}) está asociado a múltiples cuentas. Contacta al administrador."
+
+        user = users_with_email[0] if users_with_email else None
 
         if user and user.is_active:
             # Usuario existe y está activo → login automático
