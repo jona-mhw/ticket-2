@@ -371,7 +371,7 @@ def nursing_board():
     }
 
     query = TicketRepository.build_filtered_query(filters, current_user)
-    query = query.filter(Ticket.status == TICKET_STATUS_VIGENTE).order_by(Ticket.current_fpa.asc())
+    query = query.order_by(Ticket.current_fpa.asc())
     tickets = query.all()
 
     # Calculate urgency levels
@@ -439,7 +439,7 @@ def nursing_list():
     ]
 
     query = TicketRepository.build_filtered_query(filters, current_user)
-    query = query.filter(Ticket.status == TICKET_STATUS_VIGENTE).order_by(Ticket.current_fpa.asc())
+    query = query.order_by(Ticket.current_fpa.asc())
     tickets = query.all()
 
     # Calculate urgency (same logic as nursing_board)

@@ -219,6 +219,16 @@ def create_user():
             if not current_user.is_superuser:
                 flash('Solo los superusuarios pueden crear otros superusuarios.', 'error')
                 return redirect(url_for('admin.users'))
+        elif role == ROLE_ADMIN:
+            # Only superusers can create admins
+            if not current_user.is_superuser:
+                flash('Solo los superusuarios pueden crear administradores.', 'error')
+                return redirect(url_for('admin.users'))
+            # Admins require a clinic_id
+            clinic_id = request.form.get('clinic_id', type=int)
+            if not clinic_id:
+                flash('Debe seleccionar una clínica para este rol.', 'error')
+                return redirect(url_for('admin.users'))
         else:
             # Non-superuser roles require a clinic_id
             if current_user.is_superuser:
@@ -337,6 +347,16 @@ def edit_user(user_id):
             # Only superusers can edit to superuser role
             if not current_user.is_superuser:
                 flash('Solo los superusuarios pueden asignar el rol de superusuario.', 'error')
+                return redirect(url_for('admin.users'))
+        elif role == ROLE_ADMIN:
+            # Only superusers can assign admin role
+            if not current_user.is_superuser:
+                flash('Solo los superusuarios pueden asignar el rol de administrador.', 'error')
+                return redirect(url_for('admin.users'))
+            # Admins require a clinic_id
+            clinic_id = request.form.get('clinic_id', type=int)
+            if not clinic_id:
+                flash('Debe seleccionar una clínica para este rol.', 'error')
                 return redirect(url_for('admin.users'))
         else:
             # Non-superuser roles require a clinic_id
