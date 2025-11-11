@@ -1,474 +1,701 @@
 # 🚀 Deployment Ticket Home - Ambiente MHW (GCP)
 
-Guía completa y scripts para deployment de Ticket Home en Google Cloud Platform usando Cloud Run, Cloud SQL (IP pública), IAP y SSL.
+**Versión:** V1 - Beta RS
+**Última actualización:** 2025-11-10
+**Ambiente:** Producción MHW con IAP
 
-## 📋 Tabla de Contenidos
-
-- [Descripción](#descripción)
-- [Arquitectura](#arquitectura)
-- [Prerequisitos](#prerequisitos)
-- [Guía Rápida](#guía-rápida)
-- [Archivos Incluidos](#archivos-incluidos)
-- [Configuración Detallada](#configuración-detallada)
-- [Troubleshooting](#troubleshooting)
+Guía completa para deployment de Ticket Home en Google Cloud Platform usando Cloud Run, Cloud SQL, IAP, Load Balancer y SSL administrado.
 
 ---
 
-## 📝 Descripción
+## 📋 Tabla de Contenidos
 
-Este directorio contiene todo lo necesario para desplegar Ticket Home en un nuevo ambiente MHW (nube GCP interna) con la siguiente configuración:
+- [Resumen Ejecutivo](#-resumen-ejecutivo)
+- [Arquitectura](#-arquitectura)
+- [Prerequisitos](#-prerequisitos)
+- [Guía de Deployment](#-guía-de-deployment)
+- [Configuración de Base de Datos](#-configuración-de-base-de-datos)
+- [Troubleshooting](#-troubleshooting)
+- [Mantenimiento](#-mantenimiento)
 
-- ✅ **Cloud Run** - Servicio serverless para la aplicación Flask
-- ✅ **Cloud SQL (IP Pública)** - Conexión directa sin VPC
-- ✅ **Secret Manager** - Gestión segura de credenciales
-- ✅ **Load Balancer** - HTTPS global con certificado administrado
+---
+
+## 📊 Resumen Ejecutivo
+
+### Deployment Actual (Referencia)
+
+| Componente | Valor |
+|------------|-------|
+| **Proyecto GCP** | `ticket-home-demo` |
+| **Región** | `us-central1` |
+| **Dominio** | `ticket-home-beta.mhwdev.dev` |
+| **IP Load Balancer** | `34.8.122.103` |
+| **Cloud Run** | `tickethome-demo` |
+| **Cloud SQL** | `tickethome-db` (IP: 34.60.42.106) |
+| **Base de Datos** | `mhw_ticket_home` |
+| **Repositorio Docker** | `us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo` |
+
+### Características
+
+- ✅ **Cloud Run** - Servicio serverless con autoscaling
+- ✅ **Cloud SQL Proxy** - Conexión segura via Unix socket
+- ✅ **Secret Manager** - Gestión de credenciales
+- ✅ **Load Balancer HTTPS** - Certificado SSL administrado por Google
 - ✅ **IAP** - Autenticación con Google SSO
-- ✅ **Artifact Registry** - Almacenamiento de imágenes Docker
-
-**Diferencia clave:** Este deployment usa IP pública de Cloud SQL en lugar de VPC Connector.
+- ✅ **Modo Híbrido** - IAP + Demo Login habilitado
+- ✅ **Seed Minimalista** - Solo clínicas y rangos horarios
 
 ---
 
 ## 🏗️ Arquitectura
 
 ```
-Usuario → DNS → Load Balancer (HTTPS) → IAP → Cloud Run → Cloud SQL (IP Pública)
-                     ↓
-              Certificado SSL
-              (auto-gestionado)
+Usuario
+  ↓
+DNS (ticket-home-beta.mhwdev.dev → 34.8.122.103)
+  ↓
+Load Balancer Global (HTTPS)
+  ↓
+SSL Certificate (Google-managed)
+  ↓
+HTTPS Target Proxy
+  ↓
+Backend Service (IAP habilitado)
+  ↓
+Network Endpoint Group (Serverless NEG)
+  ↓
+Cloud Run Service (tickethome-demo)
+  ├→ Cloud SQL Proxy (Unix socket)
+  └→ Secret Manager (DATABASE_URL, SECRET_KEY, SUPERUSER_EMAILS)
+     ↓
+  Cloud SQL (mhw_ticket_home)
 ```
 
-### Componentes:
+### Componentes Clave
 
-1. **DNS** - Registro A apuntando a IP estática de GCP
-2. **Load Balancer Global** - Balanceador HTTPS con SSL
-3. **IAP (Identity-Aware Proxy)** - Capa de autenticación OAuth 2.0
-4. **Cloud Run** - Aplicación Flask en contenedor
-5. **Secret Manager** - DATABASE_URL, SECRET_KEY, SUPERUSER_EMAILS
-6. **Cloud SQL** - PostgreSQL con acceso vía IP pública
-7. **Artifact Registry** - Repositorio de imágenes Docker
+1. **Load Balancer**: IP estática global con SSL
+2. **IAP**: Autenticación OAuth 2.0 con Google
+3. **Cloud Run**: Container con Cloud SQL Proxy integrado
+4. **Secrets**: Almacenados en Secret Manager
+5. **Database**: PostgreSQL en Cloud SQL
 
 ---
 
 ## ✅ Prerequisitos
 
-### Software Local
+### Software
 
-- ✅ **gcloud CLI** ([Instalar](https://cloud.google.com/sdk/docs/install))
-- ✅ **Docker** ([Instalar](https://docs.docker.com/get-docker/))
-- ✅ **Git** (para clonar el repositorio)
+- ✅ `gcloud CLI` instalado y configurado
+- ✅ `docker` (para builds locales) o usar Cloud Build
+- ✅ Acceso al proyecto GCP con permisos de admin
 
-### Accesos GCP
+### Recursos GCP
 
-- ✅ Cuenta de Google con permisos en el proyecto GCP
-- ✅ Roles necesarios:
-  - Cloud Run Admin
-  - Compute Admin
-  - Cloud SQL Admin
-  - Secret Manager Admin
-  - Service Account Admin
-  - Security Admin (para IAP)
+- ✅ **Proyecto GCP** creado
+- ✅ **Instancia Cloud SQL** (PostgreSQL)
+- ✅ **Dominio** configurado
+- ✅ **Acceso DNS** para crear registro A
 
-### Recursos Pre-existentes
-
-- ✅ **Instancia Cloud SQL** ya creada
-- ✅ **Dominio** configurado (ej: `mhw-ticket-home.mhwdev.dev`)
-- ✅ **Acceso al DNS** del dominio para crear registros A
-
----
-
-## 🚀 Guía Rápida
-
-### Opción 1: Guía HTML Interactiva (Recomendada)
-
-1. **Abrir la guía HTML:**
-   ```bash
-   cd mhw-deployment
-   open docs/deployment-guide.html  # macOS
-   # O
-   xdg-open docs/deployment-guide.html  # Linux
-   # O simplemente abre el archivo en tu navegador
-   ```
-
-2. **Completar configuración** en la guía
-3. **Seguir el timeline** paso a paso
-4. **Marcar checkboxes** para trackear progreso
-
-### Opción 2: Script Maestro Automatizado
-
-1. **Copiar y configurar archivo de variables:**
-   ```bash
-   cd mhw-deployment
-   cp config.env config.local.env
-   nano config.local.env  # O tu editor favorito
-   ```
-
-2. **Completar TODAS las variables** en `config.local.env`
-
-3. **Validar configuración:**
-   ```bash
-   source config.local.env
-   validate_config
-   ```
-
-4. **Ejecutar script maestro:**
-   ```bash
-   ./deploy-master.sh
-   ```
-
-5. **Seguir instrucciones manuales** (OAuth, DNS)
-
----
-
-## 📁 Archivos Incluidos
+### Permisos Necesarios
 
 ```
-mhw-deployment/
-├── README.md                          # Este archivo
-├── config.env                         # Plantilla de configuración (COPIAR a config.local.env)
-├── deploy-master.sh                   # Script maestro automatizado
-├── scripts/                           # Scripts auxiliares por fase
-│   ├── phase1-cloudsql.sh            # Setup Cloud SQL y base de datos
-│   ├── phase2-secrets.sh             # Crear secrets en Secret Manager
-│   ├── phase3-serviceaccount.sh      # Service Account y permisos
-│   ├── phase4-docker.sh              # Build y push Docker
-│   ├── phase5-cloudrun.sh            # Deploy en Cloud Run
-│   ├── phase6-loadbalancer.sh        # Configurar Load Balancer
-│   └── phase7-iap.sh                 # Configurar IAP (parcial)
-└── docs/
-    ├── deployment-guide.html          # Guía interactiva (ABRIR EN NAVEGADOR)
-    └── oauth-setup.md                 # Guía detallada de OAuth
+- Cloud Run Admin
+- Compute Admin
+- Cloud SQL Admin
+- Secret Manager Admin
+- Service Account Admin
+- Security Admin (para IAP)
 ```
 
 ---
 
-## ⚙️ Configuración Detallada
+## 🚀 Guía de Deployment
 
-### 1. Variables de Configuración
+### Paso 0: Preparación
 
-Copia `config.env` a `config.local.env` y completa:
-
+1. **Configurar cuenta GCP**:
 ```bash
-# Proyecto GCP
-export GCP_PROJECT_ID="mhw-ticket-home-xxxxx"
-export GCP_REGION="southamerica-west1"
-
-# Cloud SQL (Instancia EXISTENTE)
-export CLOUDSQL_INSTANCE_NAME="ticket-home-sql-instance"
-export CLOUDSQL_PUBLIC_IP=""  # Se obtendrá automáticamente
-
-# Nueva Base de Datos
-export DB_NAME="mhw_ticket_home"
-export DB_USER="mhw_user"
-export DB_PASSWORD=""  # GENERAR UNA CONTRASEÑA SEGURA
-
-# Dominio
-export DOMAIN_NAME="mhw-ticket-home.mhwdev.dev"
-
-# OAuth (se completan después de crear cliente OAuth)
-export OAUTH_CLIENT_ID=""
-export OAUTH_CLIENT_SECRET=""
-
-# Grupo de acceso
-export IAP_ACCESS_GROUP="mhw-ticket-home@googlegroups.com"
+gcloud auth login
+gcloud config set project ticket-home-demo
+gcloud config set account jonathan.segura.vega@gmail.com
 ```
 
-### 2. Generar Valores Faltantes
-
-**Generar contraseña de base de datos:**
+2. **Clonar repositorio**:
 ```bash
-openssl rand -base64 32
+git clone https://github.com/jona-mhw/ticket-2
+cd ticket-2
 ```
 
-**Generar SECRET_KEY para Flask:**
+3. **Crear archivo de configuración**:
 ```bash
-python3 -c "import secrets; print(secrets.token_hex(32))"
+cd mhw-deployment
+cp config.env config.local.env
+# Editar config.local.env con tus valores
 ```
 
-### 3. Obtener IP Pública de Cloud SQL
+---
 
+### Paso 1: Cloud SQL - Base de Datos
+
+**1.1. Crear nueva base de datos** (si no existe):
 ```bash
-gcloud sql instances describe YOUR_INSTANCE_NAME \
-  --project=YOUR_PROJECT_ID \
+gcloud sql databases create mhw_ticket_home \
+  --instance=tickethome-db \
+  --project=ticket-home-demo
+```
+
+**1.2. Crear usuario de base de datos**:
+```bash
+# Generar contraseña segura
+DB_PASSWORD=$(openssl rand -base64 32)
+echo "Guardar esta contraseña: $DB_PASSWORD"
+
+# Crear usuario
+gcloud sql users create mhw_user \
+  --instance=tickethome-db \
+  --password="$DB_PASSWORD" \
+  --project=ticket-home-demo
+```
+
+**1.3. Obtener información de conexión**:
+```bash
+# IP pública de Cloud SQL
+gcloud sql instances describe tickethome-db \
+  --project=ticket-home-demo \
   --format="value(ipAddresses[0].ipAddress)"
+
+# Connection name para Cloud SQL Proxy
+gcloud sql instances describe tickethome-db \
+  --project=ticket-home-demo \
+  --format="value(connectionName)"
+# Resultado: ticket-home-demo:us-central1:tickethome-db
 ```
 
-Copia esta IP a `CLOUDSQL_PUBLIC_IP` en tu config.
-
 ---
 
-## 🎯 Workflow de Deployment
+### Paso 2: Secret Manager
 
-### Fase 0: Prerequisitos
-- ✅ Verificar gcloud CLI
-- ✅ Verificar Docker
-- ✅ Configurar proyecto GCP
-- ✅ Habilitar APIs
-
-### Fase 1: Cloud SQL
-- ✅ Verificar instancia existente
-- ✅ Obtener IP pública
-- ✅ Crear usuario de base de datos
-- ✅ Crear nueva base de datos
-- ✅ Configurar IPs autorizadas
-
-### Fase 2: Secret Manager
-- ✅ Crear secret para DATABASE_URL
-- ✅ Crear secret para SECRET_KEY
-- ✅ Crear secret para SUPERUSER_EMAILS
-
-### Fase 3: Service Account
-- ✅ Crear Service Account
-- ✅ Asignar rol Cloud SQL Client
-- ✅ Asignar rol Secret Manager Accessor
-- ✅ Permisos granulares por secret
-
-### Fase 4: Docker
-- ✅ Crear repositorio en Artifact Registry
-- ✅ Configurar autenticación Docker
-- ✅ Build de imagen
-- ✅ Push a Artifact Registry
-
-### Fase 5: Cloud Run
-- ✅ Deploy con configuración completa
-- ✅ Configurar secrets y env vars
-- ✅ Verificar logs
-
-### Fase 6: Load Balancer
-- ✅ Reservar IP estática
-- ✅ Crear NEG (Network Endpoint Group)
-- ✅ Crear Backend Service
-- ✅ Crear certificado SSL
-- ✅ Crear URL Map
-- ✅ Crear HTTPS Proxy
-- ✅ Crear Forwarding Rule
-- ⏳ Esperar provisionamiento SSL (15-60 min)
-
-### Fase 7: IAP
-- ✅ Configurar OAuth Consent Screen (MANUAL)
-- ✅ Crear OAuth Client ID (MANUAL)
-- ✅ Habilitar IAP en Backend Service
-- ✅ Configurar acceso por grupo
-
-### Fase 8: Verificación
-- ✅ Verificar DNS
-- ✅ Verificar certificado SSL activo
-- ✅ Test HTTPS
-- ✅ Test autenticación IAP
-- ✅ Verificar logs
-- ✅ Test funcional
-
----
-
-## 🔐 Configuración de OAuth (Pasos Manuales)
-
-### 1. Crear OAuth Consent Screen
-
-1. Ir a: [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
-2. Seleccionar "Tipo de usuario": **Externo**
-3. Completar:
-   - Nombre de la aplicación: `Ticket Home - Ambiente MHW`
-   - Email de asistencia: tu email
-   - Logo (opcional)
-   - Dominios autorizados: `mhwdev.dev`
-4. Ámbitos: dejar en blanco
-5. Usuarios de prueba: agregar emails que tendrán acceso
-
-### 2. Crear OAuth Client ID
-
-1. Ir a: [Credentials](https://console.cloud.google.com/apis/credentials)
-2. Click "+ CREAR CREDENCIALES" > "ID de cliente de OAuth 2.0"
-3. Tipo de aplicación: **Aplicación web**
-4. Nombre: `ticket-home-iap-client`
-5. URIs de redirección autorizados:
-   ```
-   https://iap.googleapis.com/v1/oauth/clientIds/TU_CLIENT_ID:handleRedirect
-   ```
-   (Reemplazar `TU_CLIENT_ID` con el ID generado)
-6. **COPIAR** Client ID y Client Secret
-7. Actualizar `config.local.env` con estos valores
-
----
-
-## 🧪 Verificación Post-Deployment
-
-### Test 1: DNS
+**2.1. Crear DATABASE_URL** (usando Unix socket para Cloud SQL Proxy):
 ```bash
-nslookup mhw-ticket-home.mhwdev.dev
+# Formato: postgresql://USER:PASSWORD@/DATABASE?host=/cloudsql/CONNECTION_NAME
+DATABASE_URL="postgresql://mhw_user:YOUR_PASSWORD@/mhw_ticket_home?host=/cloudsql/ticket-home-demo:us-central1:tickethome-db"
+
+echo "$DATABASE_URL" | gcloud secrets create mhw-database-url \
+  --data-file=- \
+  --project=ticket-home-demo
 ```
-Debe retornar la IP reservada.
 
-### Test 2: Certificado SSL
+**2.2. Crear SECRET_KEY**:
 ```bash
-gcloud compute ssl-certificates describe ticket-home-ssl \
+SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+
+echo "$SECRET_KEY" | gcloud secrets create mhw-secret-key \
+  --data-file=- \
+  --project=ticket-home-demo
+```
+
+**2.3. Crear SUPERUSER_EMAILS**:
+```bash
+# Separar emails con punto y coma (;)
+SUPERUSER_EMAILS="jonathan.segura@redsalud.cl;jonathan.segura.vega@gmail.com"
+
+echo "$SUPERUSER_EMAILS" | gcloud secrets create mhw-superuser-emails \
+  --data-file=- \
+  --project=ticket-home-demo
+```
+
+---
+
+### Paso 3: Service Account
+
+**3.1. Crear Service Account**:
+```bash
+gcloud iam service-accounts create tickethome-demo-sa \
+  --display-name="Service Account for Ticket Home Demo" \
+  --project=ticket-home-demo
+```
+
+**3.2. Asignar rol Cloud SQL Client**:
+```bash
+gcloud projects add-iam-policy-binding ticket-home-demo \
+  --member="serviceAccount:tickethome-demo-sa@ticket-home-demo.iam.gserviceaccount.com" \
+  --role="roles/cloudsql.client"
+```
+
+**3.3. Dar acceso a los secrets**:
+```bash
+# DATABASE_URL
+gcloud secrets add-iam-policy-binding mhw-database-url \
+  --member="serviceAccount:tickethome-demo-sa@ticket-home-demo.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project=ticket-home-demo
+
+# SECRET_KEY
+gcloud secrets add-iam-policy-binding mhw-secret-key \
+  --member="serviceAccount:tickethome-demo-sa@ticket-home-demo.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project=ticket-home-demo
+
+# SUPERUSER_EMAILS
+gcloud secrets add-iam-policy-binding mhw-superuser-emails \
+  --member="serviceAccount:tickethome-demo-sa@ticket-home-demo.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project=ticket-home-demo
+```
+
+---
+
+### Paso 4: Docker Build & Push
+
+**IMPORTANTE**: El Dockerfile ya está configurado correctamente. NO necesita modificaciones.
+
+**Opción A: Build local** (requiere Docker Desktop ejecutándose):
+```bash
+cd .. # Volver a la raíz del proyecto
+
+# Configurar autenticación
+gcloud auth configure-docker us-central1-docker.pkg.dev
+
+# Build
+docker build -t us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo/ticket-home:latest .
+
+# Push
+docker push us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo/ticket-home:latest
+```
+
+**Opción B: Cloud Build** (recomendado - más rápido):
+```bash
+gcloud builds submit \
+  --tag us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo/ticket-home:latest \
+  --project=ticket-home-demo \
+  --timeout=20m
+```
+
+---
+
+### Paso 5: Cloud Run Deployment
+
+**5.1. Deploy inicial**:
+```bash
+gcloud run deploy tickethome-demo \
+  --image=us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo/ticket-home:latest \
+  --region=us-central1 \
+  --service-account=tickethome-demo-sa@ticket-home-demo.iam.gserviceaccount.com \
+  --set-secrets="DATABASE_URL=mhw-database-url:latest,SECRET_KEY=mhw-secret-key:latest,SUPERUSER_EMAILS=mhw-superuser-emails:latest" \
+  --set-env-vars="FLASK_ENV=development,FLASK_DEBUG=false,ENABLE_IAP=true,ENABLE_DEMO_LOGIN=true,RESET_DB_ON_STARTUP=false,ENVIRONMENT=production" \
+  --set-cloudsql-instances="ticket-home-demo:us-central1:tickethome-db" \
+  --memory=1Gi \
+  --cpu=2 \
+  --timeout=900 \
+  --concurrency=80 \
+  --min-instances=0 \
+  --max-instances=3 \
+  --port=8080 \
+  --ingress=internal-and-cloud-load-balancing \
+  --no-allow-unauthenticated \
+  --project=ticket-home-demo
+```
+
+**Notas importantes**:
+- `--set-cloudsql-instances`: Habilita Cloud SQL Proxy (conexión via Unix socket)
+- `--ingress=internal-and-cloud-load-balancing`: Solo accesible via Load Balancer
+- `--no-allow-unauthenticated`: Requiere autenticación (IAP)
+- `ENABLE_IAP=true` y `ENABLE_DEMO_LOGIN=true`: Modo híbrido
+
+---
+
+### Paso 6: Load Balancer + SSL
+
+**6.1. Crear Network Endpoint Group (NEG)**:
+```bash
+gcloud compute network-endpoint-groups create tickethome-demo-neg \
+  --region=us-central1 \
+  --network-endpoint-type=serverless \
+  --cloud-run-service=tickethome-demo \
+  --project=ticket-home-demo
+```
+
+**6.2. Crear Backend Service**:
+```bash
+gcloud compute backend-services create tickethome-demo-backend \
   --global \
-  --project=YOUR_PROJECT_ID
-```
-Estado esperado: `ACTIVE`
+  --load-balancing-scheme=EXTERNAL \
+  --protocol=HTTPS \
+  --project=ticket-home-demo
 
-### Test 3: HTTPS
+# Agregar NEG al backend
+gcloud compute backend-services add-backend tickethome-demo-backend \
+  --global \
+  --network-endpoint-group=tickethome-demo-neg \
+  --network-endpoint-group-region=us-central1 \
+  --project=ticket-home-demo
+```
+
+**6.3. Crear certificado SSL**:
 ```bash
-curl -I https://mhw-ticket-home.mhwdev.dev
+gcloud compute ssl-certificates create tickethome-demo-ssl \
+  --domains=ticket-home-beta.mhwdev.dev \
+  --global \
+  --project=ticket-home-demo
 ```
-Esperado: HTTP/2 302 (redirect a IAP)
 
-### Test 4: Aplicación
-Abrir en navegador: `https://mhw-ticket-home.mhwdev.dev`
+**6.4. Crear URL Map**:
+```bash
+gcloud compute url-maps create tickethome-demo-url-map \
+  --default-service=tickethome-demo-backend \
+  --global \
+  --project=ticket-home-demo
+```
 
-Flujo esperado:
-1. Redirect a login de Google
-2. Seleccionar cuenta
-3. Dar consentimiento (primera vez)
-4. Redirect a aplicación
-5. Ver dashboard de Ticket Home
+**6.5. Crear HTTPS Proxy**:
+```bash
+gcloud compute target-https-proxies create tickethome-demo-https-proxy \
+  --ssl-certificates=tickethome-demo-ssl \
+  --url-map=tickethome-demo-url-map \
+  --global \
+  --project=ticket-home-demo
+```
+
+**6.6. Reservar IP y crear Forwarding Rule**:
+```bash
+# Reservar IP estática
+gcloud compute addresses create tickethome-demo-ip \
+  --global \
+  --project=ticket-home-demo
+
+# Obtener la IP
+gcloud compute addresses describe tickethome-demo-ip \
+  --global \
+  --project=ticket-home-demo \
+  --format="value(address)"
+
+# Crear Forwarding Rule
+gcloud compute forwarding-rules create tickethome-demo-forwarding-rule \
+  --global \
+  --target-https-proxy=tickethome-demo-https-proxy \
+  --address=tickethome-demo-ip \
+  --ports=443 \
+  --project=ticket-home-demo
+```
+
+**6.7. Configurar DNS**:
+```
+Tipo: A
+Nombre: ticket-home-beta.mhwdev.dev
+Valor: [IP del paso anterior]
+TTL: 300
+```
+
+---
+
+### Paso 7: IAP (Identity-Aware Proxy)
+
+**IMPORTANTE**: Algunos pasos de IAP deben hacerse manualmente en la consola web.
+
+**7.1. Configurar OAuth Consent Screen** (MANUAL):
+
+1. Ir a: https://console.cloud.google.com/apis/credentials/consent?project=ticket-home-demo
+2. Configurar:
+   - Tipo: Interno o Externo (según necesidad)
+   - Nombre: "Ticket Home"
+   - Email de soporte: tu email
+   - Dominios autorizados: `mhwdev.dev`
+
+**7.2. Crear OAuth Client ID** (MANUAL):
+
+1. Ir a: https://console.cloud.google.com/apis/credentials?project=ticket-home-demo
+2. Crear credenciales > OAuth Client ID
+3. Tipo: Aplicación web
+4. URIs de redirección: Dejar vacío (IAP lo maneja)
+5. Guardar Client ID y Client Secret
+
+**7.3. Habilitar IAP en Backend Service** (MANUAL o via CLI):
+
+Via CLI (requiere Client ID):
+```bash
+gcloud iap web enable \
+  --resource-type=backend-services \
+  --oauth2-client-id=YOUR_CLIENT_ID \
+  --oauth2-client-secret=YOUR_CLIENT_SECRET \
+  --service=tickethome-demo-backend \
+  --project=ticket-home-demo
+```
+
+Via Console (más fácil):
+1. Ir a: https://console.cloud.google.com/security/iap?project=ticket-home-demo
+2. Buscar `tickethome-demo-backend`
+3. Toggle IAP a ON
+4. Seleccionar OAuth Client creado
+
+**7.4. Configurar acceso** (quien puede acceder):
+```bash
+# Opción A: Por grupo de Google
+gcloud iap web add-iam-policy-binding \
+  --resource-type=backend-services \
+  --service=tickethome-demo-backend \
+  --member="group:ticket-home-demo@googlegroups.com" \
+  --role="roles/iap.httpsResourceAccessor" \
+  --project=ticket-home-demo
+
+# Opción B: Por usuario individual
+gcloud iap web add-iam-policy-binding \
+  --resource-type=backend-services \
+  --service=tickethome-demo-backend \
+  --member="user:jonathan.segura.vega@gmail.com" \
+  --role="roles/iap.httpsResourceAccessor" \
+  --project=ticket-home-demo
+```
+
+---
+
+## 💾 Configuración de Base de Datos
+
+### Opción 1: Inicializar con Seed Minimalista (Recomendado para Producción)
+
+Ejecuta este script SQL en la consola de GCP:
+
+```sql
+-- Agregar superusuarios
+INSERT INTO public.superuser (email) VALUES
+    ('jonathan.segura@redsalud.cl'),
+    ('jonathan.segura.vega@gmail.com')
+ON CONFLICT (email) DO NOTHING;
+```
+
+Luego, cuando accedas via IAP, tu usuario se creará automáticamente con rol ADMIN.
+
+### Opción 2: Limpiar Base de Datos
+
+Ejecutar: `_sql/01_cleanup_keep_essentials.sql`
+
+Este script:
+- ✅ Mantiene: clínicas, rangos horarios, superusuarios
+- ❌ Elimina: usuarios, pacientes, tickets, especialidades, cirugías, doctores, auditoría
+
+### Opción 3: Agregar Datos de Demo
+
+Ejecutar: `_sql/02_seed_full_demo_data.sql`
+
+Este script crea:
+- 28 usuarios (contraseña: `password123`)
+- 36 especialidades
+- 36 cirugías
+- 18 doctores
+- 144 razones estandarizadas
+- 45 pacientes
+- 135 tickets
+
+---
+
+## 🔧 Mantenimiento
+
+### Actualizar Aplicación (Re-deploy)
+
+```bash
+# 1. Build nueva imagen
+gcloud builds submit \
+  --tag us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo/ticket-home:latest \
+  --project=ticket-home-demo
+
+# 2. Deploy (usa el mismo comando del Paso 5.1)
+gcloud run deploy tickethome-demo \
+  --image=us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo/ticket-home:latest \
+  --region=us-central1 \
+  [... resto de parámetros ...]
+```
+
+### Actualizar Secrets
+
+```bash
+# Actualizar DATABASE_URL (ejemplo)
+echo "NEW_VALUE" | gcloud secrets versions add mhw-database-url \
+  --data-file=- \
+  --project=ticket-home-demo
+
+# Re-deploy Cloud Run para usar nueva versión
+gcloud run services update tickethome-demo \
+  --region=us-central1 \
+  --project=ticket-home-demo
+```
+
+### Ver Logs
+
+```bash
+# Logs de Cloud Run
+gcloud logging read "resource.type=cloud_run_revision" \
+  --limit=50 \
+  --project=ticket-home-demo \
+  --format="table(timestamp,severity,textPayload)"
+
+# Logs en tiempo real
+gcloud logging tail "resource.type=cloud_run_revision" \
+  --project=ticket-home-demo
+```
 
 ---
 
 ## 🚨 Troubleshooting
 
-### Error: "Secret already exists"
-✅ **OK** - El script detecta secrets existentes. Puedes continuar.
+### Error: "Connection timeout" a Cloud SQL
 
-### Error: "Docker build failed"
-❌ **Solución:** Verifica que Docker esté corriendo
+**Causa**: DATABASE_URL mal configurado o Cloud SQL Proxy no conectado.
+
+**Solución**:
+1. Verificar que DATABASE_URL use formato Unix socket:
+   ```
+   postgresql://USER:PASS@/DB?host=/cloudsql/PROJECT:REGION:INSTANCE
+   ```
+2. Verificar que Cloud Run tenga `--set-cloudsql-instances` configurado
+
+### Error: "Access denied" al acceder a la app
+
+**Causa**: Usuario no autorizado en IAP.
+
+**Solución**:
+1. Verificar que el usuario esté en el grupo de Google autorizado
+2. O agregar usuario individual:
+   ```bash
+   gcloud iap web add-iam-policy-binding \
+     --resource-type=backend-services \
+     --service=tickethome-demo-backend \
+     --member="user:EMAIL@example.com" \
+     --role="roles/iap.httpsResourceAccessor" \
+     --project=ticket-home-demo
+   ```
+
+### Error: Certificado SSL en "PROVISIONING"
+
+**Causa**: Normal, el certificado tarda 15-60 minutos en aprovisionarse.
+
+**Solución**: Esperar y verificar:
 ```bash
-docker ps
-```
-
-### Error: "403 Forbidden" al acceder a la app
-❌ **Posibles causas:**
-1. IAP no configurado correctamente
-2. Usuario no está en el Google Group autorizado
-3. OAuth Client ID incorrecto
-
-**Solución:**
-```bash
-# Verificar IAP
-gcloud iap web get-iam-policy \
-  --resource-type=backend-services \
-  --service=ticket-home-backend \
-  --project=YOUR_PROJECT_ID
-```
-
-### Error: Certificado SSL en estado "PROVISIONING"
-⏳ **Normal** - El certificado puede tardar 15-60 minutos en aprovisionarse.
-
-**Verificar progreso:**
-```bash
-gcloud compute ssl-certificates describe ticket-home-ssl \
+gcloud compute ssl-certificates describe tickethome-demo-ssl \
   --global \
-  --project=YOUR_PROJECT_ID \
+  --project=ticket-home-demo \
   --format="get(managed.status)"
 ```
 
-### Error: "Could not connect to Cloud SQL"
-❌ **Posibles causas:**
-1. IPs autorizadas no configuradas en Cloud SQL
-2. DATABASE_URL incorrecta
-3. Firewall bloqueando conexión
+Estado esperado final: `ACTIVE`
 
-**Solución:**
-1. Verificar IPs autorizadas en Cloud SQL incluyen el rango de Cloud Run
-2. Revisar logs de Cloud Run:
-   ```bash
-   gcloud logging read "resource.type=cloud_run_revision" \
-     --limit=50 \
-     --project=YOUR_PROJECT_ID
-   ```
+### Error: "Usuario no registrado" después de autenticarse con IAP
 
-### Error: "OAuth error" al intentar login
-❌ **Solución:**
-1. Verificar que el URI de redirección en OAuth Client coincide con:
-   ```
-   https://iap.googleapis.com/v1/oauth/clientIds/YOUR_CLIENT_ID:handleRedirect
-   ```
-2. Verificar que el dominio está en "Dominios autorizados" del Consent Screen
+**Causa**: Email no está en tabla `superuser`.
 
----
+**Solución**:
+```sql
+INSERT INTO public.superuser (email) VALUES ('tu-email@example.com');
+```
 
-## 📊 Tiempos Estimados
+### Error: "Multiple users with same email"
 
-| Fase | Descripción | Tiempo Estimado |
-|------|-------------|-----------------|
-| 0 | Prerequisitos y configuración | 10 minutos |
-| 1 | Cloud SQL - Crear BD | 5 minutos |
-| 2 | Secret Manager | 3 minutos |
-| 3 | Service Account | 2 minutos |
-| 4 | Build y Push Docker | 10-15 minutos |
-| 5 | Cloud Run Deploy | 5 minutos |
-| 6 | Load Balancer | 10 minutos |
-| 7 | IAP + OAuth | 15 minutos |
-| 8 | Verificación | 10 minutos |
-| **Espera SSL** | Provisionamiento certificado | **15-60 minutos** |
+**Causa**: Conflicto de emails duplicados (ya no debería pasar con V1).
 
-**Total activo:** ~1 hora
-**Total con espera SSL:** ~1.5-2 horas
+**Solución**: La validación en `auth_iap.py` previene esto. Si ocurre, eliminar usuarios duplicados:
+```sql
+-- Ver usuarios duplicados
+SELECT email, COUNT(*) FROM public.user GROUP BY email HAVING COUNT(*) > 1;
+
+-- Eliminar duplicados manualmente
+```
 
 ---
 
-## 📞 Soporte
+## 📊 Verificación Post-Deployment
 
-Si encuentras problemas durante el deployment:
+### Checklist de Verificación
 
-1. **Revisar logs de Cloud Run:**
-   ```bash
-   gcloud logging read "resource.type=cloud_run_revision" \
-     --limit=100 \
-     --project=YOUR_PROJECT_ID
-   ```
-
-2. **Verificar estado de recursos:**
-   ```bash
-   # Cloud Run
-   gcloud run services describe ticket-home \
-     --region=southamerica-west1 \
-     --project=YOUR_PROJECT_ID
-
-   # Backend Service
-   gcloud compute backend-services describe ticket-home-backend \
-     --global \
-     --project=YOUR_PROJECT_ID
-
-   # SSL Certificate
-   gcloud compute ssl-certificates describe ticket-home-ssl \
-     --global \
-     --project=YOUR_PROJECT_ID
-   ```
-
-3. **Consultar documentación oficial:**
-   - [Cloud Run Docs](https://cloud.google.com/run/docs)
-   - [IAP Docs](https://cloud.google.com/iap/docs)
-   - [Cloud SQL Docs](https://cloud.google.com/sql/docs)
+- [ ] DNS apunta a IP correcta (`nslookup ticket-home-beta.mhwdev.dev`)
+- [ ] Certificado SSL activo (`gcloud compute ssl-certificates describe ...`)
+- [ ] Cloud Run desplegado (`gcloud run services describe tickethome-demo ...`)
+- [ ] IAP habilitado (`gcloud compute backend-services describe ...`)
+- [ ] Acceso web funcional (https://ticket-home-beta.mhwdev.dev)
+- [ ] Login IAP funcional
+- [ ] Superusuarios pueden acceder
+- [ ] Clínicas cargadas en BD
+- [ ] Rangos horarios creados
 
 ---
 
-## 📚 Recursos Adicionales
+## 📚 Referencias
 
-- [Guía HTML Interactiva](docs/deployment-guide.html) - Abrir en navegador
-- [OAuth Setup Guide](docs/oauth-setup.md) - Guía detallada de OAuth
-- [RUNBOOK Original](../_otros_archivos/_docs/RUNBOOK_Despliegue_de_Aplicaci#U00f3n_Flask_con_IAP_y_SSO_en_GCP.md)
+### Archivos Importantes
+
+- `_sql/01_cleanup_keep_essentials.sql` - Limpiar BD
+- `_sql/02_seed_full_demo_data.sql` - Datos de demo
+- `DEPLOYMENT_LOG.md` - Log detallado del primer deployment
+- `Dockerfile` - Ya configurado correctamente
+
+### Comandos Útiles
+
+```bash
+# Estado de Cloud Run
+gcloud run services describe tickethome-demo --region=us-central1
+
+# Estado de Backend Service
+gcloud compute backend-services describe tickethome-demo-backend --global
+
+# Estado de SSL
+gcloud compute ssl-certificates list --global
+
+# Logs en tiempo real
+gcloud logging tail "resource.type=cloud_run_revision"
+
+# Listar secrets
+gcloud secrets list
+
+# Ver versiones de un secret
+gcloud secrets versions list mhw-database-url
+```
 
 ---
 
-## 🎉 Deployment Completado
+## 🎯 Valores de Referencia (Deployment Actual)
 
-Si todos los pasos se completaron exitosamente, tu aplicación estará disponible en:
+Usar estos valores como referencia para deployments similares:
 
-🌐 **https://mhw-ticket-home.mhwdev.dev** (o tu dominio)
+```bash
+# Proyecto y Región
+PROJECT_ID="ticket-home-demo"
+REGION="us-central1"
 
-Con:
-- ✅ HTTPS habilitado con certificado administrado
-- ✅ Autenticación vía Google SSO (IAP)
-- ✅ Conexión segura a Cloud SQL
-- ✅ Secrets administrados por Secret Manager
-- ✅ Alta disponibilidad con Cloud Run
-- ✅ CDN habilitado en Load Balancer
+# Service Account
+SA_EMAIL="tickethome-demo-sa@ticket-home-demo.iam.gserviceaccount.com"
 
-**Nivel de seguridad:** 9/10 🔐
+# Cloud SQL
+INSTANCE_NAME="tickethome-db"
+CONNECTION_NAME="ticket-home-demo:us-central1:tickethome-db"
+DB_NAME="mhw_ticket_home"
+DB_USER="mhw_user"
+
+# Secrets
+SECRET_DATABASE_URL="mhw-database-url"
+SECRET_KEY_NAME="mhw-secret-key"
+SECRET_SUPERUSERS="mhw-superuser-emails"
+
+# Docker
+IMAGE_URL="us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo/ticket-home:latest"
+
+# Load Balancer
+NEG_NAME="tickethome-demo-neg"
+BACKEND_SERVICE="tickethome-demo-backend"
+SSL_CERT="tickethome-demo-ssl"
+URL_MAP="tickethome-demo-url-map"
+HTTPS_PROXY="tickethome-demo-https-proxy"
+FORWARDING_RULE="tickethome-demo-forwarding-rule"
+STATIC_IP_NAME="tickethome-demo-ip"
+
+# Dominio
+DOMAIN="ticket-home-beta.mhwdev.dev"
+STATIC_IP="34.8.122.103"
+
+# Cloud Run
+SERVICE_NAME="tickethome-demo"
+```
 
 ---
 
 **Creado por:** Claude Code
-**Fecha:** Noviembre 2025
-**Versión:** 1.0.0
-**Ambiente:** MHW (GCP)
+**Versión:** V1 - Beta RS
+**Fecha:** 2025-11-10
+**GitHub:** https://github.com/jona-mhw/ticket-2
+**Tag:** v1.0-beta-rs
