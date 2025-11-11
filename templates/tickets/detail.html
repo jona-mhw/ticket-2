@@ -108,7 +108,7 @@
                 <dt class="text-sm font-medium text-gray-500">FPA Actual</dt>
                 <dd class="mt-1 text-sm font-semibold {% if ticket.current_fpa != ticket.initial_fpa %}text-orange-600{% else %}text-gray-900{% endif %}">
                     <div class="text-sm text-gray-900">{{ ticket.current_fpa.strftime('%d/%m/%Y') }}</div>
-                    <div class="text-sm text-gray-500">{{ ticket.discharge_time_slot.name if ticket.discharge_time_slot else 'N/A' }}</div>
+                    <div class="text-sm text-gray-500">{{ ticket.get_dynamic_discharge_slot() }}</div>
                     {% if ticket.get_modification_count() > 0 %}
                     <span class="text-xs text-orange-600">({{ ticket.get_modification_count() }} modificación(es))</span>
                     {% endif %}
@@ -282,10 +282,7 @@
                             {{ ticket.current_fpa.strftime('%d/%m/%Y') }}
                         </p>
                         <p class="text-sm text-blue-700 mt-1">
-                            {{ ticket.discharge_time_slot.name if ticket.discharge_time_slot else 'Sin rango' }}
-                            {% if ticket.discharge_time_slot %}
-                            ({{ ticket.discharge_time_slot.start_time.strftime('%H:%M') }} - {{ ticket.discharge_time_slot.end_time.strftime('%H:%M') }})
-                            {% endif %}
+                            Rango: {{ ticket.get_dynamic_discharge_slot() }}
                         </p>
                     </div>
                     <svg class="h-10 w-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

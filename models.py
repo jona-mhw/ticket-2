@@ -229,9 +229,29 @@ class Ticket(db.Model):
     
     def can_be_modified(self):
         return self.status == 'Vigente'
-    
+
     def get_modification_count(self):
         return len(self.modifications)
+
+    def get_dynamic_discharge_slot(self):
+        """
+        Calcula el bloque horario dinámico de alta basado en el FPA actual.
+        Formato: "HH:MM - HH:MM" donde el rango es de 2 horas terminando en el FPA.
+
+        Ejemplo: Si FPA es 10:15, retorna "08:15 - 10:15"
+        """
+        if not self.current_fpa:
+            return "Sin horario"
+
+        from datetime import timedelta
+
+        # Hora de fin es el FPA
+        end_time = self.current_fpa
+
+        # Hora de inicio es 2 horas antes
+        start_time = end_time - timedelta(hours=2)
+
+        return f"{start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')}"
 
 
 class FpaModification(db.Model):

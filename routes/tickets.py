@@ -158,20 +158,19 @@ def api_calculate_fpa():
         if not surgery:
             return jsonify({'error': 'Cirugía no encontrada'}), 404
 
+        from datetime import timedelta
+
         pavilion_end_time = datetime.fromisoformat(pavilion_end_time_str)
         system_fpa, _ = FPACalculator.calculate(pavilion_end_time, surgery)
 
-        # Order by end_time to handle edge cases where FPA falls exactly on a boundary
-        slot = DischargeTimeSlot.query.filter(
-            DischargeTimeSlot.start_time <= system_fpa.time(),
-            DischargeTimeSlot.end_time >= system_fpa.time(),
-            DischargeTimeSlot.clinic_id == clinic_id
-        ).order_by(DischargeTimeSlot.end_time.asc()).first()
+        # Calculate dynamic discharge time slot (2 hours ending at FPA)
+        start_time = system_fpa - timedelta(hours=2)
+        dynamic_slot = f"{start_time.strftime('%H:%M')} - {system_fpa.strftime('%H:%M')}"
 
         return jsonify({
             'fpa_date_iso': system_fpa.date().isoformat(),
             'fpa_time': system_fpa.strftime('%H:%M'),
-            'fpa_display_str': f"{system_fpa.strftime('%d/%m/%Y')} (Bloque: {slot.name if slot else 'N/A'})",
+            'fpa_display_str': f"{system_fpa.strftime('%d/%m/%Y')} (Bloque: {dynamic_slot})",
             'surgery_base_stay_hours': surgery.base_stay_hours
         })
 

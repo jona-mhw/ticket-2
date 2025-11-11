@@ -229,7 +229,7 @@
 
                 <!-- Time Slot -->
                 <td class="column-time_slot px-4 py-4">
-                    <div class="text-sm text-gray-700">{{ ticket.discharge_time_slot.name if ticket.discharge_time_slot else 'Sin horario' }}</div>
+                    <div class="text-sm text-gray-700">{{ ticket.get_dynamic_discharge_slot() }}</div>
                 </td>
 
                 <!-- Status Badge -->
