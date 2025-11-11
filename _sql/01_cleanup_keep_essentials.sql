@@ -10,23 +10,23 @@
 
 BEGIN;
 
--- 1. Eliminar tickets y datos relacionados (en orden por dependencias)
+-- 1. Eliminar auditoría PRIMERO (tiene FK a user)
+DELETE FROM public.action_audit WHERE TRUE;
+DELETE FROM public.login_audit WHERE TRUE;
+
+-- 2. Eliminar tickets y datos relacionados (en orden por dependencias)
 DELETE FROM public.fpa_modification WHERE TRUE;
 DELETE FROM public.ticket WHERE TRUE;
 DELETE FROM public.patient WHERE TRUE;
 
--- 2. Eliminar datos maestros
+-- 3. Eliminar datos maestros
 DELETE FROM public.standardized_reason WHERE TRUE;
 DELETE FROM public.doctor WHERE TRUE;
 DELETE FROM public.surgery WHERE TRUE;
 DELETE FROM public.specialty WHERE TRUE;
 
--- 3. Eliminar usuarios (excepto los que se crearán automáticamente desde superuser)
+-- 4. Eliminar usuarios (excepto los que se crearán automáticamente desde superuser)
 DELETE FROM public.user WHERE TRUE;
-
--- 4. Eliminar auditoría
-DELETE FROM public.action_audit WHERE TRUE;
-DELETE FROM public.login_audit WHERE TRUE;
 
 -- ============================================================================
 -- DATOS QUE SE MANTIENEN:
