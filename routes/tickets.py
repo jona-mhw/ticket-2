@@ -161,11 +161,12 @@ def api_calculate_fpa():
         pavilion_end_time = datetime.fromisoformat(pavilion_end_time_str)
         system_fpa, _ = FPACalculator.calculate(pavilion_end_time, surgery)
 
+        # Order by end_time to handle edge cases where FPA falls exactly on a boundary
         slot = DischargeTimeSlot.query.filter(
             DischargeTimeSlot.start_time <= system_fpa.time(),
             DischargeTimeSlot.end_time >= system_fpa.time(),
             DischargeTimeSlot.clinic_id == clinic_id
-        ).first()
+        ).order_by(DischargeTimeSlot.end_time.asc()).first()
 
         return jsonify({
             'fpa_date_iso': system_fpa.date().isoformat(),

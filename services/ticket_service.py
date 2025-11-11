@@ -55,11 +55,24 @@ class TicketService:
         Returns:
             Ticket: Created ticket instance
         """
+        from models import DischargeTimeSlot
+
         # Calculate FPA
         fpa, overnight_stays = FPACalculator.calculate(
             ticket_data['pavilion_end_time'],
             ticket_data['surgery']
         )
+
+        # Find the discharge slot that matches the calculated FPA
+        # Order by end_time to handle edge cases where FPA falls exactly on a boundary
+        discharge_slot = DischargeTimeSlot.query.filter(
+            DischargeTimeSlot.start_time <= fpa.time(),
+            DischargeTimeSlot.end_time >= fpa.time(),
+            DischargeTimeSlot.clinic_id == ticket_data['clinic'].id
+        ).order_by(DischargeTimeSlot.end_time.asc()).first()
+
+        # Use found slot or allow override from ticket_data
+        discharge_slot_id = ticket_data.get('discharge_slot_id') or (discharge_slot.id if discharge_slot else None)
 
         # Generate ticket ID
         ticket_id = TicketService.generate_ticket_id(ticket_data['clinic'])
@@ -70,7 +83,7 @@ class TicketService:
             patient_id=ticket_data['patient'].id,
             surgery_id=ticket_data['surgery'].id,
             doctor_id=ticket_data.get('doctor_id'),
-            discharge_slot_id=ticket_data.get('discharge_slot_id'),
+            discharge_slot_id=discharge_slot_id,
             clinic_id=ticket_data['clinic'].id,
             pavilion_end_time=ticket_data['pavilion_end_time'],
             medical_discharge_date=ticket_data['medical_discharge_date'],
