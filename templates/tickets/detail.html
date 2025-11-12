@@ -282,10 +282,7 @@
                             {{ ticket.current_fpa.strftime('%d/%m/%Y') }}
                         </p>
                         <p class="text-sm text-blue-700 mt-1">
-                            {{ ticket.discharge_time_slot.name if ticket.discharge_time_slot else 'Sin rango' }}
-                            {% if ticket.discharge_time_slot %}
-                            ({{ ticket.discharge_time_slot.start_time.strftime('%H:%M') }} - {{ ticket.discharge_time_slot.end_time.strftime('%H:%M') }})
-                            {% endif %}
+                            {{ ticket.calculated_discharge_time_block }}
                         </p>
                     </div>
                     <svg class="h-10 w-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
