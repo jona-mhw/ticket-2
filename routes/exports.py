@@ -80,7 +80,7 @@ def create_ticket_pdf_final(ticket):
         original_fpa_data = [
             [Paragraph("Fecha:", styles['FieldLabel']), Paragraph(ticket.initial_fpa.strftime('%d/%m/%Y'), styles['FieldValue'])],
             [Spacer(1, 0.1*inch)],
-            [Paragraph("Hora (entre):", styles['FieldLabel']), Paragraph(ticket.discharge_time_slot.name if ticket.discharge_time_slot else ticket.initial_fpa.strftime('%H:%M'), styles['FieldValue'])]
+            [Paragraph("Hora (entre):", styles['FieldLabel']), Paragraph(ticket.calculated_discharge_time_block, styles['FieldValue'])]
         ]
         original_fpa_table = Table(original_fpa_data, colWidths=[2*inch, 4.5*inch], rowHeights=[0.5*inch, 0.1*inch, 0.5*inch])
         original_fpa_table.setStyle(TableStyle([
@@ -93,11 +93,17 @@ def create_ticket_pdf_final(ticket):
         # --- Modification Section (Conditional) ---
         last_mod = sorted(ticket.modifications, key=lambda m: m.modified_at)[-1] if ticket.modifications else None
         if last_mod:
+            # Calculate discharge time block for the modification (same logic as model)
+            fpa_hour = last_mod.new_fpa.hour
+            block_start_hour = (fpa_hour // 2) * 2
+            block_end_hour = block_start_hour + 2
+            mod_time_block = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
+
             story.append(Paragraph("Última Modificación", styles['SectionTitle']))
             mod_fpa_data = [
                 [Paragraph("Nueva Fecha:", styles['FieldLabel']), Paragraph(last_mod.new_fpa.strftime('%d/%m/%Y'), styles['FieldValue'])],
                 [Spacer(1, 0.1*inch)],
-                [Paragraph("Nueva Hora:", styles['FieldLabel']), Paragraph(last_mod.ticket.discharge_time_slot.name if last_mod.ticket.discharge_time_slot else last_mod.new_fpa.strftime('%H:%M'), styles['FieldValue'])]
+                [Paragraph("Nueva Hora:", styles['FieldLabel']), Paragraph(mod_time_block, styles['FieldValue'])]
             ]
             mod_fpa_table = Table(mod_fpa_data, colWidths=[2*inch, 4.5*inch], rowHeights=[0.5*inch, 0.1*inch, 0.5*inch])
             mod_fpa_table.setStyle(TableStyle([
@@ -224,7 +230,7 @@ def export_excel():
             ticket.surgery_name_snapshot or ticket.surgery.name,
             ticket.attending_doctor.name if ticket.attending_doctor else 'N/A',
             ticket.initial_fpa.strftime('%Y-%m-%d %H:%M'),
-            f"{ticket.current_fpa.strftime('%Y-%m-%d')} {ticket.discharge_time_slot.name if ticket.discharge_time_slot else ''}",
+            f"{ticket.current_fpa.strftime('%Y-%m-%d')} {ticket.calculated_discharge_time_block}",
             ticket.overnight_stays,
             adjustment_names,
             ticket.created_by,
@@ -241,9 +247,12 @@ def export_excel():
         for i in range(5):
             if i < len(modifications):
                 mod = modifications[i]
-                slot = mod.ticket.discharge_time_slot
-                slot_name = slot.name if slot else "N/A"
-                
+                # Calculate discharge time block for this modification
+                fpa_hour = mod.new_fpa.hour
+                block_start_hour = (fpa_hour // 2) * 2
+                block_end_hour = block_start_hour + 2
+                slot_name = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
+
                 row.extend([
                     mod.new_fpa.strftime('%Y-%m-%d'),
                     slot_name,

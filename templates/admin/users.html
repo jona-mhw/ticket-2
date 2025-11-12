@@ -37,9 +37,9 @@
                 <select id="role" name="role" required onchange="toggleClinicRequirement()"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
                     <option value="clinical">Usuario Clínico</option>
-                    <option value="admin">Administrador</option>
                     <option value="visualizador">Visualizador</option>
                     {% if current_user.is_superuser %}
+                    <option value="admin">Administrador</option>
                     <option value="superuser">Superusuario</option>
                     {% endif %}
                 </select>
@@ -174,9 +174,9 @@
                 <select id="edit_role" name="role" required onchange="toggleEditClinicRequirement()"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
                     <option value="clinical">Usuario Clínico</option>
-                    <option value="admin">Administrador</option>
                     <option value="visualizador">Visualizador</option>
                     {% if current_user.is_superuser %}
+                    <option value="admin">Administrador</option>
                     <option value="superuser">Superusuario</option>
                     {% endif %}
                 </select>

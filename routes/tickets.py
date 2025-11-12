@@ -255,9 +255,6 @@ def update_fpa(ticket_id):
         # Use service to modify
         TicketService.modify_fpa(ticket, new_fpa, reason, justification, current_user)
 
-        # Update discharge slot
-        ticket.discharge_slot_id = slot.id
-
         # Recalculate overnight stays
         time_diff = new_fpa - ticket.pavilion_end_time
         overnight_stays = max(0, time_diff.days)
@@ -371,7 +368,7 @@ def nursing_board():
     }
 
     query = TicketRepository.build_filtered_query(filters, current_user)
-    query = query.filter(Ticket.status == TICKET_STATUS_VIGENTE).order_by(Ticket.current_fpa.asc())
+    query = query.order_by(Ticket.current_fpa.asc())
     tickets = query.all()
 
     # Calculate urgency levels
@@ -439,7 +436,7 @@ def nursing_list():
     ]
 
     query = TicketRepository.build_filtered_query(filters, current_user)
-    query = query.filter(Ticket.status == TICKET_STATUS_VIGENTE).order_by(Ticket.current_fpa.asc())
+    query = query.order_by(Ticket.current_fpa.asc())
     tickets = query.all()
 
     # Calculate urgency (same logic as nursing_board)

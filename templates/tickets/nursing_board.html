@@ -36,11 +36,30 @@
 
     <!-- Filters Row -->
     <div class="flex items-center gap-3 flex-wrap">
-        <!-- Status Filters -->
+        <!-- Ticket Status Filter -->
         <div class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado:</span>
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado Ticket:</span>
             <div class="flex gap-2">
-                <a href="{{ url_for('tickets.nursing_board') }}"
+                <a href="{{ url_for('tickets.nursing_board', urgency=filters.urgency if filters.urgency else '', search=filters.search if filters.search else '') }}"
+                   class="filter-pill {% if not filters.status %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
+                    <span>Todos</span>
+                </a>
+                <a href="{{ url_for('tickets.nursing_board', status='Vigente', urgency=filters.urgency if filters.urgency else '', search=filters.search if filters.search else '') }}"
+                   class="filter-pill {% if filters.status == 'Vigente' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
+                    <span>Vigente</span>
+                </a>
+                <a href="{{ url_for('tickets.nursing_board', status='Anulado', urgency=filters.urgency if filters.urgency else '', search=filters.search if filters.search else '') }}"
+                   class="filter-pill {% if filters.status == 'Anulado' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
+                    <span>Anulado</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Urgency Filters -->
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Urgencia:</span>
+            <div class="flex gap-2">
+                <a href="{{ url_for('tickets.nursing_board', status=filters.status if filters.status else '', search=filters.search if filters.search else '') }}"
                    class="filter-pill {% if not filters.urgency %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
@@ -48,15 +67,15 @@
                     <span>Todos</span>
                     <span class="filter-count">{{ stats.total }}</span>
                 </a>
-                <a href="{{ url_for('tickets.nursing_board', urgency='normal') }}"
+                <a href="{{ url_for('tickets.nursing_board', urgency='normal', status=filters.status if filters.status else '', search=filters.search if filters.search else '') }}"
                    class="filter-pill filter-pill-normal {% if filters.urgency == 'normal' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>Vigente</span>
+                    <span>Normal</span>
                     <span class="filter-count">{{ stats.normal }}</span>
                 </a>
-                <a href="{{ url_for('tickets.nursing_board', urgency='expired') }}"
+                <a href="{{ url_for('tickets.nursing_board', urgency='expired', status=filters.status if filters.status else '', search=filters.search if filters.search else '') }}"
                    class="filter-pill filter-pill-expired {% if filters.urgency == 'expired' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -64,7 +83,7 @@
                     <span>Vencido</span>
                     <span class="filter-count">{{ stats.expired }}</span>
                 </a>
-                <a href="{{ url_for('tickets.nursing_board', urgency='scheduled') }}"
+                <a href="{{ url_for('tickets.nursing_board', urgency='scheduled', status=filters.status if filters.status else '', search=filters.search if filters.search else '') }}"
                    class="filter-pill filter-pill-scheduled {% if filters.urgency == 'scheduled' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -80,6 +99,9 @@
             <form method="GET" class="flex items-center gap-2">
                 {% if filters.urgency %}
                 <input type="hidden" name="urgency" value="{{ filters.urgency }}">
+                {% endif %}
+                {% if filters.status %}
+                <input type="hidden" name="status" value="{{ filters.status }}">
                 {% endif %}
                 <div class="relative">
                     <input type="search" name="search" value="{{ filters.search }}"
