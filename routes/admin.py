@@ -65,30 +65,9 @@ def edit_ticket(ticket_id):
             if ticket.room != new_room:
                 ticket_changes.append(f"Habitación/Cama de '{ticket.room or ''}' a '{new_room}'")
                 ticket.room = new_room
-            new_status = request.form['status']
-            if ticket.status != new_status:
-                ticket_changes.append(f"Estado de '{ticket.status}' a '{new_status}'")
-                if new_status == 'Anulado':
-                    annulled_reason = request.form.get('annulled_reason')
-                    if not annulled_reason:
-                        flash('La razón de anulación es obligatoria al cambiar el estado a "Anulado".', 'error')
-                        return redirect(url_for('admin.edit_ticket', ticket_id=ticket.id))
-                    ticket.annulled_at = datetime.utcnow()
-                    ticket.annulled_by = current_user.username
-                    ticket.annulled_reason = annulled_reason
-                    AuditService.log_action(
-                        user=current_user,
-                        action=f"Anuló ticket con razón: {annulled_reason}",
-                        target_id=ticket.id,
-                        target_type='Ticket'
-                    )
-                
-                if new_status == 'Vigente' and ticket.status == 'Anulado':
-                    ticket.annulled_at = None
-                    ticket.annulled_by = None
-                    ticket.annulled_reason = None
 
-            ticket.status = new_status
+            # NOTE: Status is NOT modifiable from this form
+            # Use specific actions (annul ticket, etc.) to change status
 
             # NOTE: pavilion_end_time is intentionally not modifiable
             # It's set at ticket creation and should remain unchanged

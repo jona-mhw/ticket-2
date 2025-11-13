@@ -142,7 +142,13 @@
                     {{ ticket.patient.apellido_paterno }}
                     {% if ticket.patient.apellido_materno %}{{ ticket.patient.apellido_materno }}{% endif %}
                 </div>
-                <div class="patient-rut">RUT: {{ ticket.patient.rut }}</div>
+                <div class="patient-rut">
+                    RUT: {{ ticket.patient.rut }}
+                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                        {% if ticket.status == 'Vigente' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ ticket.status }}
+                    </span>
+                </div>
             </div>
             <div class="room-badge editable-room" data-ticket-id="{{ ticket.id }}" data-current-room="{{ ticket.room or '' }}" title="Haz clic para editar la cama">
                 <svg class="w-5 h-5 room-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +168,15 @@
             <div class="fpa-date">{{ ticket.current_fpa.strftime('%d/%m/%Y') }}</div>
             <div class="fpa-time">{{ ticket.calculated_discharge_time_block }}</div>
 
-            {% if ticket.is_scheduled %}
+            {% if ticket.status == 'Anulado' %}
+            {# No mostrar timer para tickets anulados #}
+            <div class="countdown-display" style="background-color: #fee2e2; color: #991b1b;">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                <span>TICKET ANULADO</span>
+            </div>
+            {% elif ticket.is_scheduled %}
             <div class="countdown-display countdown-scheduled">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
