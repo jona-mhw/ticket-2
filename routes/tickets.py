@@ -248,7 +248,9 @@ def update_fpa(ticket_id):
             flash('Rango horario no válido.', 'error')
             return redirect(url_for('tickets.detail', ticket_id=ticket_id))
 
-        new_fpa = datetime.combine(new_fpa_date, slot.start_time)
+        # IMPORTANTE: Usar end_time porque el FPA representa el FIN del bloque horario
+        # Ejemplo: slot "14:00 - 16:00" → FPA = 16:00 → se calcula como bloque 14:00-16:00
+        new_fpa = datetime.combine(new_fpa_date, slot.end_time)
         reason = request.form.get('reason')
         justification = request.form.get('justification', '').strip()
 
