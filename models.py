@@ -237,23 +237,42 @@ class Ticket(db.Model):
     def calculated_discharge_time_block(self):
         """
         Calcula dinámicamente el bloque de 2 horas basándose en current_fpa.
-        No usa los bloques predefinidos de la DB, sino que calcula bloques de 2 horas
-        desde las 00:00 hasta encontrar el que contiene el FPA.
-        
+        IMPORTANTE: El FPA es el FIN del bloque, no el inicio.
+
+        Ejemplo: Si FPA es 10:00, el bloque es 08:00-10:00 (donde 10:00 es el fin del bloque)
+
+        Reglas de redondeo:
+        - 10:00 → 08:00-10:00 (exacto, es el fin del bloque)
+        - 10:15 → 08:00-10:00 (redondea hacia abajo dentro del mismo bloque)
+        - 10:45 → 10:00-12:00 (redondea hacia arriba al siguiente bloque)
+
         Retorna el nombre del bloque (ej: "08:00 - 10:00").
         """
         if not self.current_fpa:
             return "Sin horario"
-        
+
         # Obtener la hora y minutos del FPA
         fpa_hour = self.current_fpa.hour
         fpa_minute = self.current_fpa.minute
-        
-        # Calcular el inicio del bloque de 2 horas que contiene el FPA
-        # Los bloques son: 00-02, 02-04, 04-06, 06-08, 08-10, 10-12, 12-14, 14-16, 16-18, 18-20, 20-22, 22-24
-        block_start_hour = (fpa_hour // 2) * 2
-        block_end_hour = block_start_hour + 2
-        
+
+        # Si hay minutos, redondeamos a la siguiente hora
+        if fpa_minute > 0:
+            fpa_hour += 1
+
+        # Redondear al siguiente bloque par si es necesario
+        if fpa_hour % 2 != 0:
+            fpa_hour += 1
+
+        # Manejar caso edge de medianoche
+        if fpa_hour == 0:
+            return "22:00 - 00:00"
+        elif fpa_hour >= 24:
+            fpa_hour = 24
+
+        # El FPA es el FIN del bloque
+        block_end_hour = fpa_hour
+        block_start_hour = block_end_hour - 2
+
         # Formatear como "HH:MM - HH:MM"
         return f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
 

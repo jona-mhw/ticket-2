@@ -79,23 +79,23 @@ class TicketValidator:
         errors = []
 
         # Required fields
-        if not form_data.get('new_fpa'):
-            errors.append('Nueva FPA es requerida')
+        if not form_data.get('new_fpa_date'):
+            errors.append('Nueva fecha de alta es requerida')
+
+        if not form_data.get('discharge_slot_id'):
+            errors.append('Rango horario de alta es requerido')
 
         if not form_data.get('reason'):
             errors.append('Razón de modificación es requerida')
 
         # Date validation
         try:
-            new_fpa = datetime.strptime(
-                form_data.get('new_fpa', ''),
-                '%Y-%m-%dT%H:%M'
+            datetime.strptime(
+                form_data.get('new_fpa_date', ''),
+                '%Y-%m-%d'
             )
-            # FPA should be in the future
-            if new_fpa <= datetime.now():
-                errors.append('La nueva FPA debe estar en el futuro')
         except (ValueError, TypeError):
-            errors.append('Nueva FPA inválida')
+            errors.append('Nueva fecha de alta inválida')
 
         return errors
 

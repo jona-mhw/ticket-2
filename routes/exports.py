@@ -93,11 +93,28 @@ def create_ticket_pdf_final(ticket):
         # --- Modification Section (Conditional) ---
         last_mod = sorted(ticket.modifications, key=lambda m: m.modified_at)[-1] if ticket.modifications else None
         if last_mod:
-            # Calculate discharge time block for the modification (same logic as model)
+            # Calculate discharge time block for the modification (FPA is END of block)
             fpa_hour = last_mod.new_fpa.hour
-            block_start_hour = (fpa_hour // 2) * 2
-            block_end_hour = block_start_hour + 2
-            mod_time_block = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
+            fpa_minute = last_mod.new_fpa.minute
+
+            # Si hay minutos, redondeamos a la siguiente hora
+            if fpa_minute > 0:
+                fpa_hour += 1
+
+            # Redondear al siguiente bloque par si es necesario
+            if fpa_hour % 2 != 0:
+                fpa_hour += 1
+
+            # Manejar caso edge de medianoche
+            if fpa_hour == 0:
+                mod_time_block = "22:00 - 00:00"
+            elif fpa_hour >= 24:
+                mod_time_block = "22:00 - 24:00"
+            else:
+                # El FPA es el FIN del bloque
+                block_end_hour = fpa_hour
+                block_start_hour = block_end_hour - 2
+                mod_time_block = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
 
             story.append(Paragraph("Última Modificación", styles['SectionTitle']))
             mod_fpa_data = [
@@ -247,11 +264,28 @@ def export_excel():
         for i in range(5):
             if i < len(modifications):
                 mod = modifications[i]
-                # Calculate discharge time block for this modification
+                # Calculate discharge time block for this modification (FPA is END of block)
                 fpa_hour = mod.new_fpa.hour
-                block_start_hour = (fpa_hour // 2) * 2
-                block_end_hour = block_start_hour + 2
-                slot_name = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
+                fpa_minute = mod.new_fpa.minute
+
+                # Si hay minutos, redondeamos a la siguiente hora
+                if fpa_minute > 0:
+                    fpa_hour += 1
+
+                # Redondear al siguiente bloque par si es necesario
+                if fpa_hour % 2 != 0:
+                    fpa_hour += 1
+
+                # Manejar caso edge de medianoche
+                if fpa_hour == 0:
+                    slot_name = "22:00 - 00:00"
+                elif fpa_hour >= 24:
+                    slot_name = "22:00 - 24:00"
+                else:
+                    # El FPA es el FIN del bloque
+                    block_end_hour = fpa_hour
+                    block_start_hour = block_end_hour - 2
+                    slot_name = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
 
                 row.extend([
                     mod.new_fpa.strftime('%Y-%m-%d'),
