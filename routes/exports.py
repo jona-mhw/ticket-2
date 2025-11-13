@@ -76,11 +76,34 @@ def create_ticket_pdf_final(ticket):
         story.append(Spacer(1, 0.2*inch))
 
         # --- Original FPA Section ---
+        # Calculate discharge time block for INITIAL FPA (FPA is END of block)
+        initial_fpa_hour = ticket.initial_fpa.hour
+        initial_fpa_minute = ticket.initial_fpa.minute
+
+        # Si hay minutos, redondeamos a la siguiente hora
+        if initial_fpa_minute > 0:
+            initial_fpa_hour += 1
+
+        # Redondear al siguiente bloque par si es necesario
+        if initial_fpa_hour % 2 != 0:
+            initial_fpa_hour += 1
+
+        # Manejar caso edge de medianoche
+        if initial_fpa_hour == 0:
+            initial_time_block = "22:00 - 00:00"
+        elif initial_fpa_hour >= 24:
+            initial_time_block = "22:00 - 24:00"
+        else:
+            # El FPA es el FIN del bloque
+            block_end_hour = initial_fpa_hour
+            block_start_hour = block_end_hour - 2
+            initial_time_block = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
+
         story.append(Paragraph(f"Fecha probable de alta original ({ticket.overnight_stays} días de pernocte)", styles['SectionTitle']))
         original_fpa_data = [
             [Paragraph("Fecha:", styles['FieldLabel']), Paragraph(ticket.initial_fpa.strftime('%d/%m/%Y'), styles['FieldValue'])],
             [Spacer(1, 0.1*inch)],
-            [Paragraph("Hora (entre):", styles['FieldLabel']), Paragraph(ticket.calculated_discharge_time_block, styles['FieldValue'])]
+            [Paragraph("Hora (entre):", styles['FieldLabel']), Paragraph(initial_time_block, styles['FieldValue'])]
         ]
         original_fpa_table = Table(original_fpa_data, colWidths=[2*inch, 4.5*inch], rowHeights=[0.5*inch, 0.1*inch, 0.5*inch])
         original_fpa_table.setStyle(TableStyle([
