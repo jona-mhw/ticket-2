@@ -410,37 +410,82 @@ document.addEventListener('DOMContentLoaded', function() {
                 initialReasonSelect.required = false;
             }
 
-            // Update preview panel with detailed breakdown
+            // Update preview panel with detailed breakdown (Issue #41)
             const pavilionDate = new Date(pavilionEndValue);
-            const fpaDate = new Date(data.fpa_date_iso + 'T' + data.fpa_time);
-            const daysDiff = Math.ceil((fpaDate - pavilionDate) / (1000 * 60 * 60 * 24));
+            const systemFpaDate = new Date(data.fpa_date_iso + 'T' + data.fpa_time);
+            const medicalDate = new Date(medicalDischargeDateInput.value + 'T00:00:00');
+            const usingMedicalDate = medicalDischargeDate.getTime() !== systemFpaDate.getTime();
 
-            fpaPreview.innerHTML = `
-                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-xs font-medium text-gray-600 mb-1">FPA Calculada</p>
-                            <p class="text-lg font-bold text-primary">${data.fpa_display_str}</p>
-                            <p class="text-xs text-gray-500 mt-1">${data.fpa_date_iso} a las ${data.fpa_time}</p>
+            // Helper function to format date as DD/MM/YYYY
+            const formatDateDMY = (date) => {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            };
+
+            if (usingMedicalDate) {
+                // Show both: system calculated FPA and medical indicated FPA
+                const medicalDaysDiff = Math.ceil((medicalDate - pavilionDate) / (1000 * 60 * 60 * 24));
+
+                fpaPreview.innerHTML = `
+                    <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-300">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <h4 class="text-sm font-semibold text-yellow-900">FPA Indicado por Médico (Diferente al Calculado)</h4>
                         </div>
-                        <div>
-                            <p class="text-xs font-medium text-gray-600 mb-1">Estancia Calculada</p>
-                            <p class="text-lg font-bold text-blue-700">${daysDiff} día${daysDiff !== 1 ? 's' : ''}</p>
-                            <p class="text-xs text-gray-500 mt-1">Desde cirugía hasta alta prevista</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white rounded p-3 border border-gray-300">
+                                <p class="text-xs font-medium text-gray-600 mb-1">FPA Calculada (Sistema)</p>
+                                <p class="text-lg font-bold text-gray-700">${data.fpa_display_str}</p>
+                                <p class="text-xs text-gray-500 mt-1">${data.fpa_date_iso} a las ${data.fpa_time}</p>
+                            </div>
+                            <div class="bg-yellow-100 rounded p-3 border-2 border-yellow-500">
+                                <p class="text-xs font-medium text-yellow-800 mb-1">FPA Indicada (Médico)</p>
+                                <p class="text-lg font-bold text-yellow-900">${formatDateDMY(medicalDate)}</p>
+                                <p class="text-xs text-yellow-700 mt-1">⚠️ Esta fecha será la FPA del ticket</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-yellow-200">
+                            <p class="text-xs text-yellow-700">
+                                <strong>Estancia indicada:</strong> ${medicalDaysDiff} día${medicalDaysDiff !== 1 ? 's' : ''} desde cirugía hasta alta
+                            </p>
                         </div>
                     </div>
-                    <div class="mt-3 pt-3 border-t border-blue-200">
-                        <p class="text-xs font-medium text-gray-600 mb-2">Cálculo Base:</p>
-                        <div class="flex items-center gap-2 text-xs text-gray-700">
-                            <span class="px-2 py-1 bg-white rounded border border-gray-300">Cirugía: ${pavilionDate.toLocaleString('es-CL', {dateStyle: 'short', timeStyle: 'short'})}</span>
-                            <span>+</span>
-                            <span class="px-2 py-1 bg-white rounded border border-gray-300">${data.surgery_base_stay_hours || 0}h de estancia base</span>
-                            <span>=</span>
-                            <span class="px-2 py-1 bg-blue-100 rounded border border-blue-300 font-semibold">${data.fpa_display_str}</span>
+                `;
+            } else {
+                // Show only system calculated FPA (same as before)
+                const daysDiff = Math.ceil((systemFpaDate - pavilionDate) / (1000 * 60 * 60 * 24));
+
+                fpaPreview.innerHTML = `
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">FPA Calculada</p>
+                                <p class="text-lg font-bold text-primary">${data.fpa_display_str}</p>
+                                <p class="text-xs text-gray-500 mt-1">${data.fpa_date_iso} a las ${data.fpa_time}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">Estancia Calculada</p>
+                                <p class="text-lg font-bold text-blue-700">${daysDiff} día${daysDiff !== 1 ? 's' : ''}</p>
+                                <p class="text-xs text-gray-500 mt-1">Desde cirugía hasta alta prevista</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-blue-200">
+                            <p class="text-xs font-medium text-gray-600 mb-2">Cálculo Base:</p>
+                            <div class="flex items-center gap-2 text-xs text-gray-700">
+                                <span class="px-2 py-1 bg-white rounded border border-gray-300">Cirugía: ${pavilionDate.toLocaleString('es-CL', {dateStyle: 'short', timeStyle: 'short'})}</span>
+                                <span>+</span>
+                                <span class="px-2 py-1 bg-white rounded border border-gray-300">${data.surgery_base_stay_hours || 0}h de estancia base</span>
+                                <span>=</span>
+                                <span class="px-2 py-1 bg-blue-100 rounded border border-blue-300 font-semibold">${data.fpa_display_str}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
 
         } catch (error) {
             console.error('Error fetching FPA:', error);

@@ -76,12 +76,31 @@ def create():
                 '%Y-%m-%d'
             ).date()
 
+            # Calculate system FPA (automatic calculation)
+            from datetime import time
+            system_fpa, _ = FPACalculator.calculate(pavilion_end_time, surgery)
+
+            # Determine if medical discharge date is different from system calculation
+            # If different, use medical date as FPA (Issue #40)
+            if medical_discharge_date != system_fpa.date():
+                # Convert medical date to datetime with default time block (18:00)
+                # This ensures the medical decision overrides the automatic calculation
+                medical_fpa_datetime = datetime.combine(medical_discharge_date, time(18, 0))
+                initial_fpa = medical_fpa_datetime
+                current_fpa = medical_fpa_datetime
+            else:
+                # If dates match, use system calculated FPA (includes correct time)
+                initial_fpa = system_fpa
+                current_fpa = system_fpa
+
             ticket_data = {
                 'patient': patient,
                 'surgery': surgery,
                 'clinic': clinic,
                 'pavilion_end_time': pavilion_end_time,
                 'medical_discharge_date': medical_discharge_date,
+                'initial_fpa': initial_fpa,
+                'current_fpa': current_fpa,
                 'doctor_id': int(request.form.get('doctor_id')) if request.form.get('doctor_id') else None,
                 'room': request.form.get('room', '').strip() or None,
                 'initial_reason': request.form.get('initial_reason'),
