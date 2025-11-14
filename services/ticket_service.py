@@ -55,11 +55,27 @@ class TicketService:
         Returns:
             Ticket: Created ticket instance
         """
-        # Calculate FPA
-        fpa, overnight_stays = FPACalculator.calculate(
+        # Calculate system FPA (automatic calculation for reference)
+        system_fpa, system_overnight_stays = FPACalculator.calculate(
             ticket_data['pavilion_end_time'],
             ticket_data['surgery']
         )
+
+        # Use initial_fpa and current_fpa from ticket_data if provided (Issue #40)
+        # This allows the medical decision to override the automatic calculation
+        initial_fpa = ticket_data.get('initial_fpa', system_fpa)
+        current_fpa = ticket_data.get('current_fpa', system_fpa)
+
+        # Recalculate overnight_stays based on the actual FPA being used
+        if 'initial_fpa' in ticket_data and ticket_data['initial_fpa'] != system_fpa:
+            # Medical FPA is different, recalculate overnight stays
+            time_diff = initial_fpa - ticket_data['pavilion_end_time']
+            overnight_stays = max(0, time_diff.days)
+            if time_diff.seconds > 0:
+                overnight_stays += 1
+        else:
+            # Using system FPA, use system calculated overnight stays
+            overnight_stays = system_overnight_stays
 
         # Generate ticket ID
         ticket_id = TicketService.generate_ticket_id(ticket_data['clinic'])
@@ -74,9 +90,9 @@ class TicketService:
             clinic_id=ticket_data['clinic'].id,
             pavilion_end_time=ticket_data['pavilion_end_time'],
             medical_discharge_date=ticket_data['medical_discharge_date'],
-            system_calculated_fpa=fpa,
-            initial_fpa=ticket_data.get('initial_fpa', fpa),
-            current_fpa=ticket_data.get('current_fpa', fpa),
+            system_calculated_fpa=system_fpa,
+            initial_fpa=initial_fpa,
+            current_fpa=current_fpa,
             overnight_stays=overnight_stays,
             room=ticket_data.get('room'),
             status=ticket_data.get('status', 'Vigente'),
