@@ -498,18 +498,36 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clinic change (superuser only)
     if (isSuperuser && clinicSelect) {
         clinicSelect.addEventListener('change', () => {
-            currentClinicId = parseInt(clinicSelect.value) || null;
-            medicalDateManuallySet = false;
+            const selectedValue = clinicSelect.value;
 
-            // Reset dependent selects
-            surgerySelect.innerHTML = '<option value="">Primero seleccione una especialidad</option>';
-            surgerySelect.disabled = true;
+            if (selectedValue && selectedValue !== '') {
+                currentClinicId = parseInt(selectedValue);
+                medicalDateManuallySet = false;
 
-            // Populate based on clinic
-            populateSpecialties();
-            populateDoctors();
-            populateInitialReasons();
-            updateFpaPreview();
+                // Reset dependent selects
+                surgerySelect.innerHTML = '<option value="">Primero seleccione una especialidad</option>';
+                surgerySelect.disabled = true;
+
+                // Populate based on clinic (wait a tick to ensure currentClinicId is set)
+                setTimeout(() => {
+                    populateSpecialties();
+                    populateDoctors();
+                    populateInitialReasons();
+                    updateFpaPreview();
+                }, 0);
+            } else {
+                // No clinic selected, reset everything
+                currentClinicId = null;
+                specialtySelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
+                specialtySelect.disabled = true;
+                surgerySelect.innerHTML = '<option value="">Primero seleccione una especialidad</option>';
+                surgerySelect.disabled = true;
+                doctorSelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
+                doctorSelect.disabled = true;
+                if (initialReasonSelect) {
+                    initialReasonSelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
+                }
+            }
         });
     }
 
