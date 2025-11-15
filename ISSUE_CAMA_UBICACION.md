@@ -369,3 +369,18 @@ Nota: Los campos Cama y Ubicación en la parte superior
 ### Auditoría
 - Los cambios en ambos campos deben quedar registrados en `ActionAudit`
 - Formato sugerido: "Actualizó cama de '201' a '202' y ubicación de 'Piso 2' a 'UCI'"
+
+---
+
+## 📝 ACLARACIÓN IMPORTANTE (Actualización)
+
+**Los campos Cama y Ubicación deben aparecer en:**
+- ✅ Vista de tarjetas (nursing board) - WEB
+- ✅ Vista de lista (nursing list) - WEB  
+- ✅ Detalle del ticket - WEB
+- ✅ Exportación **Excel** - EXPORT
+
+**NO deben aparecer en:**
+- ❌ Exportación **PDF** (mantener PDF sin cambios)
+
+Esto significa que el PDF se mantiene tal como está actualmente, sin agregar estos campos.
