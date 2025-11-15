@@ -232,14 +232,14 @@ def export_excel():
     ws.title = "Reporte Tickets"
     
     headers = [
-        'N° Ticket', 'Estado', 'RUT Paciente', 'Nombre Completo', 'Especialidad', 'Cirugía', 
-        'Médico', 'FPA Inicial', 'FPA Actual', 'Noches de Estancia',
+        'N° Ticket', 'Estado', 'RUT Paciente', 'Nombre Completo', 'Cama', 'Ubicación',
+        'Especialidad', 'Cirugía', 'Médico', 'FPA Inicial', 'FPA Actual', 'Noches de Estancia',
         'Criterios de Ajuste', 'Creado Por', 'Fecha Creación',
         'Fecha Posible de Alta (Indicación Médica)', 'Fecha de Alta Calculada (Hoja Maestra)'
     ]
 
     if current_user.is_superuser:
-        headers.insert(4, 'Clínica')
+        headers.insert(6, 'Clínica')
 
     for i in range(1, 6):
         headers.extend([
@@ -266,6 +266,8 @@ def export_excel():
             ticket.status,
             ticket.patient.rut,
             ticket.patient.full_name,
+            ticket.bed_number or '',
+            ticket.location or '',
             ticket.surgery.specialty.name,
             ticket.surgery_name_snapshot or ticket.surgery.name,
             ticket.attending_doctor.name if ticket.attending_doctor else 'N/A',
@@ -280,7 +282,7 @@ def export_excel():
         ]
 
         if current_user.is_superuser:
-            row.insert(4, ticket.clinic.name if ticket.clinic else 'N/A')
+            row.insert(6, ticket.clinic.name if ticket.clinic else 'N/A')
         
         modifications = sorted(ticket.modifications, key=lambda m: m.modified_at)
         

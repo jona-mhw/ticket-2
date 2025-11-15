@@ -250,6 +250,11 @@ def seed_db():
             # Calcular medical_discharge_date (entre 1 y 5 días después del pavilion_end_time)
             medical_discharge_date = (pavilion_end_time + timedelta(days=random.randint(1, 5))).date()
 
+            # Generar bed_number y location aleatorios (Issue #49)
+            bed_number = f"{random.randint(101, 450)}" if random.random() > 0.2 else None  # 80% de tickets tienen cama
+            locations = ['Piso 2', 'Piso 3', 'UCI', 'Recuperación', 'Ala Norte', 'Ala Sur', 'Sector A', 'Sector B']
+            location = random.choice(locations) if bed_number and random.random() > 0.3 else None  # 70% de tickets con cama tienen ubicación
+
             ticket = Ticket(
                 id=f'TH-{prefix.upper()}-{now.year}-{i+1:03d}',
                 patient_id=selected_patient.id,
@@ -264,6 +269,8 @@ def seed_db():
                 discharge_slot_id=discharge_slot.id if discharge_slot else None,
                 surgery_name_snapshot=selected_surgery.name,
                 surgery_base_hours_snapshot=selected_surgery.base_stay_hours,
+                bed_number=bed_number,
+                location=location,
                 created_by=f'{ROLE_ADMIN}_{prefix}',
                 clinic_id=clinic.id,
                 status=TICKET_STATUS_VIGENTE

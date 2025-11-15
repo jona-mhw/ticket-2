@@ -94,7 +94,7 @@ class TicketRepository:
                     func.lower(Ticket.status) == func.lower(filters['status'])
                 )
 
-        # Search filter (ticket ID, patient name, or RUT)
+        # Search filter (ticket ID, patient name, RUT, bed number, or location)
         if filters.get('search'):
             search_query = filters['search'].strip()
             cleaned_search_rut = re.sub(r'[.-]', '', search_query)
@@ -105,7 +105,9 @@ class TicketRepository:
                 db.or_(
                     Ticket.id.ilike(f"%{search_query}%"),
                     full_name_expr.ilike(f"%{search_query}%"),
-                    cleaned_db_rut.ilike(f"%{cleaned_search_rut}%")
+                    cleaned_db_rut.ilike(f"%{cleaned_search_rut}%"),
+                    Ticket.bed_number.ilike(f"%{search_query}%"),
+                    Ticket.location.ilike(f"%{search_query}%")
                 )
             )
 

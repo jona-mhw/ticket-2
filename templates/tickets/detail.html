@@ -151,10 +151,18 @@
                 </dd>
             </div>
             
-            {% if ticket.room %}
+            <!-- Bed Number and Location (Issue #49) -->
+            {% if ticket.bed_number %}
             <div>
-                <dt class="text-sm font-medium text-gray-500">Habitación/Cama</dt>
-                <dd class="mt-1 text-sm text-gray-900">{{ ticket.room }}</dd>
+                <dt class="text-sm font-medium text-gray-500">Cama</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ ticket.bed_number }}</dd>
+            </div>
+            {% endif %}
+
+            {% if ticket.location %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Ubicación</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ ticket.location }}</dd>
             </div>
             {% endif %}
             
