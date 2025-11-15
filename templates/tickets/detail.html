@@ -335,19 +335,19 @@
                     </div>
 
                     <div>
-                        <label for="discharge_slot_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="discharge_end_hour" class="block text-sm font-medium text-gray-700 mb-1">
                             Rango Horario de Alta <span class="text-red-500">*</span>
                         </label>
-                        <select id="discharge_slot_id" name="discharge_slot_id" required
+                        <select id="discharge_end_hour" name="discharge_end_hour" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                             <option value="">Seleccionar rango horario</option>
-                            {% for slot in discharge_time_slots %}
-                            <option value="{{ slot.id }}" {% if ticket.discharge_slot_id == slot.id %}selected{% endif %}>
-                                {{ slot.name }}
+                            {% for block in discharge_time_slots %}
+                            <option value="{{ block.value }}">
+                                {{ block.label }}
                             </option>
                             {% endfor %}
                         </select>
-                        <p class="mt-1 text-xs text-gray-500">Seleccione el horario estimado de alta</p>
+                        <p class="mt-1 text-xs text-gray-500">Seleccione el horario estimado de alta (Issue #54: Bloques dinámicos)</p>
                     </div>
 
                     <div>

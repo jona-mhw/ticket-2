@@ -347,3 +347,204 @@ class TestFPAEdgeCases:
         expected_fpa = datetime(2025, 1, 20, 10, 0)
         assert fpa == expected_fpa
         assert overnight == 5
+
+
+@pytest.mark.fpa
+@pytest.mark.issue53
+class TestFPARounding:
+    """
+    Tests para Issue #53: Corrección de lógica de redondeo FPA.
+
+    La nueva lógica debe redondear a la hora entera MÁS CERCANA:
+    - 0-29 minutos → Redondear ABAJO
+    - 30-59 minutos → Redondear ARRIBA
+    - Esa hora es el extremo DERECHO del bloque de 2 horas
+    """
+
+    def test_rounding_down_0_minutes(self, db_session, sample_clinic, sample_specialty):
+        """FPA con 0 minutos → No redondea (ya es hora entera)."""
+        surgery = Surgery(
+            name='Cirugía Test',
+            base_stay_hours=24,
+            specialty_id=sample_specialty.id,
+            clinic_id=sample_clinic.id,
+            is_ambulatory=False
+        )
+        db_session.session.add(surgery)
+        db_session.session.commit()
+
+        ticket = Ticket(id='TH-ROUND-001', clinic_id=sample_clinic.id)
+        # Termina a las 22:00
+        pavilion_end = datetime(2025, 11, 12, 22, 0)
+
+        fpa, overnight = ticket.calculate_fpa(pavilion_end, surgery)
+
+        # 22:00 + 24h = 22:00 del día siguiente (ya es hora entera, no redondea)
+        expected_fpa = datetime(2025, 11, 13, 22, 0)
+        assert fpa == expected_fpa
+
+        # Verificar el bloque calculado: 22:00 es extremo derecho → Bloque 20:00-22:00
+        ticket.current_fpa = fpa
+        assert ticket.calculated_discharge_time_block == "20:00 - 22:00"
+
+    def test_rounding_down_15_minutes(self, db_session, sample_clinic, sample_specialty):
+        """FPA con 15 minutos → Redondea ABAJO a la hora actual."""
+        surgery = Surgery(
+            name='Cirugía Test',
+            base_stay_hours=6,
+            specialty_id=sample_specialty.id,
+            clinic_id=sample_clinic.id,
+            is_ambulatory=False
+        )
+        db_session.session.add(surgery)
+        db_session.session.commit()
+
+        ticket = Ticket(id='TH-ROUND-002', clinic_id=sample_clinic.id)
+        # Termina a las 14:15
+        pavilion_end = datetime(2025, 11, 15, 14, 15)
+
+        fpa, overnight = ticket.calculate_fpa(pavilion_end, surgery)
+
+        # 14:15 + 6h = 20:15 → Redondea ABAJO a 20:00
+        expected_fpa = datetime(2025, 11, 15, 20, 0)
+        assert fpa == expected_fpa
+
+        # Verificar el bloque: 20:00 es extremo derecho → Bloque 18:00-20:00
+        ticket.current_fpa = fpa
+        assert ticket.calculated_discharge_time_block == "18:00 - 20:00"
+
+    def test_rounding_down_29_minutes(self, db_session, sample_clinic, sample_specialty):
+        """FPA con 29 minutos → Redondea ABAJO (límite superior del redondeo abajo)."""
+        surgery = Surgery(
+            name='Cirugía Test',
+            base_stay_hours=6,
+            specialty_id=sample_specialty.id,
+            clinic_id=sample_clinic.id,
+            is_ambulatory=False
+        )
+        db_session.session.add(surgery)
+        db_session.session.commit()
+
+        ticket = Ticket(id='TH-ROUND-003', clinic_id=sample_clinic.id)
+        # Termina a las 08:29
+        pavilion_end = datetime(2025, 11, 15, 8, 29)
+
+        fpa, overnight = ticket.calculate_fpa(pavilion_end, surgery)
+
+        # 08:29 + 6h = 14:29 → Redondea ABAJO a 14:00
+        expected_fpa = datetime(2025, 11, 15, 14, 0)
+        assert fpa == expected_fpa
+
+        # Bloque: 14:00 → 12:00-14:00
+        ticket.current_fpa = fpa
+        assert ticket.calculated_discharge_time_block == "12:00 - 14:00"
+
+    def test_rounding_up_30_minutes(self, db_session, sample_clinic, sample_specialty):
+        """FPA con 30 minutos → Redondea ARRIBA (límite inferior del redondeo arriba)."""
+        surgery = Surgery(
+            name='Cirugía Test',
+            base_stay_hours=6,
+            specialty_id=sample_specialty.id,
+            clinic_id=sample_clinic.id,
+            is_ambulatory=False
+        )
+        db_session.session.add(surgery)
+        db_session.session.commit()
+
+        ticket = Ticket(id='TH-ROUND-004', clinic_id=sample_clinic.id)
+        # Termina a las 08:30
+        pavilion_end = datetime(2025, 11, 15, 8, 30)
+
+        fpa, overnight = ticket.calculate_fpa(pavilion_end, surgery)
+
+        # 08:30 + 6h = 14:30 → Redondea ARRIBA a 15:00
+        expected_fpa = datetime(2025, 11, 15, 15, 0)
+        assert fpa == expected_fpa
+
+        # Bloque: 15:00 → 13:00-15:00
+        ticket.current_fpa = fpa
+        assert ticket.calculated_discharge_time_block == "13:00 - 15:00"
+
+    def test_rounding_up_45_minutes(self, db_session, sample_clinic, sample_specialty):
+        """FPA con 45 minutos → Redondea ARRIBA."""
+        surgery = Surgery(
+            name='Cirugía Test',
+            base_stay_hours=6,
+            specialty_id=sample_specialty.id,
+            clinic_id=sample_clinic.id,
+            is_ambulatory=False
+        )
+        db_session.session.add(surgery)
+        db_session.session.commit()
+
+        ticket = Ticket(id='TH-ROUND-005', clinic_id=sample_clinic.id)
+        # Termina a las 08:45
+        pavilion_end = datetime(2025, 11, 15, 8, 45)
+
+        fpa, overnight = ticket.calculate_fpa(pavilion_end, surgery)
+
+        # 08:45 + 6h = 14:45 → Redondea ARRIBA a 15:00
+        expected_fpa = datetime(2025, 11, 15, 15, 0)
+        assert fpa == expected_fpa
+
+        # Bloque: 15:00 → 13:00-15:00
+        ticket.current_fpa = fpa
+        assert ticket.calculated_discharge_time_block == "13:00 - 15:00"
+
+    def test_rounding_midnight_edge_case(self, db_session, sample_clinic, sample_specialty):
+        """FPA que redondea a medianoche (00:00 del día siguiente)."""
+        surgery = Surgery(
+            name='Cirugía Test',
+            base_stay_hours=6,
+            specialty_id=sample_specialty.id,
+            clinic_id=sample_clinic.id,
+            is_ambulatory=False
+        )
+        db_session.session.add(surgery)
+        db_session.session.commit()
+
+        ticket = Ticket(id='TH-ROUND-006', clinic_id=sample_clinic.id)
+        # Termina a las 17:40
+        pavilion_end = datetime(2025, 11, 15, 17, 40)
+
+        fpa, overnight = ticket.calculate_fpa(pavilion_end, surgery)
+
+        # 17:40 + 6h = 23:40 → Redondea ARRIBA a 00:00 del día siguiente
+        expected_fpa = datetime(2025, 11, 16, 0, 0)
+        assert fpa == expected_fpa
+
+        # Bloque: 00:00 → 22:00-00:00
+        ticket.current_fpa = fpa
+        assert ticket.calculated_discharge_time_block == "22:00 - 00:00"
+
+    def test_real_case_issue_53(self, db_session, sample_clinic, sample_specialty):
+        """
+        Caso real del Issue #53: Cirugía de 24 horas que empieza a las 22:00.
+
+        Fecha inicio:  12/11/2025 22:00
+        FPA calculado: 13/11/2025 22:00
+        Rango esperado: 20:00 - 22:00
+        """
+        surgery = Surgery(
+            name='Cirugía 24h',
+            base_stay_hours=24,
+            specialty_id=sample_specialty.id,
+            clinic_id=sample_clinic.id,
+            is_ambulatory=False
+        )
+        db_session.session.add(surgery)
+        db_session.session.commit()
+
+        ticket = Ticket(id='TH-ISSUE-53', clinic_id=sample_clinic.id)
+        pavilion_end = datetime(2025, 11, 12, 22, 0)
+
+        fpa, overnight = ticket.calculate_fpa(pavilion_end, surgery)
+
+        # 22:00 + 24h = 22:00 del día siguiente
+        expected_fpa = datetime(2025, 11, 13, 22, 0)
+        assert fpa == expected_fpa
+
+        # Bloque: 22:00 → 20:00-22:00 ✅
+        ticket.current_fpa = fpa
+        assert ticket.calculated_discharge_time_block == "20:00 - 22:00"
+        assert overnight == 1

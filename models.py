@@ -127,16 +127,8 @@ class Doctor(db.Model):
 
     tickets = db.relationship('Ticket', backref='attending_doctor', lazy=True)
 
-class DischargeTimeSlot(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    start_time = db.Column(db.Time, nullable=False)
-    end_time = db.Column(db.Time, nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    clinic_id = db.Column(db.Integer, db.ForeignKey('clinic.id'), nullable=False)
-    
-    tickets = db.relationship('Ticket', backref='discharge_time_slot', lazy=True)
+# Issue #54: DischargeTimeSlot eliminado - se usa TimeBlockHelper en vez de BD
+# Los bloques horarios son FIJOS (24 bloques de 2h) y se calculan dinámicamente
 
 class StandardizedReason(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -185,7 +177,7 @@ class Ticket(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=True)
     surgery_id = db.Column(db.Integer, db.ForeignKey('surgery.id'), nullable=True)
     doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.id'), nullable=True)
-    discharge_slot_id = db.Column(db.Integer, db.ForeignKey('discharge_time_slot.id'), nullable=True)
+    # Issue #54: discharge_slot_id eliminado - bloques se calculan dinámicamente
     clinic_id = db.Column(db.Integer, db.ForeignKey('clinic.id'), nullable=False)
     
     pavilion_end_time = db.Column(db.DateTime, nullable=False)
@@ -238,16 +230,22 @@ class Ticket(db.Model):
     def calculated_discharge_time_block(self):
         """
         Calcula dinámicamente el bloque de 2 horas basándose en current_fpa.
-        IMPORTANTE: El FPA es el FIN del bloque, no el inicio.
+        IMPORTANTE: El FPA es el extremo DERECHO (fin) del bloque.
 
-        Ejemplo: Si FPA es 10:00, el bloque es 08:00-10:00 (donde 10:00 es el fin del bloque)
+        CORRECCIÓN Issue #53: Redondeo a hora entera MÁS CERCANA
+        - 0-29 minutos → Redondear ABAJO a la hora actual
+        - 30-59 minutos → Redondear ARRIBA a la siguiente hora
+        - Esa hora es el extremo DERECHO del rango de 2 horas
 
-        Reglas de redondeo:
-        - 10:00 → 08:00-10:00 (exacto, es el fin del bloque)
-        - 10:15 → 08:00-10:00 (redondea hacia abajo dentro del mismo bloque)
-        - 10:45 → 10:00-12:00 (redondea hacia arriba al siguiente bloque)
+        Ejemplos:
+        - 14:15 → Redondear a 14:00 → Bloque 12:00-14:00
+        - 14:30 → Redondear a 15:00 → Bloque 13:00-15:00
+        - 14:45 → Redondear a 15:00 → Bloque 13:00-15:00
+        - 13:00 → Ya es entero → Bloque 11:00-13:00
+        - 22:00 → Bloque 20:00-22:00
+        - 23:40 → Redondear a 00:00 → Bloque 22:00-00:00
 
-        Retorna el nombre del bloque (ej: "08:00 - 10:00").
+        Retorna el nombre del bloque (ej: "12:00 - 14:00").
         """
         if not self.current_fpa:
             return "Sin horario"
@@ -256,23 +254,18 @@ class Ticket(db.Model):
         fpa_hour = self.current_fpa.hour
         fpa_minute = self.current_fpa.minute
 
-        # Si hay minutos, redondeamos a la siguiente hora
-        if fpa_minute > 0:
-            fpa_hour += 1
+        # CORRECCIÓN: Redondear a la hora MÁS CERCANA
+        if fpa_minute >= 30:
+            fpa_hour += 1  # Redondear ARRIBA si >= 30 minutos
+        # Si < 30 minutos, se queda en la hora actual (redondear ABAJO)
 
-        # Redondear al siguiente bloque par si es necesario
-        if fpa_hour % 2 != 0:
-            fpa_hour += 1
+        # Manejar el caso de 24:00 (medianoche del día siguiente)
+        if fpa_hour >= 24:
+            fpa_hour = 0
 
-        # Manejar caso edge de medianoche
-        if fpa_hour == 0:
-            return "22:00 - 00:00"
-        elif fpa_hour >= 24:
-            fpa_hour = 24
-
-        # El FPA es el FIN del bloque
+        # El FPA redondeado es el extremo DERECHO del bloque
         block_end_hour = fpa_hour
-        block_start_hour = block_end_hour - 2
+        block_start_hour = (block_end_hour - 2) % 24
 
         # Formatear como "HH:MM - HH:MM"
         return f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"

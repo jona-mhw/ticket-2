@@ -5,7 +5,8 @@ from sqlalchemy import text
 from flask_migrate import upgrade as alembic_upgrade
 from models import (
     db, User, Clinic, Surgery, Specialty, Doctor,
-    DischargeTimeSlot, StandardizedReason, Patient, Ticket, Superuser,
+    # Issue #54: DischargeTimeSlot eliminado - se usa TimeBlockHelper
+    StandardizedReason, Patient, Ticket, Superuser,
     ROLE_ADMIN, ROLE_CLINICAL, ROLE_VISUALIZADOR,
     TICKET_STATUS_VIGENTE, TICKET_STATUS_ANULADO,
     REASON_CATEGORY_INITIAL, REASON_CATEGORY_MODIFICATION, REASON_CATEGORY_ANNULMENT
@@ -160,23 +161,10 @@ def seed_db():
         db.session.add_all(clinic_doctors)
         db.session.flush()
 
-        # Discharge Time Slots & Standardized Reasons (only if they don't exist for the clinic)
-        clinic_slots = []
-        if not DischargeTimeSlot.query.filter_by(clinic_id=clinic.id).first():
-            for i in range(0, 24, 2):
-                start_time = datetime.strptime(f'{i:02d}:00', '%H:%M').time()
-                end_hour = i + 2
-                end_time_str = '23:59:59' if end_hour >= 24 else f'{end_hour:02d}:00'
-                end_time = datetime.strptime(end_time_str, '%H:%M:%S' if end_hour >= 24 else '%H:%M').time()
-                slot_name = f"{start_time.strftime('%H:%M')} - {'00:00' if end_hour >= 24 else end_time.strftime('%H:%M')}"
-                slot = DischargeTimeSlot(name=slot_name, start_time=start_time, end_time=end_time, clinic_id=clinic.id)
-                clinic_slots.append(slot)
-                slots_to_add.append(slot)
+        # Issue #54: DischargeTimeSlot eliminado - los bloques horarios se generan dinámicamente
+        # Los bloques son FIJOS (24 bloques de 2h) y no requieren almacenamiento en BD
 
-            # Add and flush clinic slots immediately so they're available for ticket creation
-            db.session.add_all(clinic_slots)
-            db.session.flush()
-
+        # Standardized Reasons (only if they don't exist for the clinic)
         if not StandardizedReason.query.filter_by(clinic_id=clinic.id).first():
             reasons_data = [
                 # Razones de Discrepancia Inicial (Al crear ticket)

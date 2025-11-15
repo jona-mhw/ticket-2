@@ -8,7 +8,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import (
     db, Ticket, Patient, Surgery, Specialty, Clinic,
-    StandardizedReason, Doctor, DischargeTimeSlot,
+    StandardizedReason, Doctor,
+    # Issue #54: DischargeTimeSlot eliminado - se usa TimeBlockHelper
     TICKET_STATUS_VIGENTE, REASON_CATEGORY_INITIAL,
     REASON_CATEGORY_MODIFICATION, REASON_CATEGORY_ANNULMENT
 )
@@ -18,6 +19,7 @@ from repositories import TicketRepository, PatientRepository
 from validators import TicketValidator
 from dto import TicketDTO
 from utils import calculate_time_remaining
+from utils.time_blocks import TimeBlockHelper
 
 tickets_bp = Blueprint('tickets', __name__)
 
@@ -180,16 +182,13 @@ def api_calculate_fpa():
         pavilion_end_time = datetime.fromisoformat(pavilion_end_time_str)
         system_fpa, _ = FPACalculator.calculate(pavilion_end_time, surgery)
 
-        slot = DischargeTimeSlot.query.filter(
-            DischargeTimeSlot.start_time <= system_fpa.time(),
-            DischargeTimeSlot.end_time >= system_fpa.time(),
-            DischargeTimeSlot.clinic_id == clinic_id
-        ).first()
+        # Issue #54: Usar TimeBlockHelper en vez de buscar en BD
+        block = TimeBlockHelper.get_block_for_time(system_fpa)
 
         return jsonify({
             'fpa_date_iso': system_fpa.date().isoformat(),
             'fpa_time': system_fpa.strftime('%H:%M'),
-            'fpa_display_str': f"{system_fpa.strftime('%d/%m/%Y')} (Bloque: {slot.name if slot else 'N/A'})",
+            'fpa_display_str': f"{system_fpa.strftime('%d/%m/%Y')} (Bloque: {block['label']})",
             'surgery_base_stay_hours': surgery.base_stay_hours
         })
 
@@ -210,19 +209,17 @@ def detail(ticket_id):
         flash('Ticket no encontrado', 'error')
         return redirect(url_for('tickets.list'))
 
-    # Load reasons and slots for the ticket's clinic
+    # Load reasons for the ticket's clinic
     reasons_query = StandardizedReason.query.filter_by(
-        is_active=True,
-        clinic_id=ticket.clinic_id
-    )
-    slots_query = DischargeTimeSlot.query.filter_by(
         is_active=True,
         clinic_id=ticket.clinic_id
     )
 
     modification_reasons = reasons_query.filter_by(category='modification').all()
     annulment_reasons = reasons_query.filter_by(category='annulment').all()
-    discharge_time_slots = slots_query.order_by(DischargeTimeSlot.start_time).all()
+
+    # Issue #54: Generar bloques dinámicamente con TimeBlockHelper
+    discharge_time_slots = TimeBlockHelper.get_all_blocks()
 
     return render_template('tickets/detail.html',
                          ticket=ticket,
@@ -261,15 +258,19 @@ def update_fpa(ticket_id):
 
     try:
         new_fpa_date = datetime.strptime(request.form.get('new_fpa_date'), '%Y-%m-%d').date()
-        slot = DischargeTimeSlot.query.get(request.form.get('discharge_slot_id'))
 
-        if not slot:
+        # Issue #54: Usar discharge_end_hour directamente en vez de buscar en BD
+        discharge_end_hour = request.form.get('discharge_end_hour')
+        if not discharge_end_hour:
             flash('Rango horario no válido.', 'error')
             return redirect(url_for('tickets.detail', ticket_id=ticket_id))
 
-        # IMPORTANTE: Usar end_time porque el FPA representa el FIN del bloque horario
-        # Ejemplo: slot "14:00 - 16:00" → FPA = 16:00 → se calcula como bloque 14:00-16:00
-        new_fpa = datetime.combine(new_fpa_date, slot.end_time)
+        # Convertir hora a objeto time
+        end_time = TimeBlockHelper.get_end_time(int(discharge_end_hour))
+
+        # IMPORTANTE: El FPA representa el FIN del bloque horario
+        # Ejemplo: bloque "14:00 - 16:00" → FPA = 16:00 → se calcula como bloque 14:00-16:00
+        new_fpa = datetime.combine(new_fpa_date, end_time)
         reason = request.form.get('reason')
         justification = request.form.get('justification', '').strip()
 
