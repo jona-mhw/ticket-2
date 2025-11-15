@@ -261,7 +261,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Functions ---
     function populateSpecialties() {
-        const clinicId = currentClinicId || (isSuperuser && clinicSelect ? parseInt(clinicSelect.value) : null);
+        // For superusers, use currentClinicId (should be set before calling this function)
+        // For regular users, use their clinic_id
+        const clinicId = isSuperuser ? currentClinicId : {{ current_user.clinic_id if not current_user.is_superuser else 'null' }};
+
         specialtySelect.innerHTML = '<option value="">Seleccionar especialidad</option>';
         specialtySelect.disabled = true;
 
@@ -270,7 +273,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const clinicSpecialties = allSpecialties.filter(s => s.clinic_id === clinicId);
+        // Convert clinicId to number for consistent comparison
+        const clinicIdNum = parseInt(clinicId);
+        const clinicSpecialties = allSpecialties.filter(s => s.clinic_id === clinicIdNum);
+
         if (clinicSpecialties.length > 0) {
             clinicSpecialties.forEach(specialty => {
                 const option = new Option(specialty.name, specialty.id);
@@ -284,7 +290,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function populateSurgeries() {
         const specialtyId = parseInt(specialtySelect.value);
-        const clinicId = currentClinicId || (isSuperuser ? parseInt(clinicSelect.value) : null);
+        // For superusers, use currentClinicId (should be set before calling this function)
+        // For regular users, use their clinic_id
+        const clinicId = isSuperuser ? currentClinicId : {{ current_user.clinic_id if not current_user.is_superuser else 'null' }};
 
         surgerySelect.innerHTML = '<option value="">Seleccionar cirugía</option>';
         surgerySelect.disabled = true;
@@ -295,7 +303,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Filtrar por clínica si es necesario
         if (clinicId) {
-            specialtySurgeries = specialtySurgeries.filter(s => s.clinic_id === clinicId);
+            const clinicIdNum = parseInt(clinicId);
+            specialtySurgeries = specialtySurgeries.filter(s => s.clinic_id === clinicIdNum);
         }
 
         if (specialtySurgeries.length > 0) {
@@ -310,7 +319,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function populateDoctors() {
-        const clinicId = currentClinicId || (isSuperuser && clinicSelect ? parseInt(clinicSelect.value) : null);
+        // For superusers, use currentClinicId (should be set before calling this function)
+        // For regular users, use their clinic_id
+        const clinicId = isSuperuser ? currentClinicId : {{ current_user.clinic_id if not current_user.is_superuser else 'null' }};
+
         doctorSelect.innerHTML = '<option value="">Seleccione un médico (opcional)</option>';
         doctorSelect.disabled = true;
 
@@ -319,7 +331,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const clinicDoctors = allDoctors.filter(d => d.clinic_id === clinicId);
+        // Convert clinicId to number for consistent comparison
+        const clinicIdNum = parseInt(clinicId);
+        const clinicDoctors = allDoctors.filter(d => d.clinic_id === clinicIdNum);
+
         if (clinicDoctors.length > 0) {
             clinicDoctors.forEach(doctor => {
                 const option = new Option(`${doctor.name} - ${doctor.specialty}`, doctor.id);
@@ -333,7 +348,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function populateInitialReasons() {
-        const clinicId = currentClinicId || (isSuperuser && clinicSelect ? parseInt(clinicSelect.value) : null);
+        // For superusers, use currentClinicId (should be set before calling this function)
+        // For regular users, use their clinic_id
+        const clinicId = isSuperuser ? currentClinicId : {{ current_user.clinic_id if not current_user.is_superuser else 'null' }};
 
         if (!initialReasonSelect) return; // El select puede no existir si no hay discrepancia
 
@@ -344,7 +361,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const clinicReasons = allInitialReasons.filter(r => r.clinic_id === clinicId);
+        // Convert clinicId to number for consistent comparison
+        const clinicIdNum = parseInt(clinicId);
+        const clinicReasons = allInitialReasons.filter(r => r.clinic_id === clinicIdNum);
+
         if (clinicReasons.length > 0) {
             clinicReasons.forEach(reason => {
                 const option = new Option(reason.reason, reason.reason);
@@ -358,7 +378,9 @@ document.addEventListener('DOMContentLoaded', function() {
     async function updateFpaPreview() {
         const surgeryId = surgerySelect.value;
         const pavilionEndValue = pavilionEndTimeInput.value;
-        const clinicId = currentClinicId || (isSuperuser && clinicSelect ? parseInt(clinicSelect.value) : null);
+        // For superusers, use currentClinicId (should be set before calling this function)
+        // For regular users, use their clinic_id
+        const clinicId = isSuperuser ? currentClinicId : {{ current_user.clinic_id if not current_user.is_superuser else 'null' }};
         const systemFpaHelper = document.getElementById('system-fpa-helper');
 
         if (!surgeryId || !pavilionEndValue) {
