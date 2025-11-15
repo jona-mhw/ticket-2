@@ -27,7 +27,10 @@ class FPACalculator:
             1. FPA = pavilion_end_time + base_stay_hours
             2. For ambulatory surgeries before cutoff hour:
                - If calculated FPA is before 8am next day, set FPA to 8am next day
-            3. Overnight stays = number of nights patient stays (ceil of days)
+            3. CORRECCIÓN Issue #53: Redondear a hora entera más cercana:
+               - 0-29 minutos → Redondear ABAJO
+               - 30-59 minutos → Redondear ARRIBA
+            4. Overnight stays = number of nights patient stays (ceil of days)
         """
         base_hours = surgery.base_stay_hours
         total_hours = base_hours
@@ -45,6 +48,16 @@ class FPACalculator:
                 ) + timedelta(days=1)
                 if fpa < next_morning:
                     fpa = next_morning
+
+        # CORRECCIÓN Issue #53: Redondear FPA a la hora entera más cercana
+        # 0-29 minutos → Redondear ABAJO
+        # 30-59 minutos → Redondear ARRIBA
+        if fpa.minute >= 30:
+            # Redondear ARRIBA: eliminar minutos/segundos y sumar 1 hora
+            fpa = fpa.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        else:
+            # Redondear ABAJO: eliminar minutos/segundos
+            fpa = fpa.replace(minute=0, second=0, microsecond=0)
 
         # Calculate overnight stays
         time_diff = fpa - pavilion_end_time
