@@ -40,8 +40,12 @@
                             <span class="text-sm text-gray-700">RUT</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="room" checked>
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="bed_number" checked>
                             <span class="text-sm text-gray-700">Cama</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="location" checked>
+                            <span class="text-sm text-gray-700">Ubicación</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
                             <input type="checkbox" class="column-toggle rounded text-blue-600 focus:ring-blue-500" data-column="ticket_id">
@@ -151,7 +155,7 @@
         <div class="flex items-center gap-2 ml-auto">
             <div class="relative">
                 <input type="search" name="search" value="{{ filters.search }}"
-                       placeholder="Buscar paciente, RUT, cama..."
+                       placeholder="Buscar paciente, RUT, cama, ubicación..."
                        class="pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-72">
                 <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -177,8 +181,11 @@
                 <th class="column-rut px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     RUT
                 </th>
-                <th class="column-room px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th class="column-bed_number px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Cama
+                </th>
+                <th class="column-location px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Ubicación
                 </th>
                 <th class="column-fpa px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Fecha Probable Alta
@@ -227,18 +234,14 @@
                     <div class="text-sm text-gray-700">{{ ticket.patient.rut }}</div>
                 </td>
 
-                <!-- Room (Editable) -->
-                <td class="column-room px-4 py-4">
-                    <div class="room-badge-list editable-room" data-ticket-id="{{ ticket.id }}" data-current-room="{{ ticket.room or '' }}" title="Haz clic para editar">
-                        <svg class="w-4 h-4 room-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                        </svg>
-                        <span class="room-display">{{ ticket.room or 'Sin cama' }}</span>
-                        <input type="text" class="room-input" value="{{ ticket.room or '' }}" placeholder="Ej: 201" style="display: none;" maxlength="10">
-                        <svg class="w-3 h-3 edit-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity: 0.5;">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                    </div>
+                <!-- Bed Number (Issue #49) -->
+                <td class="column-bed_number px-4 py-4">
+                    <div class="text-sm text-gray-700">{{ ticket.bed_number or '-' }}</div>
+                </td>
+
+                <!-- Location (Issue #49) -->
+                <td class="column-location px-4 py-4">
+                    <div class="text-sm text-gray-700">{{ ticket.location or '-' }}</div>
                 </td>
 
                 <!-- FPA Date -->
@@ -409,45 +412,6 @@
 .urgency-indicator.urgency-expired { background-color: #ef4444; }
 .urgency-indicator.urgency-scheduled { background-color: #8b5cf6; }
 
-/* Room Badge for List */
-.room-badge-list {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.75rem;
-    background: #f3f4f6;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-    font-size: 0.875rem;
-}
-
-.room-badge-list:hover {
-    background: #e5e7eb;
-    border-color: #3b82f6;
-}
-
-.room-badge-list:hover .edit-icon {
-    opacity: 1 !important;
-}
-
-.room-badge-list .room-input {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #111827;
-    border: 1px solid #3b82f6;
-    border-radius: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    background: white;
-    outline: none;
-}
-
-.room-badge-list.editing {
-    background: white;
-    border-color: #3b82f6;
-}
-
 /* Status Badges */
 .status-badge {
     display: inline-flex;
@@ -602,86 +566,10 @@ function updateCountdowns() {
     });
 }
 
-// Inline Room Editing
+// Countdowns and Search (Issue #49: edición de cama/ubicación movida a vista de tarjetas)
 document.addEventListener('DOMContentLoaded', function() {
     updateCountdowns();
     setInterval(updateCountdowns, 1000); // Update every second
-
-    // Setup inline editing for room badges
-    document.querySelectorAll('.editable-room').forEach(roomBadge => {
-        const display = roomBadge.querySelector('.room-display');
-        const input = roomBadge.querySelector('.room-input');
-        const ticketId = roomBadge.dataset.ticketId;
-
-        roomBadge.addEventListener('click', function(e) {
-            if (roomBadge.classList.contains('editing')) return;
-            roomBadge.classList.add('editing');
-            display.style.display = 'none';
-            input.style.display = 'block';
-            input.focus();
-            input.select();
-        });
-
-        const saveRoom = async function() {
-            const newRoom = input.value.trim();
-            const currentRoom = roomBadge.dataset.currentRoom;
-
-            if (newRoom === currentRoom) {
-                exitEditMode();
-                return;
-            }
-
-            try {
-                const response = await fetch('{{ url_for("tickets.api_update_room") }}', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ticket_id: ticketId, room: newRoom})
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    display.textContent = data.room;
-                    roomBadge.dataset.currentRoom = newRoom;
-                    roomBadge.style.background = '#d4edda';
-                    setTimeout(() => { roomBadge.style.background = ''; }, 1000);
-                } else {
-                    alert('Error: ' + (data.error || 'No se pudo actualizar la cama'));
-                    input.value = currentRoom;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al guardar la cama');
-                input.value = currentRoom;
-            }
-
-            exitEditMode();
-        };
-
-        const exitEditMode = function() {
-            roomBadge.classList.remove('editing');
-            display.style.display = 'inline';
-            input.style.display = 'none';
-        };
-
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                saveRoom();
-            } else if (e.key === 'Escape') {
-                input.value = roomBadge.dataset.currentRoom;
-                exitEditMode();
-            }
-        });
-
-        input.addEventListener('blur', function() {
-            setTimeout(saveRoom, 100);
-        });
-
-        input.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-    });
 
     // Real-time Search
     const searchInput = document.querySelector('input[name="search"]');

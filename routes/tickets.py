@@ -500,16 +500,26 @@ def nursing_list():
                          visible_columns=visible_columns)
 
 
-@tickets_bp.route('/api/update-room', methods=['POST'])
+@tickets_bp.route('/api/update-bed-location', methods=['POST'])
 @login_required
-def api_update_room():
-    """API endpoint to update patient room/bed from nursing board."""
+def api_update_bed_location():
+    """API endpoint to update patient bed number and location from nursing board."""
     data = request.get_json()
     ticket_id = data.get('ticket_id')
-    room = data.get('room', '').strip()
+    field = data.get('field')  # 'bed_number' or 'location'
+    value = data.get('value', '').strip()
 
     if not ticket_id:
         return jsonify({'error': 'ticket_id es requerido'}), 400
+
+    if not field or field not in ['bed_number', 'location']:
+        return jsonify({'error': 'field debe ser bed_number o location'}), 400
+
+    # Validaciones de longitud
+    if field == 'bed_number' and value and len(value) > 10:
+        return jsonify({'error': 'Número de cama no puede exceder 10 caracteres'}), 400
+    if field == 'location' and value and len(value) > 50:
+        return jsonify({'error': 'Ubicación no puede exceder 50 caracteres'}), 400
 
     ticket = TicketRepository.get_by_id(
         ticket_id,
@@ -520,10 +530,19 @@ def api_update_room():
         return jsonify({'error': 'Ticket no encontrado'}), 404
 
     try:
-        ticket.room = room if room else None
+        # Actualizar el campo correspondiente
+        if field == 'bed_number':
+            ticket.bed_number = value if value else None
+            field_label = 'cama'
+            display_value = value if value else 'Sin asignar'
+        else:  # location
+            ticket.location = value if value else None
+            field_label = 'ubicación'
+            display_value = value if value else 'Sin especificar'
+
         AuditService.log_action(
             user=current_user,
-            action=f"Actualizó cama a: {room if room else 'Sin cama'}",
+            action=f"Actualizó {field_label} a: {display_value}",
             target_id=ticket_id,
             target_type='Ticket'
         )
@@ -531,8 +550,9 @@ def api_update_room():
 
         return jsonify({
             'success': True,
-            'room': room if room else 'Sin cama',
-            'message': f'Cama actualizada a: {room if room else "Sin cama"}'
+            'field': field,
+            'value': display_value,
+            'message': f'{field_label.capitalize()} actualizada correctamente'
         })
     except Exception as e:
         db.session.rollback()
