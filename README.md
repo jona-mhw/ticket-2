@@ -34,10 +34,12 @@ Ticket Home permite a los equipos médicos y administrativos de RedSalud:
 
 ### Ambientes Disponibles
 
-| Ambiente | URL | Acceso |
-|----------|-----|--------|
-| **DEV** | https://ticket-home.mhwdev.dev | Google SSO + Login tradicional |
-| **QA** | https://qa-ticket-home.mhwdev.dev | Solo Google SSO |
+| Ambiente | URL | Propósito | Documentación |
+|----------|-----|-----------|---------------|
+| **LOCAL** | localhost:5000 | Desarrollo diario (80%) | `deployment/local/` |
+| **MHW DEV** | https://ticket-home-beta.mhwdev.dev | Cloud personal - Testing/Demos (15%) | `deployment/mhw-dev/` |
+| **Empresa DEV** | https://ticket-home.mhwdev.dev | Testing funcional RedSalud (4%) | `deployment/empresa-dev/` |
+| **Empresa QA** | https://qa-ticket-home.mhwdev.dev | Pre-producción RedSalud (1%) | `deployment/empresa-qa/` |
 
 ### Requisitos de Acceso
 
@@ -122,13 +124,39 @@ Ver documentación completa en: `tests/README.md`
 
 ---
 
+## 🚀 Deployment
+
+**Ver guía completa**: [`deployment/README.md`](deployment/README.md)
+
+### Quick Start por Ambiente
+
+**LOCAL** (Desarrollo diario):
+```bash
+flask run
+```
+
+**MHW DEV** (Tu cloud personal):
+```powershell
+cd deployment/mhw-dev
+.\Deploy-Interactive.ps1
+```
+
+**Empresa DEV/QA** (RedSalud):
+```batch
+cd deployment\empresa-dev
+1-build-push-local.bat
+2-deploy-normal.bat
+```
+
+---
+
 ## 📖 Documentación Técnica
 
-Para información técnica sobre deployment y desarrollo:
-- `tests/README.md` - Guía completa de testing
-- `_deployment_scripts/README.md` - Guía de deployment
-- `RESUMEN-SEGURIDAD-v1.9.3.md` - Documentación de seguridad
-- `_docs/changelog.md` - Historial de versiones
+- [`deployment/README.md`](deployment/README.md) - **Guía completa de deployment**
+- [`deployment/mhw-dev/docs/SECRETS_GUIDE.md`](deployment/mhw-dev/docs/SECRETS_GUIDE.md) - Gestión de secretos
+- [`tests/README.md`](tests/README.md) - Guía completa de testing
+- [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) - Arquitectura técnica
+- `DEPLOYMENT_LOG.md` - Log detallado del primer deployment
 
 ---
 
