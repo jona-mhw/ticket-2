@@ -551,8 +551,8 @@
 
 {% block extra_js %}
 <script>
-// Current FPA for calculations
-const currentFpa = new Date('{{ ticket.current_fpa.strftime("%Y-%m-%d") }}');
+// Current FPA for calculations (with time to avoid timezone issues)
+const currentFpa = new Date('{{ ticket.current_fpa.strftime("%Y-%m-%d") }}T00:00:00');
 
 // Format date as DD/MM/YYYY
 function formatDateDMY(date) {
@@ -606,12 +606,8 @@ function updatePreview() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Set current FPA as default value
-    const dateInput = document.getElementById('new_fpa_date');
-    if (dateInput) {
-        dateInput.value = formatDateYMD(currentFpa);
-        updatePreview();
-    }
+    // Update preview (value is already set in HTML by Jinja2)
+    updatePreview();
 });
 </script>
 {% endblock %}
