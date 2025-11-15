@@ -420,23 +420,21 @@ document.addEventListener('DOMContentLoaded', function() {
                  medicalDischargeDateInput.value = data.fpa_date_iso;
             }
 
-            // Show/hide justification section
-            const medicalDischargeDate = new Date(medicalDischargeDateInput.value + 'T00:00:00');
-            const systemFpaDate = new Date(data.fpa_date_iso + 'T00:00:00');
+            // Prepare dates for comparison and preview (Issue #41)
+            const pavilionDate = new Date(pavilionEndValue);
+            const systemFpaDateOnly = new Date(data.fpa_date_iso + 'T00:00:00');
+            const systemFpaDateTime = new Date(data.fpa_date_iso + 'T' + data.fpa_time);
+            const medicalDate = new Date(medicalDischargeDateInput.value + 'T00:00:00');
+            const usingMedicalDate = medicalDate.getTime() !== systemFpaDateOnly.getTime();
 
-            if (medicalDischargeDate.getTime() !== systemFpaDate.getTime()) {
+            // Show/hide justification section based on date difference
+            if (usingMedicalDate) {
                 justificationSection.style.display = 'block';
                 initialReasonSelect.required = true;
             } else {
                 justificationSection.style.display = 'none';
                 initialReasonSelect.required = false;
             }
-
-            // Update preview panel with detailed breakdown (Issue #41)
-            const pavilionDate = new Date(pavilionEndValue);
-            const systemFpaDate = new Date(data.fpa_date_iso + 'T' + data.fpa_time);
-            const medicalDate = new Date(medicalDischargeDateInput.value + 'T00:00:00');
-            const usingMedicalDate = medicalDischargeDate.getTime() !== systemFpaDate.getTime();
 
             // Helper function to format date as DD/MM/YYYY
             const formatDateDMY = (date) => {
@@ -479,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             } else {
                 // Show only system calculated FPA (same as before)
-                const daysDiff = Math.ceil((systemFpaDate - pavilionDate) / (1000 * 60 * 60 * 24));
+                const daysDiff = Math.ceil((systemFpaDateTime - pavilionDate) / (1000 * 60 * 60 * 24));
 
                 fpaPreview.innerHTML = `
                     <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
