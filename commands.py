@@ -5,7 +5,8 @@ from sqlalchemy import text
 from flask_migrate import upgrade as alembic_upgrade
 from models import (
     db, User, Clinic, Surgery, Specialty, Doctor,
-    DischargeTimeSlot, StandardizedReason, Patient, Ticket, Superuser,
+    # Issue #54: DischargeTimeSlot eliminado - se usa TimeBlockHelper
+    StandardizedReason, Patient, Ticket, Superuser,
     ROLE_ADMIN, ROLE_CLINICAL, ROLE_VISUALIZADOR,
     TICKET_STATUS_VIGENTE, TICKET_STATUS_ANULADO,
     REASON_CATEGORY_INITIAL, REASON_CATEGORY_MODIFICATION, REASON_CATEGORY_ANNULMENT
@@ -160,35 +161,10 @@ def seed_db():
         db.session.add_all(clinic_doctors)
         db.session.flush()
 
-        # Discharge Time Slots & Standardized Reasons (only if they don't exist for the clinic)
-        clinic_slots = []
-        if not DischargeTimeSlot.query.filter_by(clinic_id=clinic.id).first():
-            # CORRECCIÓN Issue #53: Crear 24 bloques (uno por cada hora) en vez de 12
-            # Cada bloque termina en una hora específica y tiene 2 horas de duración
-            for end_hour in range(24):  # 0, 1, 2, 3, ..., 23
-                # El bloque termina en end_hour, y empieza 2 horas antes
-                start_hour = (end_hour - 2) % 24
+        # Issue #54: DischargeTimeSlot eliminado - los bloques horarios se generan dinámicamente
+        # Los bloques son FIJOS (24 bloques de 2h) y no requieren almacenamiento en BD
 
-                # Crear objetos time
-                start_time = datetime.strptime(f'{start_hour:02d}:00', '%H:%M').time()
-                end_time = datetime.strptime(f'{end_hour:02d}:00', '%H:%M').time()
-
-                # Nombre del bloque (ej: "11:00 - 13:00", "13:00 - 15:00", etc.)
-                slot_name = f"{start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')}"
-
-                slot = DischargeTimeSlot(
-                    name=slot_name,
-                    start_time=start_time,
-                    end_time=end_time,
-                    clinic_id=clinic.id
-                )
-                clinic_slots.append(slot)
-                slots_to_add.append(slot)
-
-            # Add and flush clinic slots immediately so they're available for ticket creation
-            db.session.add_all(clinic_slots)
-            db.session.flush()
-
+        # Standardized Reasons (only if they don't exist for the clinic)
         if not StandardizedReason.query.filter_by(clinic_id=clinic.id).first():
             reasons_data = [
                 # Razones de Discrepancia Inicial (Al crear ticket)

@@ -127,16 +127,8 @@ class Doctor(db.Model):
 
     tickets = db.relationship('Ticket', backref='attending_doctor', lazy=True)
 
-class DischargeTimeSlot(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    start_time = db.Column(db.Time, nullable=False)
-    end_time = db.Column(db.Time, nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    clinic_id = db.Column(db.Integer, db.ForeignKey('clinic.id'), nullable=False)
-    
-    tickets = db.relationship('Ticket', backref='discharge_time_slot', lazy=True)
+# Issue #54: DischargeTimeSlot eliminado - se usa TimeBlockHelper en vez de BD
+# Los bloques horarios son FIJOS (24 bloques de 2h) y se calculan dinámicamente
 
 class StandardizedReason(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -185,7 +177,7 @@ class Ticket(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=True)
     surgery_id = db.Column(db.Integer, db.ForeignKey('surgery.id'), nullable=True)
     doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.id'), nullable=True)
-    discharge_slot_id = db.Column(db.Integer, db.ForeignKey('discharge_time_slot.id'), nullable=True)
+    # Issue #54: discharge_slot_id eliminado - bloques se calculan dinámicamente
     clinic_id = db.Column(db.Integer, db.ForeignKey('clinic.id'), nullable=False)
     
     pavilion_end_time = db.Column(db.DateTime, nullable=False)
