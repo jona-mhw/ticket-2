@@ -1,0 +1,9 @@
+# ============================================
+# TERRAFORM VARIABLES - EJEMPLO 02
+# ============================================
+
+# Tu proyecto GCP
+project_id = "mi-proyecto-gcp"
+
+# Región (opcional, tiene default)
+region = "us-central1"

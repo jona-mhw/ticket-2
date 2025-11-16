@@ -1,0 +1,41 @@
+# ============================================
+# TERRAFORM VARIABLES - EMPRESA DEV
+# ============================================
+# Copia este archivo a: terraform.tfvars
+# Y llena con tus valores reales
+
+# --- GCP Project ---
+project_id = "dev-ticket-home-redsalud"
+region     = "southamerica-west1"
+
+# --- Aplicación ---
+service_name = "ticket-home"
+environment  = "empresa-dev"
+
+# Imagen Docker
+# Actualiza el tag según la versión que quieras deployar
+docker_image = "southamerica-west1-docker.pkg.dev/dev-ticket-home-redsalud/tickethome-repo/ticket-home:latest"
+
+# --- VPC ---
+vpc_connector = "tckthome-conn-sa-west1"
+
+# --- Dominio ---
+domain_name = "ticket-home.mhwdev.dev"
+
+# --- Service Account ---
+service_account_email = "ticket-home-sa@dev-ticket-home-redsalud.iam.gserviceaccount.com"
+
+# --- IAP ---
+# Client ID (obtener de GCP Console → APIs & Services → Credentials)
+iap_oauth_client_id = "123456789-xxxxxxxxxxxxxx.apps.googleusercontent.com"
+
+# Client Secret
+# IMPORTANTE: Considera usar una variable de entorno:
+#   export TF_VAR_iap_oauth_client_secret="tu-secret"
+iap_oauth_client_secret = "GOCSPX-xxxxxxxxxxxxxx"
+
+# Usuarios/grupos con acceso
+iap_access_members = [
+  "group:rs-ticket-home@googlegroups.com",
+  # "user:usuario@redsalud.cl",
+]

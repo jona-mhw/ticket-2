@@ -1,0 +1,11 @@
+# ============================================
+# TERRAFORM VARIABLES - EJEMPLO 01
+# ============================================
+# Copia este archivo a: terraform.tfvars
+# Y llena con tus valores reales
+
+# Tu proyecto GCP
+project_id = "mi-proyecto-gcp"
+
+# Región (opcional, tiene default en variables.tf)
+region = "us-central1"

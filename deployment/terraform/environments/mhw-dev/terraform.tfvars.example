@@ -1,0 +1,43 @@
+# ============================================
+# TERRAFORM VARIABLES - MHW DEV
+# ============================================
+# Copia este archivo a: terraform.tfvars
+# Y llena con tus valores reales
+
+# --- GCP Project ---
+project_id = "ticket-home-demo"
+region     = "us-central1"
+
+# --- Aplicación ---
+service_name = "tickethome-demo"
+environment  = "mhw-dev"
+
+# Imagen Docker
+# Actualiza el tag según la versión que quieras deployar
+docker_image = "us-central1-docker.pkg.dev/ticket-home-demo/tickethome-repo/ticket-home:latest"
+
+# --- Cloud SQL ---
+cloudsql_instance_name   = "tickethome-db"
+cloudsql_database_name   = "mhw_ticket_home"
+cloudsql_connection_name = "ticket-home-demo:us-central1:tickethome-db"
+
+# --- Dominio ---
+domain_name = "ticket-home-beta.mhwdev.dev"
+
+# --- Service Account ---
+service_account_email = "tickethome-demo-sa@ticket-home-demo.iam.gserviceaccount.com"
+
+# --- IAP ---
+# Client ID (obtener de GCP Console → APIs & Services → Credentials)
+iap_oauth_client_id = "123456789-xxxxxxxxxxxxxx.apps.googleusercontent.com"
+
+# Client Secret (también de Credentials)
+# IMPORTANTE: Considera usar una variable de entorno en vez de hardcodear:
+#   export TF_VAR_iap_oauth_client_secret="tu-secret"
+iap_oauth_client_secret = "GOCSPX-xxxxxxxxxxxxxx"
+
+# Usuarios/grupos con acceso
+iap_access_members = [
+  "user:jonathan@mhwdev.dev",
+  # "group:ticket-home@googlegroups.com",
+]

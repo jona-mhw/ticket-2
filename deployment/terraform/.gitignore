@@ -1,0 +1,58 @@
+# ============================================
+# TERRAFORM GITIGNORE
+# ============================================
+# Archivos que NUNCA deben ir a Git
+
+# --- State Files ---
+# Contienen información sobre recursos creados
+# Pueden contener datos sensibles
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# --- Variable Files con Valores Reales ---
+# terraform.tfvars puede contener secrets, IPs, etc.
+# Solo commitear los archivos .example
+terraform.tfvars
+*.auto.tfvars
+
+# --- Terraform Directory ---
+# Contiene providers descargados
+.terraform/
+.terraform.lock.hcl
+
+# --- Plan Files ---
+# Pueden contener información sensible
+*.tfplan
+*.tfplan.*
+
+# --- Crash Logs ---
+crash.log
+crash.*.log
+
+# --- Override Files ---
+# Útiles para desarrollo local
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# --- CLI Configuration ---
+.terraformrc
+terraform.rc
+
+# --- Backup Files ---
+*.bak
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+
+# ============================================
+# ARCHIVOS QUE SÍ DEBEN IR A GIT
+# ============================================
+# ✅ *.tf (archivos Terraform)
+# ✅ *.tf.json
+# ✅ *.tfvars.example (ejemplos sin datos sensibles)
+# ✅ README.md
+# ✅ .gitignore
