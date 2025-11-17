@@ -43,8 +43,7 @@ class TicketRepository:
         query = Ticket.query.options(
             joinedload(Ticket.patient),
             joinedload(Ticket.surgery).joinedload(Surgery.specialty),
-            joinedload(Ticket.attending_doctor),
-            joinedload(Ticket.discharge_time_slot)
+            joinedload(Ticket.attending_doctor)
         ).filter_by(id=ticket_id)
 
         if clinic_id:
@@ -68,8 +67,7 @@ class TicketRepository:
         query = Ticket.query.options(
             joinedload(Ticket.patient),
             joinedload(Ticket.surgery).joinedload(Surgery.specialty),
-            joinedload(Ticket.attending_doctor),
-            joinedload(Ticket.discharge_time_slot)
+            joinedload(Ticket.attending_doctor)
         ).join(Patient, Ticket.patient_id == Patient.id)\
          .join(Surgery, Ticket.surgery_id == Surgery.id)\
          .outerjoin(Doctor, Ticket.doctor_id == Doctor.id)

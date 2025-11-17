@@ -82,9 +82,6 @@ class TicketValidator:
         if not form_data.get('new_fpa_date'):
             errors.append('Nueva fecha de alta es requerida')
 
-        if not form_data.get('discharge_slot_id'):
-            errors.append('Rango horario de alta es requerido')
-
         if not form_data.get('reason'):
             errors.append('Razón de modificación es requerida')
 

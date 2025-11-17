@@ -228,13 +228,6 @@ def seed_db():
             # Calcular FPA correctamente usando el método del modelo
             system_calculated_fpa, overnight_stays = Ticket().calculate_fpa(pavilion_end_time, selected_surgery)
 
-            # Buscar el discharge_slot que corresponde al FPA calculado
-            discharge_slot = DischargeTimeSlot.query.filter(
-                DischargeTimeSlot.start_time <= system_calculated_fpa.time(),
-                DischargeTimeSlot.end_time >= system_calculated_fpa.time(),
-                DischargeTimeSlot.clinic_id == clinic.id
-            ).first()
-
             # Calcular medical_discharge_date (entre 1 y 5 días después del pavilion_end_time)
             medical_discharge_date = (pavilion_end_time + timedelta(days=random.randint(1, 5))).date()
 
@@ -254,7 +247,6 @@ def seed_db():
                 initial_fpa=system_calculated_fpa,
                 current_fpa=system_calculated_fpa,
                 overnight_stays=overnight_stays,
-                discharge_slot_id=discharge_slot.id if discharge_slot else None,
                 surgery_name_snapshot=selected_surgery.name,
                 surgery_base_hours_snapshot=selected_surgery.base_stay_hours,
                 bed_number=bed_number,
@@ -341,33 +333,6 @@ def _create_minimal_seed():
     db.session.add_all(clinics_to_add)
     db.session.commit()
     print(f"{len(clinics_to_add)} clinics created.")
-
-    # Create discharge time slots for each clinic
-    clinics = Clinic.query.all()
-    total_slots = 0
-
-    for clinic in clinics:
-        # Check if slots already exist for this clinic
-        if DischargeTimeSlot.query.filter_by(clinic_id=clinic.id).first():
-            print(f"  Discharge slots already exist for {clinic.name}. Skipping.")
-            continue
-
-        slots_to_add = []
-        for i in range(0, 24, 2):
-            start_time = datetime.strptime(f'{i:02d}:00', '%H:%M').time()
-            end_hour = i + 2
-            end_time_str = '23:59:59' if end_hour >= 24 else f'{end_hour:02d}:00'
-            end_time = datetime.strptime(end_time_str, '%H:%M:%S' if end_hour >= 24 else '%H:%M').time()
-            slot_name = f"{start_time.strftime('%H:%M')} - {'00:00' if end_hour >= 24 else end_time.strftime('%H:%M')}"
-            slot = DischargeTimeSlot(name=slot_name, start_time=start_time, end_time=end_time, clinic_id=clinic.id)
-            slots_to_add.append(slot)
-
-        db.session.add_all(slots_to_add)
-        total_slots += len(slots_to_add)
-        print(f"  Created {len(slots_to_add)} discharge time slots for {clinic.name}")
-
-    db.session.commit()
-    print(f"Total discharge time slots created: {total_slots}")
 
 # --- Click Commands ---
 
@@ -672,31 +637,12 @@ def init_db_qa_minimal_command():
 
     # Create essential system data for each clinic
     click.echo('Creating essential system data (DischargeTimeSlots)...')
-    clinics = Clinic.query.all()
-
-    for clinic in clinics:
-        # Create DischargeTimeSlots if they don't exist
-        if not DischargeTimeSlot.query.filter_by(clinic_id=clinic.id).first():
-            slots_to_add = []
-            for i in range(0, 24, 2):
-                start_time = datetime.strptime(f'{i:02d}:00', '%H:%M').time()
-                end_hour = i + 2
-                end_time_str = '23:59:59' if end_hour >= 24 else f'{end_hour:02d}:00'
-                end_time = datetime.strptime(end_time_str, '%H:%M:%S' if end_hour >= 24 else '%H:%M').time()
-                slot_name = f"{start_time.strftime('%H:%M')} - {'00:00' if end_hour >= 24 else end_time.strftime('%H:%M')}"
-                slot = DischargeTimeSlot(name=slot_name, start_time=start_time, end_time=end_time, clinic_id=clinic.id)
-                slots_to_add.append(slot)
-            db.session.add_all(slots_to_add)
-            click.echo(f'  - Created {len(slots_to_add)} DischargeTimeSlots for {clinic.name}')
-
-    db.session.commit()
     click.echo('Essential system data created successfully.')
 
     click.echo('QA minimal database initialization complete.')
     click.echo('Database contains:')
     click.echo(f'  - {Clinic.query.count()} clinics')
     click.echo(f'  - {Superuser.query.count()} superusers')
-    click.echo(f'  - {DischargeTimeSlot.query.count()} discharge time slots')
     click.echo('  - No other data (users, specialties, surgeries, standardized reasons, etc. must be created manually)')
 
 @click.command('reset-db-qa-minimal')
@@ -727,32 +673,12 @@ def reset_db_qa_minimal_command():
     db.session.commit()
     click.echo(f'{len(clinics_to_add)} clinics created.')
 
-    # Create essential system data for each clinic
-    click.echo('Creating essential system data (DischargeTimeSlots)...')
-    clinics = Clinic.query.all()
-
-    for clinic in clinics:
-        # Create DischargeTimeSlots
-        slots_to_add = []
-        for i in range(0, 24, 2):
-            start_time = datetime.strptime(f'{i:02d}:00', '%H:%M').time()
-            end_hour = i + 2
-            end_time_str = '23:59:59' if end_hour >= 24 else f'{end_hour:02d}:00'
-            end_time = datetime.strptime(end_time_str, '%H:%M:%S' if end_hour >= 24 else '%H:%M').time()
-            slot_name = f"{start_time.strftime('%H:%M')} - {'00:00' if end_hour >= 24 else end_time.strftime('%H:%M')}"
-            slot = DischargeTimeSlot(name=slot_name, start_time=start_time, end_time=end_time, clinic_id=clinic.id)
-            slots_to_add.append(slot)
-        db.session.add_all(slots_to_add)
-        click.echo(f'  - Created {len(slots_to_add)} DischargeTimeSlots for {clinic.name}')
-
-    db.session.commit()
     click.echo('Essential system data created successfully.')
 
     click.echo('Database has been reset with minimal QA data.')
     click.echo('Database contains:')
     click.echo(f'  - {Clinic.query.count()} clinics')
     click.echo(f'  - {Superuser.query.count()} superusers')
-    click.echo(f'  - {DischargeTimeSlot.query.count()} discharge time slots')
     click.echo('  - No other data (users, specialties, surgeries, standardized reasons, etc. must be created manually)')
 
 def register_commands(app):

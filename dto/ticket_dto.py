@@ -20,8 +20,8 @@ class TicketDTO:
     pavilion_end_time: datetime
     medical_discharge_date: datetime.date
     doctor_id: Optional[int] = None
-    discharge_slot_id: Optional[int] = None
-    room: Optional[str] = None
+    bed_number: Optional[str] = None
+    location: Optional[str] = None
     status: str = 'Vigente'
     initial_fpa: Optional[datetime] = None
     current_fpa: Optional[datetime] = None
@@ -55,9 +55,6 @@ class TicketDTO:
         doctor_id = form_data.get('doctor_id')
         doctor_id = int(doctor_id) if doctor_id else None
 
-        discharge_slot_id = form_data.get('discharge_slot_id')
-        discharge_slot_id = int(discharge_slot_id) if discharge_slot_id else None
-
         # Handle custom FPA if provided
         initial_fpa = None
         current_fpa = None
@@ -79,8 +76,8 @@ class TicketDTO:
             pavilion_end_time=pavilion_end_time,
             medical_discharge_date=medical_discharge_date,
             doctor_id=doctor_id,
-            discharge_slot_id=discharge_slot_id,
-            room=form_data.get('room', '').strip() or None,
+            bed_number=form_data.get('bed_number', '').strip() or None,
+            location=form_data.get('location', '').strip() or None,
             status=form_data.get('status', 'Vigente'),
             initial_fpa=initial_fpa,
             current_fpa=current_fpa,

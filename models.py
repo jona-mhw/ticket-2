@@ -42,7 +42,6 @@ class Clinic(db.Model):
     surgeries = db.relationship('Surgery', backref='clinic', lazy=True)
 
     doctors = db.relationship('Doctor', backref='clinic', lazy=True)
-    discharge_time_slots = db.relationship('DischargeTimeSlot', backref='clinic', lazy=True)
     standardized_reasons = db.relationship('StandardizedReason', backref='clinic', lazy=True)
     patients = db.relationship('Patient', backref='clinic', lazy=True)
     tickets = db.relationship('Ticket', backref='clinic', lazy=True)

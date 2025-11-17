@@ -7,7 +7,7 @@ Uses centralized decorators and services from refactored architecture.
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort, send_file
 from flask_login import login_required, current_user
 from models import (
-    db, User, Surgery, Specialty, StandardizedReason, Doctor, DischargeTimeSlot,
+    db, User, Surgery, Specialty, StandardizedReason, Doctor,
     Clinic, LoginAudit, Ticket, Patient, REASON_CATEGORY_ANNULMENT,
     FpaModification, ActionAudit, Superuser, ROLE_SUPERUSER, ROLE_ADMIN, UrgencyThreshold
 )
@@ -132,7 +132,6 @@ def index():
     stats_doctor_query = Doctor.query.filter_by(is_active=True)
     stats_surgery_query = Surgery.query.filter_by(is_active=True)
     stats_specialty_query = Specialty.query.filter_by(is_active=True)
-    stats_timeslot_query = DischargeTimeSlot.query.filter_by(is_active=True)
     stats_reason_query = StandardizedReason.query.filter_by(is_active=True)
 
     if not current_user.is_superuser:
@@ -148,7 +147,6 @@ def index():
         'doctors': stats_doctor_query.count(),
         'surgeries': stats_surgery_query.count(),
         'specialties': stats_specialty_query.count(),
-        'time_slots': stats_timeslot_query.count(),
         'reasons': stats_reason_query.count(),
         'clinics': Clinic.query.filter_by(is_active=True).count(),
     }
