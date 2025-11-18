@@ -133,34 +133,16 @@
         <!-- Urgency Indicator Bar -->
         <div class="urgency-bar urgency-{{ ticket.urgency_level }}"></div>
 
-        <!-- Card Header: Patient Info -->
-        <div class="card-header">
-            <div class="patient-info">
-                <div class="patient-name">
-                    {{ ticket.patient.primer_nombre }}
-                    {% if ticket.patient.segundo_nombre %}{{ ticket.patient.segundo_nombre }}{% endif %}
-                    {{ ticket.patient.apellido_paterno }}
-                    {% if ticket.patient.apellido_materno %}{{ ticket.patient.apellido_materno }}{% endif %}
-                </div>
-                <div class="patient-rut">
-                    RUT: {{ ticket.patient.rut }}
-                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                        {% if ticket.status == 'Vigente' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                        {{ ticket.status }}
-                    </span>
-                </div>
-            </div>
-            <!-- Bed and Location Fields (Issue #49) -->
-            <div class="bed-location-header">
+        <!-- Card Header: Bed/Location -->
+        <div class="card-header" style="padding-bottom: 0; border-bottom: 1px solid #e5e7eb;">
+            <div class="bed-location-header" style="border-bottom: none; background: transparent; padding: 0; width: 100%;">
                 <!-- Bed Number Field -->
                 <div class="bed-field editable-field"
                      data-ticket-id="{{ ticket.id }}"
                      data-field="bed_number"
                      data-current-value="{{ ticket.bed_number or '' }}"
                      title="Clic para editar cama">
-                    <svg class="w-3 h-3 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                    </svg>
+                    <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                     <span class="field-label">Cama:</span>
                     <span class="field-display">{{ ticket.bed_number or '-' }}</span>
                     <input type="text" class="field-input" value="{{ ticket.bed_number or '' }}" placeholder="201" maxlength="10" style="display: none;">
@@ -172,14 +154,29 @@
                      data-field="location"
                      data-current-value="{{ ticket.location or '' }}"
                      title="Clic para editar ubicación">
-                    <svg class="w-3 h-3 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
+                    <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span class="field-label">Ubic:</span>
                     <span class="field-display">{{ ticket.location or '-' }}</span>
                     <input type="text" class="field-input" value="{{ ticket.location or '' }}" placeholder="Piso 2" maxlength="50" style="display: none;">
                 </div>
+            </div>
+        </div>
+
+        <!-- Patient Info Below Header -->
+        <div class="px-4 pt-3 pb-3">
+            <div class="patient-name font-bold text-gray-800 truncate" title="{{ ticket.patient.full_name }}">
+                {{ ticket.patient.full_name }}
+            </div>
+            <div class="patient-rut text-sm text-gray-600 mt-1">
+                RUT: {{ ticket.patient.rut }}
+            </div>
+            <div class="mt-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    {% if ticket.status == 'Vigente' %}bg-green-100 text-green-800
+                    {% elif ticket.status == 'Anulado' %}bg-red-100 text-red-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ ticket.status }}
+                </span>
             </div>
         </div>
 
@@ -199,10 +196,11 @@
             </div>
             {% elif ticket.is_scheduled %}
             <div class="countdown-display countdown-scheduled">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 <span>PROGRAMADO</span>
+            </div>
+            <div class="scheduled-countdown text-center text-xs text-blue-700 font-semibold mt-1" data-scheduled-fpa="{{ ticket.current_fpa.isoformat() if ticket.current_fpa else '' }}">
+                <!-- JS will populate this -->
             </div>
             {% elif ticket.time_remaining %}
             <div class="countdown-display countdown-{{ ticket.urgency_level }}" data-countdown-target>
@@ -996,6 +994,39 @@ function updateCountdowns() {
 }
 
 // EDITABLE ROOM - INLINE EDITING
+function updateScheduledCountdowns() {
+    const now = new Date();
+    document.querySelectorAll('[data-scheduled-fpa]').forEach(el => {
+        const fpaIso = el.dataset.scheduledFpa;
+        if (!fpaIso) return;
+
+        const fpaDate = new Date(fpaIso);
+        const timeDiff = fpaDate - now;
+
+        if (timeDiff <= 0) {
+            el.textContent = 'Ticket ya activo';
+            el.classList.add('text-green-600');
+            return;
+        }
+
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+        let display = 'Activo en: ';
+        if (days > 0) {
+            display += `${days}d ${hours}h`;
+        } else if (hours > 0) {
+            display += `${hours}h ${minutes}m`;
+        } else if (minutes > 0) {
+            display += `${minutes}m`;
+        } else {
+            display = 'Activo en menos de un minuto';
+        }
+        el.textContent = display;
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     // Load color thresholds first
     await loadColorThresholds();
@@ -1003,6 +1034,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Countdown updates
     updateCountdowns();
     setInterval(updateCountdowns, 1000);
+
+    // Scheduled countdown updates
+    updateScheduledCountdowns();
+    setInterval(updateScheduledCountdowns, 60000); // Update every minute
 
     // Setup inline editing for room badges
     // Setup inline editing for bed and location fields (Issue #49)
