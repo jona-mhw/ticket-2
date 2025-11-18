@@ -34,3 +34,7 @@ _screenshots/*.jpeg
 !_config/README.md
 !_docs/README.md
 !_deployment_scripts/README.md 
+
+# Terraform local files
+**/.terraform/*
+

@@ -37,9 +37,9 @@ param(
     [switch]$SkipValidation
 )
 
-# ============================================
+# ============================================ 
 # CONFIGURACIÓN INICIAL
-# ============================================
+# ============================================ 
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = 'SilentlyContinue'
@@ -60,9 +60,9 @@ if (-not (Test-Path $MODULE_PATH)) {
 
 Import-Module $MODULE_PATH -Force
 
-# ============================================
+# ============================================ 
 # CONFIGURACIÓN DEL PROYECTO
-# ============================================
+# ============================================ 
 
 # Estos valores se pueden sobrescribir cargando config.env
 $Config = @{
@@ -84,39 +84,39 @@ if (Test-Path $CONFIG_FILE) {
     # Los usuarios pueden modificar $Config arriba directamente
 }
 
-# ============================================
+# ============================================ 
 # VARIABLES GLOBALES
-# ============================================
+# ============================================ 
 
 $DEPLOYMENT_START_TIME = Get-Date
 $TOTAL_PHASES = 7
 
-# ============================================
+# ============================================ 
 # FLUJO PRINCIPAL
-# ============================================
+# ============================================ 
 
 try {
-    # ============================================
+    # ============================================ 
     # PANTALLA 1: BIENVENIDA
-    # ============================================
+    # ============================================ 
 
     if ($FromPhase -eq 0) {
         Show-Banner
         Wait-UserInput
     }
 
-    # ============================================
+    # ============================================ 
     # PANTALLA 2: MENSAJE ALEATORIO
-    # ============================================
+    # ============================================ 
 
     if ($FromPhase -eq 0 -and (Test-Path $MESSAGES_PATH)) {
         Show-RandomWelcome -MessagesPath $MESSAGES_PATH
         Wait-UserInput
     }
 
-    # ============================================
+    # ============================================ 
     # PANTALLA 3: VALIDACIÓN DE CREDENCIALES
-    # ============================================
+    # ============================================ 
 
     if (-not $SkipValidation) {
         Clear-Host
@@ -170,9 +170,9 @@ try {
         }
     }
 
-    # ============================================
+    # ============================================ 
     # FASE 1: HABILITAR APIS DE GCP
-    # ============================================
+    # ============================================ 
 
     if ($FromPhase -le 1) {
         Clear-Host
@@ -205,13 +205,13 @@ try {
         Wait-UserInput
     }
 
-    # ============================================
-    # FASE 2: DOCKER BUILD & PUSH
-    # ============================================
+    # ============================================ 
+    # FASE 2: DOCKER BUILD AND PUSH
+    # ============================================ 
 
     if ($FromPhase -le 2) {
         Clear-Host
-        Write-Header "🐳 FASE 2: BUILD & PUSH DOCKER IMAGE"
+        Write-Header "🐳 FASE 2: BUILD AND PUSH DOCKER IMAGE"
 
         # Configurar autenticación Docker
         Write-Step "Configurando autenticación Docker para GCP..."
@@ -258,9 +258,9 @@ try {
         Wait-UserInput
     }
 
-    # ============================================
+    # ============================================ 
     # FASE 3: CLOUD RUN DEPLOYMENT
-    # ============================================
+    # ============================================ 
 
     if ($FromPhase -le 3) {
         Clear-Host
@@ -310,13 +310,13 @@ gcloud run deploy $($Config.CLOUD_RUN_SERVICE) \
         Wait-UserInput
     }
 
-    # ============================================
-    # FASE 4: LOAD BALANCER & NETWORK ENDPOINT GROUP
-    # ============================================
+    # ============================================ 
+    # FASE 4: LOAD BALANCER AND NEG
+    # ============================================ 
 
     if ($FromPhase -le 4) {
         Clear-Host
-        Write-Header "🌐 FASE 4: LOAD BALANCER & NEG"
+        Write-Header "🌐 FASE 4: LOAD BALANCER AND NEG"
 
         Write-Warning "IMPORTANTE: Esta fase requiere configuración manual en algunos pasos"
         Write-Host ""
@@ -352,13 +352,13 @@ gcloud run deploy $($Config.CLOUD_RUN_SERVICE) \
         Wait-UserInput
     }
 
-    # ============================================
-    # FASE 5: SSL CERTIFICATE & HTTPS PROXY
-    # ============================================
+    # ============================================ 
+    # FASE 5: SSL CERTIFICATE AND HTTPS PROXY
+    # ============================================ 
 
     if ($FromPhase -le 5) {
         Clear-Host
-        Write-Header "🔒 FASE 5: SSL CERTIFICATE & HTTPS PROXY"
+        Write-Header "🔒 FASE 5: SSL CERTIFICATE AND HTTPS PROXY"
 
         Write-Warning "Necesitas configurar tu dominio antes de continuar"
         Write-Info "Dominio recomendado: ticket-home-beta.mhwdev.dev"
@@ -404,13 +404,13 @@ gcloud run deploy $($Config.CLOUD_RUN_SERVICE) \
         Wait-UserInput
     }
 
-    # ============================================
-    # FASE 6: IP ESTÁTICA & FORWARDING RULE
-    # ============================================
+    # ============================================ 
+    # FASE 6: IP ESTÁTICA AND FORWARDING RULE
+    # ============================================ 
 
     if ($FromPhase -le 6) {
         Clear-Host
-        Write-Header "🌍 FASE 6: IP ESTÁTICA & FORWARDING RULE"
+        Write-Header "🌍 FASE 6: IP ESTÁTICA AND FORWARDING RULE"
 
         # Reservar IP
         Write-Step "Reservando IP estática global..."
@@ -449,9 +449,9 @@ gcloud run deploy $($Config.CLOUD_RUN_SERVICE) \
         Wait-UserInput
     }
 
-    # ============================================
+    # ============================================ 
     # FASE 7: IAP (IDENTITY-AWARE PROXY)
-    # ============================================
+    # ============================================ 
 
     if ($FromPhase -le 7) {
         Clear-Host
@@ -488,9 +488,9 @@ gcloud run deploy $($Config.CLOUD_RUN_SERVICE) \
         Wait-UserInput
     }
 
-    # ============================================
+    # ============================================ 
     # RESUMEN FINAL
-    # ============================================
+    # ============================================ 
 
     Clear-Host
     Write-Header "🎉 DEPLOYMENT COMPLETADO EXITOSAMENTE 🎉" -Success
@@ -523,7 +523,7 @@ gcloud run deploy $($Config.CLOUD_RUN_SERVICE) \
     Write-Info "📍 Estado: Configurado manualmente"
     Write-Host ""
 
-    Write-Host "⏱️  Tiempo total: $($totalTime.ToString('hh\:mm\:ss'))" -ForegroundColor Cyan
+    # Write-Host "⏱️  Tiempo total: $($totalTime.Hours.ToString('00')):$($totalTime.Minutes.ToString('00')):$($totalTime.Seconds.ToString('00'))" -ForegroundColor Cyan
     Write-Host ""
 
     Write-Host "📋 Próximos pasos:" -ForegroundColor Yellow

@@ -34,7 +34,7 @@ def upgrade():
     clinic_ids = [row[0] for row in result]
 
     # 1. Eliminar todos los slots existentes
-    op.execute("DELETE FROM discharge_time_slot")
+    op.execute(sa.text("DELETE FROM discharge_time_slot"))
 
     # 2. Crear 24 nuevos slots para cada clínica
     for clinic_id in clinic_ids:
@@ -49,19 +49,17 @@ def upgrade():
             # Nombre del bloque
             slot_name = f'{start_hour:02d}:00 - {end_hour:02d}:00'
 
-            # Insertar nuevo slot
-            op.execute(
-                sa.text("""
-                    INSERT INTO discharge_time_slot (name, start_time, end_time, clinic_id)
-                    VALUES (:name, :start_time, :end_time, :clinic_id)
-                """),
-                {
-                    'name': slot_name,
-                    'start_time': start_time,
-                    'end_time': end_time,
-                    'clinic_id': clinic_id
-                }
+            # Construir la consulta con parámetros
+            insert_stmt = sa.text("""
+                INSERT INTO discharge_time_slot (name, start_time, end_time, clinic_id)
+                VALUES (:name, :start_time, :end_time, :clinic_id)
+            """).bindparams(
+                name=slot_name,
+                start_time=start_time,
+                end_time=end_time,
+                clinic_id=clinic_id
             )
+            op.execute(insert_stmt)
 
 
 def downgrade():
@@ -75,7 +73,7 @@ def downgrade():
     clinic_ids = [row[0] for row in result]
 
     # 1. Eliminar todos los slots
-    op.execute("DELETE FROM discharge_time_slot")
+    op.execute(sa.text("DELETE FROM discharge_time_slot"))
 
     # 2. Recrear 12 slots originales para cada clínica
     for clinic_id in clinic_ids:
@@ -92,16 +90,14 @@ def downgrade():
                 end_time = f'{end_hour:02d}:00:00'
                 slot_name = f'{start_hour:02d}:00 - {end_hour:02d}:00'
 
-            # Insertar slot
-            op.execute(
-                sa.text("""
-                    INSERT INTO discharge_time_slot (name, start_time, end_time, clinic_id)
-                    VALUES (:name, :start_time, :end_time, :clinic_id)
-                """),
-                {
-                    'name': slot_name,
-                    'start_time': start_time,
-                    'end_time': end_time,
-                    'clinic_id': clinic_id
-                }
+            # Construir la consulta con parámetros
+            insert_stmt = sa.text("""
+                INSERT INTO discharge_time_slot (name, start_time, end_time, clinic_id)
+                VALUES (:name, :start_time, :end_time, :clinic_id)
+            """).bindparams(
+                name=slot_name,
+                start_time=start_time,
+                end_time=end_time,
+                clinic_id=clinic_id
             )
+            op.execute(insert_stmt)

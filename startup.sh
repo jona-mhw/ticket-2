@@ -120,6 +120,13 @@ else
     echo "ℹ️  No se importarán datos desde GCS"
 fi
 
+# Aplicar migraciones de la base de datos
+echo ""
+echo "🔄 Aplicando migraciones de la base de datos (Alembic)..."
+flask db upgrade
+echo "✅ Migraciones completadas."
+echo ""
+
 # Verificar datos
 echo "🔍 Verificando base de datos..."
 python3 << 'PYEOF'
