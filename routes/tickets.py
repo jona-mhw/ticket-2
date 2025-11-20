@@ -79,6 +79,8 @@ def create():
             ).date()
 
             # Calculate system FPA (automatic calculation)
+            # Issue #63: The form sends 'pavilion_end_time' but it represents the Surgery Time (Start Time)
+            # We pass this time to the calculator which now handles admission time calculation.
             from datetime import time
             system_fpa, _ = FPACalculator.calculate(pavilion_end_time, surgery)
 
@@ -180,6 +182,9 @@ def api_calculate_fpa():
             return jsonify({'error': 'Cirugía no encontrada'}), 404
 
         pavilion_end_time = datetime.fromisoformat(pavilion_end_time_str)
+        # Issue #63: 'pavilion_end_time' here is treated as Surgery Time
+        # We need to get admission time explicitly for the UI
+        admission_time = FPACalculator.calculate_admission_time(pavilion_end_time)
         system_fpa, _ = FPACalculator.calculate(pavilion_end_time, surgery)
 
         # Issue #54: Usar TimeBlockHelper en vez de buscar en BD
@@ -189,7 +194,10 @@ def api_calculate_fpa():
             'fpa_date_iso': system_fpa.date().isoformat(),
             'fpa_time': system_fpa.strftime('%H:%M'),
             'fpa_display_str': f"{system_fpa.strftime('%d/%m/%Y')} (Bloque: {block['label']})",
-            'surgery_base_stay_hours': surgery.base_stay_hours
+            'fpa_display_str': f"{system_fpa.strftime('%d/%m/%Y')} (Bloque: {block['label']})",
+            'surgery_base_stay_hours': surgery.base_stay_hours,
+            'admission_time_iso': admission_time.isoformat(),
+            'admission_time_display': admission_time.strftime('%d/%m/%Y %H:%M')
         })
 
     except Exception as e:

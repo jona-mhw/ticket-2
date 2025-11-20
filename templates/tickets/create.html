@@ -494,14 +494,27 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                         <div class="mt-3 pt-3 border-t border-blue-200">
-                            <p class="text-xs font-medium text-gray-600 mb-2">Cálculo Base:</p>
-                            <div class="flex items-center gap-2 text-xs text-gray-700">
-                                <span class="px-2 py-1 bg-white rounded border border-gray-300">Cirugía: ${pavilionDate.toLocaleString('es-CL', {dateStyle: 'short', timeStyle: 'short'})}</span>
-                                <span>+</span>
-                                <span class="px-2 py-1 bg-white rounded border border-gray-300">${data.surgery_base_stay_hours || 0}h de estancia base</span>
-                                <span>=</span>
-                                <span class="px-2 py-1 bg-blue-100 rounded border border-blue-300 font-semibold">${data.fpa_display_str}</span>
+                            <p class="text-xs font-medium text-gray-600 mb-2">Desglose del Cálculo:</p>
+                            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-700">
+                                <span class="px-2 py-1 bg-white rounded border border-gray-300" title="Hora Programada de Cirugía">
+                                    🏥 Cirugía: ${pavilionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </span>
+                                <span class="text-gray-400">→</span>
+                                <span class="px-2 py-1 bg-yellow-50 rounded border border-yellow-200 font-medium" title="Hora de Ingreso (Calculada)">
+                                    📥 Ingreso: ${data.admission_time_display.split(' ')[1]}
+                                </span>
+                                <span class="text-gray-400">+</span>
+                                <span class="px-2 py-1 bg-white rounded border border-gray-300" title="Estancia Base">
+                                    ⏱️ ${data.surgery_base_stay_hours || 0}h
+                                </span>
+                                <span class="text-gray-400">=</span>
+                                <span class="px-2 py-1 bg-blue-100 rounded border border-blue-300 font-bold text-blue-800">
+                                    🏁 ${data.fpa_display_str}
+                                </span>
                             </div>
+                            <p class="text-[10px] text-gray-500 mt-1 ml-1 italic">
+                                * El ingreso se calcula 2 horas antes de la cirugía (o a las 06:30 para cirugías de las 08:00).
+                            </p>
                         </div>
                     </div>
                 `;

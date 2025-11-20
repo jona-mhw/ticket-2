@@ -12,57 +12,70 @@ class FPACalculator:
     """Service for calculating FPA and overnight stays for patients."""
 
     @staticmethod
-    def calculate(pavilion_end_time, surgery) -> Tuple[object, int]:
+    def calculate_admission_time(surgery_time):
+        """
+        Calcula la hora de ingreso basada en la hora de cirugía.
+        Regla General: 2 horas antes.
+        Excepción: Si cirugía es a las 08:00, ingreso es a las 06:30.
+        """
+        # Excepción: Cirugía a las 08:00 AM (con tolerancia de +/- 5 min si es necesario, pero seremos estrictos por ahora)
+        if surgery_time.hour == 8 and surgery_time.minute == 0:
+            return surgery_time.replace(hour=6, minute=30)
+        
+        # Regla General: 2 horas antes
+        return surgery_time - timedelta(hours=2)
+
+    @staticmethod
+    def calculate(surgery_time, surgery) -> Tuple[object, int]:
         """
         Calculate FPA (Fecha Probable de Alta) and overnight stays.
 
         Args:
-            pavilion_end_time (datetime): When the patient left the pavilion/surgery room
-            surgery (Surgery): Surgery model instance with base_stay_hours and ambulatory settings
+            surgery_time (datetime): Scheduled time for the surgery (Start time)
+            surgery (Surgery): Surgery model instance with base_stay_hours
 
         Returns:
             tuple: (fpa datetime, overnight_stays int)
 
-        Business Rules:
-            1. FPA = pavilion_end_time + base_stay_hours
-            2. For ambulatory surgeries before cutoff hour:
-               - If calculated FPA is before 8am next day, set FPA to 8am next day
-            3. CORRECCIÓN Issue #53: Redondear a hora entera más cercana:
-               - 0-29 minutos → Redondear ABAJO
-               - 30-59 minutos → Redondear ARRIBA
-            4. Overnight stays = number of nights patient stays (ceil of days)
+        Business Rules (Issue #63):
+            1. Admission Time = Surgery Time - 2h (Exception: 08:00 -> 06:30)
+            2. Base FPA = Admission Time + Base Stay Hours
+            3. Rounding: ALWAYS round UP to the next full hour if there are minutes.
+               - 10:00 -> 10:00
+               - 10:01 -> 11:00
+        
+        Business Rules (Issue #60):
+            4. Overnight stays = Effective nights passed.
         """
+        # 1. Calcular Hora de Ingreso
+        admission_time = FPACalculator.calculate_admission_time(surgery_time)
+        
+        # 2. Calcular FPA Base
         base_hours = surgery.base_stay_hours
-        total_hours = base_hours
-        fpa = pavilion_end_time + timedelta(hours=total_hours)
+        fpa = admission_time + timedelta(hours=base_hours)
 
-        # Special handling for ambulatory surgeries
-        if surgery and surgery.is_ambulatory and surgery.ambulatory_cutoff_hour:
-            pavilion_hour = pavilion_end_time.hour
-            cutoff_hour = surgery.ambulatory_cutoff_hour
-
-            # If surgery ends before cutoff hour, adjust FPA to next morning
-            if pavilion_hour < cutoff_hour:
-                next_morning = pavilion_end_time.replace(
-                    hour=8, minute=0, second=0, microsecond=0
-                ) + timedelta(days=1)
-                if fpa < next_morning:
-                    fpa = next_morning
-
-        # CORRECCIÓN Issue #53: Redondear FPA a la hora entera más cercana
-        # 0-29 minutos → Redondear ABAJO
-        # 30-59 minutos → Redondear ARRIBA
-        if fpa.minute >= 30:
-            # Redondear ARRIBA: eliminar minutos/segundos y sumar 1 hora
+        # 3. Redondeo: SIEMPRE hacia arriba si hay minutos (Issue #63)
+        if fpa.minute > 0 or fpa.second > 0:
+            # Eliminar minutos/segundos y sumar 1 hora
             fpa = fpa.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
         else:
-            # Redondear ABAJO: eliminar minutos/segundos
+            # Ya es hora cerrada
             fpa = fpa.replace(minute=0, second=0, microsecond=0)
 
-        # Calculate overnight stays
-        time_diff = fpa - pavilion_end_time
-        overnight_stays = max(0, time_diff.days)
-        if time_diff.seconds > 0:
-            overnight_stays += 1
+        # 4. Calcular Estancia (Noches Efectivas) - Issue #60
+        # La estancia se calcula desde el ingreso hasta la FPA redondeada
+        # Usamos la diferencia de fechas calendario para contar "noches"
+        
+        # Opción A: Diferencia de días calendario (simple)
+        # Si ingreso es hoy y salida es mañana -> 1 noche
+        # Si ingreso es hoy y salida es hoy -> 0 noches
+        
+        # Ajuste: Si la FPA es exactamente medianoche (00:00) del día siguiente, 
+        # técnicamente cuenta como noche del día anterior para efectos de cama, 
+        # pero matemáticamente date() cambia.
+        # Sin embargo, la lógica estándar de "noches" es date_diff.
+        
+        days_diff = (fpa.date() - admission_time.date()).days
+        overnight_stays = max(0, days_diff)
 
         return fpa, overnight_stays
