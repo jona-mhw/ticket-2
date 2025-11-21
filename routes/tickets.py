@@ -106,7 +106,8 @@ def create():
                 'initial_fpa': initial_fpa,
                 'current_fpa': current_fpa,
                 'doctor_id': int(request.form.get('doctor_id')) if request.form.get('doctor_id') else None,
-                'room': request.form.get('room', '').strip() or None,
+                'bed_number': request.form.get('room', '').strip() or None,
+                'location': request.form.get('location', '').strip() or None,
                 'initial_reason': request.form.get('initial_reason'),
                 'initial_justification': request.form.get('initial_justification')
             }
