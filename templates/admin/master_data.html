@@ -48,6 +48,7 @@
         
         {% if selected_clinic_id %}
         <form method="POST" action="{{ url_for('admin.create_specialty') }}" class="mb-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <input type="text" name="name" placeholder="Nombre de la especialidad" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
@@ -74,7 +75,7 @@
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ specialty.name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if specialty.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">{% if specialty.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><form method="POST" action="{{ url_for('admin.toggle_specialty', specialty_id=specialty.id) }}" class="inline"><button type="submit" class="text-primary hover:text-opacity-80">{% if specialty.is_active %}Desactivar{% else %}Activar{% endif %}</button></form></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><form method="POST" action="{{ url_for('admin.toggle_specialty', specialty_id=specialty.id) }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="text-primary hover:text-opacity-80">{% if specialty.is_active %}Desactivar{% else %}Activar{% endif %}</button></form></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -87,6 +88,7 @@
         <h3 class="text-lg font-medium text-gray-900 mb-4">Cirugías</h3>
         {% if selected_clinic_id %}
         <form method="POST" action="{{ url_for('admin.create_surgery') }}" class="mb-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div><input type="text" name="name" placeholder="Nombre de la cirugía" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"></div>
                 <div>
@@ -119,7 +121,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ surgery.specialty.name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ surgery.base_stay_hours }}h</td>
                         <td class="px-6 py-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if surgery.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">{% if surgery.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><form method="POST" action="{{ url_for('admin.toggle_surgery', surgery_id=surgery.id) }}" class="inline"><button type="submit" class="text-primary hover:text-opacity-80">{% if surgery.is_active %}Desactivar{% else %}Activar{% endif %}</button></form></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><form method="POST" action="{{ url_for('admin.toggle_surgery', surgery_id=surgery.id) }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="text-primary hover:text-opacity-80">{% if surgery.is_active %}Desactivar{% else %}Activar{% endif %}</button></form></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -132,6 +134,7 @@
         <h3 class="text-lg font-medium text-gray-900 mb-4">Razones Estandarizadas</h3>
         {% if selected_clinic_id %}
         <form method="POST" action="{{ url_for('admin.create_reason') }}" class="mb-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-1"><textarea name="reason" placeholder="Descripción de la razón" required rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"></textarea></div>
                 <div>
@@ -163,7 +166,7 @@
                         <td class="px-6 py-4 text-sm text-gray-900">{{ reason.reason }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{% if reason.category == 'initial' %}Discrepancia Inicial{% elif reason.category == 'modification' %}Modificación{% elif reason.category == 'annulment' %}Anulación{% else %}{{ reason.category }}{% endif %}</td>
                         <td class="px-6 py-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if reason.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">{% if reason.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><form method="POST" action="{{ url_for('admin.toggle_reason', reason_id=reason.id) }}" class="inline"><button type="submit" class="text-primary hover:text-opacity-80">{% if reason.is_active %}Desactivar{% else %}Activar{% endif %}</button></form></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><form method="POST" action="{{ url_for('admin.toggle_reason', reason_id=reason.id) }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="text-primary hover:text-opacity-80">{% if reason.is_active %}Desactivar{% else %}Activar{% endif %}</button></form></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -176,6 +179,7 @@
         <h3 class="text-lg font-medium text-gray-900 mb-4">Médicos</h3>
         {% if selected_clinic_id %}
         <form method="POST" action="{{ url_for('admin.create_doctor') }}" class="mb-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div><input type="text" name="name" placeholder="Nombre del médico" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"></div>
                 <div><input type="text" name="specialty" placeholder="Especialidad" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"></div>
@@ -203,7 +207,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ doctor.specialty or 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ doctor.rut or 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if doctor.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">{% if doctor.is_active %}Activo{% else %}Inactivo{% endif %}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><form method="POST" action="{{ url_for('admin.toggle_doctor', doctor_id=doctor.id) }}" class="inline"><button type="submit" class="text-primary hover:text-opacity-80">{% if doctor.is_active %}Desactivar{% else %}Activar{% endif %}</button></form></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><form method="POST" action="{{ url_for('admin.toggle_doctor', doctor_id=doctor.id) }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="text-primary hover:text-opacity-80">{% if doctor.is_active %}Desactivar{% else %}Activar{% endif %}</button></form></td>
                     </tr>
                     {% endfor %}
                 </tbody>

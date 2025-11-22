@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
 
 # --- Constants ---
@@ -57,10 +58,18 @@ class User(UserMixin, db.Model):
     clinic_id = db.Column(db.Integer, db.ForeignKey('clinic.id'), nullable=True)
     
     def set_password(self, password):
-        self.password = password
+        self.password = generate_password_hash(password)
     
     def check_password(self, password):
-        return self.password == password
+        # Fallback for legacy plain text passwords
+        if not self.password.startswith('scrypt:') and not self.password.startswith('pbkdf2:'):
+            if self.password == password:
+                # Upgrade password to hash
+                self.set_password(password)
+                db.session.commit()
+                return True
+            return False
+        return check_password_hash(self.password, password)
     
     def is_admin(self):
         # Superusers have all admin privileges
