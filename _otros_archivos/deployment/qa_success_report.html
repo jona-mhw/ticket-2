@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Éxito: Despliegue QA Ticket Home</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #16a34a;
+            --warning-color: #ca8a04;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 { margin: 0; font-size: 2.5rem; }
+        .subtitle { opacity: 0.9; font-size: 1.1rem; margin-top: 0.5rem; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-success { background-color: #dcfce7; color: #166534; }
+        .badge-warning { background-color: #fef9c3; color: #854d0e; }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Consolas', monospace;
+            color: #d946ef;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+        }
+
+        .step-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .step-list li {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background-color: #eff6ff;
+            border-color: var(--primary-color);
+            color: #1e40af;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Misión Cumplida</h1>
+            <div class="subtitle">Despliegue Exitoso en QA Ticket Home</div>
+        </header>
+
+        <div class="card">
+            <h2>🏆 Logros Desbloqueados</h2>
+            <p>Hemos superado varios desafíos técnicos para lograr un despliegue estable y automatizado:</p>
+            <ul class="step-list">
+                <li><strong>Infraestructura como Código (IaC):</strong> Terraform ahora gestiona Cloud Run, Secrets y permisos IAM.</li>
+                <li><strong>Seguridad IAP:</strong> Configuración correcta de Identity-Aware Proxy con permisos granulares.</li>
+                <li><strong>Automatización:</strong> Script unificado <code>deploy-qa.ps1</code> que maneja Build + Deploy.</li>
+                <li><strong>Gestión de Base de Datos:</strong> Estrategia clara para migraciones y seeds (Minimal vs Full).</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🛠️ Guía de Uso: Script Unificado</h2>
+            <p>Ya no necesitas ejecutar comandos manuales de Docker o Terraform. Usa el nuevo script maestro desde PowerShell:</p>
+            
+            <h3>1. Despliegue Normal (Día a día)</h3>
+            <p>Úsalo cuando solo cambies código (Python, HTML, CSS) y <strong>NO</strong> toques <code>models.py</code>.</p>
+            <pre>.\_otros_archivos\_deployment_scripts\deploy-qa.ps1 -Scenario no-reset</pre>
+
+            <h3>2. Reset Mínimo (Cambios de Modelo)</h3>
+            <p>Úsalo cuando cambies la estructura de la base de datos (nuevas tablas/columnas). <span class="badge badge-warning">Borra datos</span></p>
+            <pre>.\_otros_archivos\_deployment_scripts\deploy-qa.ps1 -Scenario reset-minimal</pre>
+            <p><small><em>* Recrea la BD y carga solo clínicas y superusuarios.</em></small></p>
+
+            <h3>3. Reset Completo (Demo)</h3>
+            <p>Úsalo para mostrar la app con datos de prueba a stakeholders. <span class="badge badge-warning">Borra datos</span></p>
+            <pre>.\_otros_archivos\_deployment_scripts\deploy-qa.ps1 -Scenario reset-full</pre>
+        </div>
+
+        <div class="card">
+            <h2>🔍 ¿Qué pasó con la Base de Datos?</h2>
+            <p>Al principio recibimos un <strong>Error 500</strong>. Aquí la explicación técnica:</p>
+            
+            <div class="alert alert-info">
+                <strong>El Problema:</strong> La base de datos en QA tenía un esquema antiguo. El código nuevo esperaba la columna <code>discharge_slot_id</code>, pero no existía en la tabla.
+                <br><br>
+                <strong>Por qué falló el primer intento:</strong> El despliegue "No Reset" asume que la BD está al día. Como las migraciones automáticas (Alembic) a veces fallan si el historial de versiones es inconsistente, la columna no se creó.
+                <br><br>
+                <strong>La Solución:</strong> Ejecutamos el escenario <strong>Reset Minimal</strong>. Esto forzó a la aplicación a borrar la base de datos y ejecutar <code>db.create_all()</code> desde cero, garantizando que el esquema coincida 100% con el código.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🐛 Solución de Problemas Comunes</h2>
+            
+            <h3>Error 403 Forbidden</h3>
+            <p>Si vuelves a verlo, verifica:</p>
+            <ol>
+                <li>Que estás accediendo a <code>https://qa-ticket-home.mhwdev.dev</code> (no a la URL de Cloud Run).</li>
+                <li>Que tu usuario está en el grupo <code>qa-ticket-home-rs@googlegroups.com</code>.</li>
+            </ol>
+            <p><em>Nota: Ya arreglamos el permiso del Agente de Servicio IAP en Terraform, así que eso no debería fallar más.</em></p>
+
+            <h3>Error de Quota / API</h3>
+            <p>El script <code>deploy-qa.ps1</code> maneja esto automáticamente inyectando el token de autenticación correcto.</p>
+        </div>
+
+        <footer>
+            <p>Generado por tu Asistente de IA | Noviembre 2025</p>
+        </footer>
+    </div>
+</body>
+</html>
