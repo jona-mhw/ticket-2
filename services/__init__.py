@@ -10,6 +10,7 @@ from .ticket_service import TicketService
 from .audit_service import AuditService
 from .user_service import UserService
 from .patient_service import PatientService
+from .urgency_calculator import UrgencyCalculator
 
 __all__ = [
     'FPACalculator',
@@ -17,4 +18,5 @@ __all__ = [
     'AuditService',
     'UserService',
     'PatientService',
+    'UrgencyCalculator',
 ]

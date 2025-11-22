@@ -14,7 +14,7 @@ from models import (
     REASON_CATEGORY_MODIFICATION, REASON_CATEGORY_ANNULMENT
 )
 from datetime import datetime
-from services import TicketService, FPACalculator, AuditService
+from services import TicketService, FPACalculator, AuditService, UrgencyCalculator
 from repositories import TicketRepository, PatientRepository
 from validators import TicketValidator
 from dto import TicketDTO
@@ -404,25 +404,7 @@ def nursing_board():
 
     # Calculate urgency levels
     for ticket in tickets:
-        if ticket.current_fpa:
-            ticket.is_scheduled = datetime.now() < ticket.pavilion_end_time
-            ticket.time_remaining = None if ticket.is_scheduled else calculate_time_remaining(ticket.current_fpa)
-
-            if ticket.is_scheduled:
-                ticket.urgency_level = 'scheduled'
-            elif ticket.time_remaining and ticket.time_remaining['expired']:
-                ticket.urgency_level = 'expired'
-            elif ticket.time_remaining:
-                total_hours = ticket.time_remaining['days'] * 24 + ticket.time_remaining['hours']
-                if total_hours <= 1:
-                    ticket.urgency_level = 'critical'
-                elif total_hours <= 6:
-                    ticket.urgency_level = 'warning'
-                else:
-                    ticket.urgency_level = 'normal'
-        else:
-            ticket.time_remaining = None
-            ticket.urgency_level = 'unknown'
+        UrgencyCalculator.calculate_urgency(ticket)
 
     # Sort by urgency
     urgency_priority = {'normal': 0, 'warning': 1, 'critical': 2, 'scheduled': 3, 'expired': 4, 'unknown': 5}
@@ -472,20 +454,7 @@ def nursing_list():
 
     # Calculate urgency (same logic as nursing_board)
     for ticket in tickets:
-        if ticket.current_fpa:
-            ticket.is_scheduled = datetime.now() < ticket.pavilion_end_time
-            ticket.time_remaining = None if ticket.is_scheduled else calculate_time_remaining(ticket.current_fpa)
-
-            if ticket.is_scheduled:
-                ticket.urgency_level = 'scheduled'
-            elif ticket.time_remaining and ticket.time_remaining['expired']:
-                ticket.urgency_level = 'expired'
-            elif ticket.time_remaining:
-                total_hours = ticket.time_remaining['days'] * 24 + ticket.time_remaining['hours']
-                ticket.urgency_level = 'critical' if total_hours <= 1 else 'warning' if total_hours <= 6 else 'normal'
-        else:
-            ticket.time_remaining = None
-            ticket.urgency_level = 'unknown'
+        UrgencyCalculator.calculate_urgency(ticket)
 
     urgency_priority = {'normal': 0, 'warning': 1, 'critical': 2, 'scheduled': 3, 'expired': 4, 'unknown': 5}
     tickets.sort(key=lambda t: (urgency_priority.get(t.urgency_level, 99),
