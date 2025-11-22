@@ -69,3 +69,51 @@ variable "force_deployment_timestamp" {
   type        = string
   default     = ""
 }
+
+variable "environment" {
+  description = "El nombre del ambiente (ej. 'dev', 'qa', 'prod')."
+  type        = string
+  default     = "dev"
+}
+
+variable "vpc_connector" {
+  description = "El ID del conector VPC para acceso Serverless (opcional)."
+  type        = string
+  default     = null
+}
+
+variable "iap_access_group" {
+  description = "El email del grupo de Google para acceso IAP (opcional)."
+  type        = string
+  default     = null
+}
+
+variable "db_tier" {
+  description = "El tier de la instancia de Cloud SQL."
+  type        = string
+  default     = "db-f1-micro"
+}
+
+variable "create_sql_instance" {
+  description = "Indica si se debe crear/gestionar la instancia de Cloud SQL."
+  type        = bool
+  default     = false
+}
+
+variable "reset_db_on_startup" {
+  description = "Si es true, la aplicación reseteará la base de datos al iniciar."
+  type        = bool
+  default     = false
+}
+
+variable "use_qa_minimal_seed" {
+  description = "Si es true y reset_db_on_startup es true, usa un seed mínimo para QA."
+  type        = bool
+  default     = false
+}
+
+variable "superuser_emails" {
+  description = "Lista de emails de superusuarios para configurar en el sistema."
+  type        = list(string)
+  default     = []
+}

@@ -51,11 +51,19 @@ resource "google_cloud_run_v2_service" "default" {
       }
       env {
         name  = "ENVIRONMENT"
-        value = "mhw" # Específico para este ambiente
+        value = var.environment
       }
       env {
         name  = "ENABLE_DEMO_LOGIN"
         value = var.enable_demo_login
+      }
+      env {
+        name  = "RESET_DB_ON_STARTUP"
+        value = tostring(var.reset_db_on_startup)
+      }
+      env {
+        name  = "USE_QA_MINIMAL_SEED"
+        value = tostring(var.use_qa_minimal_seed)
       }
 
       # Conectar variables de entorno a los secrets de Secret Manager
@@ -118,9 +126,8 @@ resource "google_cloud_run_v2_service" "default" {
     dynamic "vpc_access" {
       for_each = var.db_connection_type == "VPC_CONNECTOR" ? [1] : []
       content {
-        # El conector se definirá como una variable en el futuro
-        # connector = var.vpc_connector_id
-        egress = "PRIVATE_RANGES_ONLY"
+        connector = var.vpc_connector
+        egress    = "PRIVATE_RANGES_ONLY"
       }
     }
   }
@@ -131,4 +138,86 @@ resource "google_cloud_run_v2_service" "default" {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
   }
+}
+
+# IAM Policy Binding para acceso público (solo si NO hay IAP group definido)
+resource "google_cloud_run_service_iam_binding" "public_invoker" {
+  count    = var.iap_access_group == null ? 1 : 0
+  location = google_cloud_run_v2_service.default.location
+  service  = google_cloud_run_v2_service.default.name
+  role     = "roles/run.invoker"
+  members = [
+    "allUsers"
+  ]
+}
+
+# IAM Policy Binding para acceso IAP (solo si hay IAP group definido)
+resource "google_cloud_run_service_iam_binding" "iap_invoker" {
+  count    = var.iap_access_group != null ? 1 : 0
+  location = google_cloud_run_v2_service.default.location
+  service  = google_cloud_run_v2_service.default.name
+  role     = "roles/run.invoker"
+  members = [
+    "group:${var.iap_access_group}",
+    "serviceAccount:service-85153475663@gcp-sa-iap.iam.gserviceaccount.com"
+  ]
+}
+
+# --- Cloud SQL Resources ---
+
+resource "google_sql_database_instance" "default" {
+  count            = var.create_sql_instance ? 1 : 0
+  name             = var.sql_instance_name
+  database_version = "POSTGRES_17"
+  region           = var.region
+
+  settings {
+    tier = var.db_tier
+    
+    # Configuración básica para QA/Dev
+    availability_type = "ZONAL"
+    disk_size         = 10
+    disk_type         = "PD_SSD"
+    
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = "projects/${var.project_id}/global/networks/default" # Asumiendo red default, ajustar si es necesario
+    }
+  }
+  
+  deletion_protection = false # Cuidado en producción
+}
+
+resource "google_sql_database" "default" {
+  count    = var.create_sql_instance ? 1 : 0
+  name     = replace(var.service_name, "-", "_") # ej. ticket-home -> ticket_home
+  instance = google_sql_database_instance.default[0].name
+}
+
+resource "google_sql_user" "default" {
+  count    = var.create_sql_instance ? 1 : 0
+  name     = replace(var.service_name, "-", "_") # usuario igual a db name
+  instance = google_sql_database_instance.default[0].name
+  password = "changeme" # La contraseña real debe gestionarse fuera o via Secret Manager
+}
+
+# --- Secret Manager Resources ---
+
+resource "google_secret_manager_secret" "superusers" {
+  count     = length(var.superuser_emails) > 0 ? 1 : 0
+  secret_id = var.secret_superusers_name
+  replication {
+    user_managed {
+      replicas {
+        location = var.region
+      }
+    }
+  }
+}
+
+# Gestionar la versión del secreto de superusuarios
+resource "google_secret_manager_secret_version" "superusers" {
+  count       = length(var.superuser_emails) > 0 ? 1 : 0
+  secret      = google_secret_manager_secret.superusers[0].id
+  secret_data = join(";", var.superuser_emails)
 }
