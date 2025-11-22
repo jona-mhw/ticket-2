@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
 from models import (
-    User, Clinic, Specialty, Surgery, Doctor, DischargeTimeSlot,
+    User, Clinic, Specialty, Surgery, Doctor,
     StandardizedReason, Patient, Ticket, FpaModification,
     Superuser, LoginAudit, ActionAudit,
     ROLE_ADMIN, ROLE_CLINICAL, TICKET_STATUS_VIGENTE
@@ -150,23 +150,7 @@ class TestDoctorModel:
         assert doctor.name == 'Dra. Ana López'
 
 
-@pytest.mark.unit
-class TestDischargeTimeSlotModel:
-    """Tests para el modelo DischargeTimeSlot."""
-
-    def test_create_slot(self, db_session, sample_clinic):
-        """Test crear bloque horario."""
-        slot = DischargeTimeSlot(
-            name='08:00-10:00',
-            start_time=datetime.strptime('08:00', '%H:%M').time(),
-            end_time=datetime.strptime('10:00', '%H:%M').time(),
-            clinic_id=sample_clinic.id
-        )
-        db_session.session.add(slot)
-        db_session.session.commit()
-
-        assert slot.id is not None
-        assert slot.name == '08:00-10:00'
+# TestDischargeTimeSlotModel removed as the model was deleted.
 
 
 @pytest.mark.unit

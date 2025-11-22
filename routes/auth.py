@@ -99,11 +99,12 @@ def logout():
     # Limpiar la sesión
     session.clear()
 
-    # Redirigir según el tipo de autenticación
+    # Fix for Issue #78: Logout Cierra Sesion Global de Google
+    # Redirigir según el tipo de autenticación pero NO cerrar sesión global de Google
     if auth_type == 'iap':
-        # Usuario IAP: cerrar sesión de Google completamente
-        # Esto fuerza al usuario a volver a autenticarse con Google
-        return redirect('https://accounts.google.com/Logout')
+        # Para IAP, solo cerramos sesión local y redirigimos a una página de confirmación
+        flash('Sesión local cerrada exitosamente.', 'success')
+        return redirect(url_for('auth.logout_success', is_iap='true'))
     else:
         # Usuario tradicional: redirigir a login normalmente
         flash('Sesión cerrada exitosamente.', 'success')

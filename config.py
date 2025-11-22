@@ -23,7 +23,12 @@ else:
 
 class Config:
     # Configuración de Flask
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if environment == 'production' and not SECRET_KEY:
+        raise ValueError("SECRET_KEY must be set in production environment!")
+    if not SECRET_KEY:
+        SECRET_KEY = 'dev-secret-key-change-in-production'
+
     FLASK_ENV = os.environ.get('FLASK_ENV', 'production')
     FLASK_DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     

@@ -62,9 +62,10 @@ def edit_ticket(ticket_id):
             # --- Ticket Data ---
             ticket_changes = []
             new_room = request.form.get('room', '').strip()
-            if ticket.room != new_room:
-                ticket_changes.append(f"Habitación/Cama de '{ticket.room or ''}' a '{new_room}'")
-                ticket.room = new_room
+            # Fix for Issue #70: Use bed_number instead of room
+            if ticket.bed_number != new_room:
+                ticket_changes.append(f"Habitación/Cama de '{ticket.bed_number or ''}' a '{new_room}'")
+                ticket.bed_number = new_room
 
             # NOTE: Status is NOT modifiable from this form
             # Use specific actions (annul ticket, etc.) to change status
@@ -139,7 +140,8 @@ def index():
         stats_doctor_query = stats_doctor_query.filter_by(clinic_id=current_user.clinic_id)
         stats_surgery_query = stats_surgery_query.filter_by(clinic_id=current_user.clinic_id)
         stats_specialty_query = stats_specialty_query.filter_by(clinic_id=current_user.clinic_id)
-        stats_timeslot_query = stats_timeslot_query.filter_by(clinic_id=current_user.clinic_id)
+        # Fix for Issue #69: stats_timeslot_query was undefined and causing crash
+        # stats_timeslot_query = stats_timeslot_query.filter_by(clinic_id=current_user.clinic_id)
         stats_reason_query = stats_reason_query.filter_by(clinic_id=current_user.clinic_id)
 
     stats = {

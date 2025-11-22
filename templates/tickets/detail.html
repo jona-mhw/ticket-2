@@ -322,6 +322,7 @@
             </div>
 
             <form method="POST" action="{{ url_for('tickets.update_fpa', ticket_id=ticket.id) }}" id="fpa-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="space-y-4">
                     <div>
                         <label for="new_fpa_date" class="block text-sm font-medium text-gray-700 mb-1">
@@ -395,6 +396,7 @@
         <div class="bg-white shadow rounded-lg p-6">
             <h4 class="text-md font-medium text-gray-900 mb-4">Anular Ticket</h4>
             <form method="POST" action="{{ url_for('tickets.annul_ticket', ticket_id=ticket.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="space-y-4">
                     <div>
                         <label for="annulled_reason" class="block text-sm font-medium text-gray-700 mb-1">Razón de Anulación</label>

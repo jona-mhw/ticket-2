@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect  # Import CSRFProtect
 from dotenv import load_dotenv
 import os
 import pytz
@@ -21,6 +22,9 @@ def create_app():
 
     # Initialize Flask-Migrate
     migrate = Migrate(app, db)
+
+    # Initialize CSRF Protection
+    csrf = CSRFProtect(app)
 
     # Database initialization is now handled by Flask commands.
 
@@ -193,4 +197,6 @@ app = create_app()
 register_commands(app)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Fix for Issue #76: Debug Mode Habilitado en Entry Point
+    debug_mode = Config.FLASK_DEBUG
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

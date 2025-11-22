@@ -73,30 +73,43 @@ class IAPAuthenticator:
         if not self.is_iap_request():
             return None, "No es una solicitud IAP."
 
-        # Validar JWT de IAP si está disponible
+        # En Producción/QA (environment != local), es OBLIGATORIO validar el JWT
+        environment = os.environ.get('ENVIRONMENT', 'local')
         iap_jwt = request.headers.get('X-Goog-IAP-JWT-Assertion')
-        if iap_jwt and self.expected_audience:
-            # Validación completa del JWT
+
+        if environment != 'local':
+            if not iap_jwt:
+                current_app.logger.error("CRITICAL: Intento de acceso sin JWT en ambiente productivo.")
+                return False, "Acceso denegado: Falta token de seguridad."
+
+            if not self.expected_audience:
+                current_app.logger.error("CRITICAL: IAP mal configurado. Faltan GCP_PROJECT_NUMBER o BACKEND_SERVICE_ID.")
+                return False, "Error de configuración del servidor de autenticación."
+
+            # Validación estricta del JWT
             decoded_jwt, validation_message = self._validate_jwt(iap_jwt)
             if not decoded_jwt:
-                current_app.logger.error(f"JWT de IAP inválido: {validation_message}")
-                return False, f"Autenticación fallida: {validation_message}"
+                current_app.logger.error(f"CRITICAL: JWT de IAP inválido: {validation_message}")
+                return False, f"Acceso denegado: Token de seguridad inválido. {validation_message}"
 
             # Obtener email del JWT validado
             email = decoded_jwt.get('email')
             current_app.logger.info(f"JWT validado correctamente. Usuario: {email}")
-        else:
-            # Fallback: Confiar en el header (solo en desarrollo/testing)
-            # En producción SIEMPRE debería haber JWT con audience configurado
-            email = self.get_user_email()
-            if not email:
-                current_app.logger.warning("No se encontró el email del usuario en la cabecera IAP.")
-                return None, "No se encontró el email del usuario en la cabecera IAP."
 
-            if not iap_jwt:
-                current_app.logger.warning("⚠️ SECURITY: No se encontró JWT de IAP. Confiando solo en header (NO recomendado en producción).")
+        else:
+            # En local (DEV), permitimos fallback a header simple si no hay JWT (para facilitar pruebas con Postman/Curl)
+            # O si hay JWT y audience configurado, también lo validamos.
+            if iap_jwt and self.expected_audience:
+                decoded_jwt, validation_message = self._validate_jwt(iap_jwt)
+                if decoded_jwt:
+                    email = decoded_jwt.get('email')
+                else:
+                    email = self.get_user_email() # Fallback a header
             else:
-                current_app.logger.warning("⚠️ SECURITY: JWT encontrado pero audience no configurado. Configure GCP_PROJECT_NUMBER y BACKEND_SERVICE_ID.")
+                email = self.get_user_email()
+
+            if not email:
+                return None, "No se encontró el email del usuario."
 
         current_app.logger.info(f"Usuario autenticado por IAP: {email}")
 
