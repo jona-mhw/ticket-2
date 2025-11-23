@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import db, Ticket, Clinic, FpaModification, StandardizedReason
 from routes.utils import log_action, _build_tickets_query
+from utils.time_blocks import TimeBlockHelper
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side, Alignment
 from openpyxl.utils import get_column_letter
@@ -76,28 +77,8 @@ def create_ticket_pdf_final(ticket):
         story.append(Spacer(1, 0.2*inch))
 
         # --- Original FPA Section ---
-        # Calculate discharge time block for INITIAL FPA (FPA is END of block)
-        initial_fpa_hour = ticket.initial_fpa.hour
-        initial_fpa_minute = ticket.initial_fpa.minute
-
-        # Si hay minutos, redondeamos a la siguiente hora
-        if initial_fpa_minute > 0:
-            initial_fpa_hour += 1
-
-        # Redondear al siguiente bloque par si es necesario
-        if initial_fpa_hour % 2 != 0:
-            initial_fpa_hour += 1
-
-        # Manejar caso edge de medianoche
-        if initial_fpa_hour == 0:
-            initial_time_block = "22:00 - 00:00"
-        elif initial_fpa_hour >= 24:
-            initial_time_block = "22:00 - 24:00"
-        else:
-            # El FPA es el FIN del bloque
-            block_end_hour = initial_fpa_hour
-            block_start_hour = block_end_hour - 2
-            initial_time_block = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
+        # Use TimeBlockHelper for consistency (Issue #77)
+        initial_time_block = TimeBlockHelper.get_block_for_time(ticket.initial_fpa)['label']
 
         story.append(Paragraph(f"Fecha probable de alta original ({ticket.overnight_stays} días de pernocte)", styles['SectionTitle']))
         original_fpa_data = [
@@ -116,28 +97,8 @@ def create_ticket_pdf_final(ticket):
         # --- Modification Section (Conditional) ---
         last_mod = sorted(ticket.modifications, key=lambda m: m.modified_at)[-1] if ticket.modifications else None
         if last_mod:
-            # Calculate discharge time block for the modification (FPA is END of block)
-            fpa_hour = last_mod.new_fpa.hour
-            fpa_minute = last_mod.new_fpa.minute
-
-            # Si hay minutos, redondeamos a la siguiente hora
-            if fpa_minute > 0:
-                fpa_hour += 1
-
-            # Redondear al siguiente bloque par si es necesario
-            if fpa_hour % 2 != 0:
-                fpa_hour += 1
-
-            # Manejar caso edge de medianoche
-            if fpa_hour == 0:
-                mod_time_block = "22:00 - 00:00"
-            elif fpa_hour >= 24:
-                mod_time_block = "22:00 - 24:00"
-            else:
-                # El FPA es el FIN del bloque
-                block_end_hour = fpa_hour
-                block_start_hour = block_end_hour - 2
-                mod_time_block = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
+            # Use TimeBlockHelper for consistency (Issue #77)
+            mod_time_block = TimeBlockHelper.get_block_for_time(last_mod.new_fpa)['label']
 
             story.append(Paragraph("Última Modificación", styles['SectionTitle']))
             mod_fpa_data = [
@@ -253,13 +214,14 @@ def export_excel():
     ws.append(headers)
     
     for ticket in tickets:
-        adjustment_names = ''
-        if ticket.adjustment_criteria_snapshot:
-            try:
-                adjustments = json.loads(ticket.adjustment_criteria_snapshot)
-                adjustment_names = ', '.join([adj['name'] for adj in adjustments])
-            except (json.JSONDecodeError, TypeError):
-                adjustment_names = 'Error en datos de ajuste'
+        # Fix for Issue #71: adjustment_criteria_snapshot field does not exist
+        # adjustment_names = ''
+        # if ticket.adjustment_criteria_snapshot:
+        #     try:
+        #         adjustments = json.loads(ticket.adjustment_criteria_snapshot)
+        #         adjustment_names = ', '.join([adj['name'] for adj in adjustments])
+        #     except (json.JSONDecodeError, TypeError):
+        #         adjustment_names = 'Error en datos de ajuste'
 
         row = [
             ticket.id,
@@ -274,7 +236,7 @@ def export_excel():
             ticket.initial_fpa.strftime('%Y-%m-%d %H:%M'),
             f"{ticket.current_fpa.strftime('%Y-%m-%d')} {ticket.calculated_discharge_time_block}",
             ticket.overnight_stays,
-            adjustment_names,
+            '', # adjustment_names removed
             ticket.created_by,
             ticket.created_at.strftime('%Y-%m-%d %H:%M'),
             ticket.medical_discharge_date.strftime('%Y-%m-%d') if ticket.medical_discharge_date else 'N/A',
@@ -289,28 +251,8 @@ def export_excel():
         for i in range(5):
             if i < len(modifications):
                 mod = modifications[i]
-                # Calculate discharge time block for this modification (FPA is END of block)
-                fpa_hour = mod.new_fpa.hour
-                fpa_minute = mod.new_fpa.minute
-
-                # Si hay minutos, redondeamos a la siguiente hora
-                if fpa_minute > 0:
-                    fpa_hour += 1
-
-                # Redondear al siguiente bloque par si es necesario
-                if fpa_hour % 2 != 0:
-                    fpa_hour += 1
-
-                # Manejar caso edge de medianoche
-                if fpa_hour == 0:
-                    slot_name = "22:00 - 00:00"
-                elif fpa_hour >= 24:
-                    slot_name = "22:00 - 24:00"
-                else:
-                    # El FPA es el FIN del bloque
-                    block_end_hour = fpa_hour
-                    block_start_hour = block_end_hour - 2
-                    slot_name = f"{block_start_hour:02d}:00 - {block_end_hour:02d}:00"
+                # Use TimeBlockHelper for consistency (Issue #77)
+                slot_name = TimeBlockHelper.get_block_for_time(mod.new_fpa)['label']
 
                 row.extend([
                     mod.new_fpa.strftime('%Y-%m-%d'),

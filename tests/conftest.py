@@ -18,7 +18,7 @@ os.environ['SKIP_AUTH_FOR_TESTING'] = 'true'
 from app import create_app
 from models import (
     db, User, Clinic, Specialty, Surgery, Doctor,
-    DischargeTimeSlot, StandardizedReason, Patient, Ticket,
+    StandardizedReason, Patient, Ticket,
     FpaModification, Superuser, LoginAudit, ActionAudit,
     ROLE_ADMIN, ROLE_CLINICAL, ROLE_VISUALIZADOR,
     TICKET_STATUS_VIGENTE, TICKET_STATUS_ANULADO,
@@ -35,7 +35,7 @@ def app():
     app = create_app()
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['WTF_CSRF_ENABLED'] = False
+    # app.config['WTF_CSRF_ENABLED'] = False # Enable CSRF to ensure csrf_token is in context
     app.config['SERVER_NAME'] = 'localhost.localdomain'
 
     return app
@@ -212,38 +212,18 @@ def sample_doctor(db_session, sample_clinic):
     return doctor
 
 
+# DischargeTimeSlot removed. This fixture is no longer needed or should return a list of strings if needed.
 @pytest.fixture
 def sample_discharge_slots(db_session, sample_clinic):
-    """Crea los 12 bloques horarios de alta estándar."""
-    slots = []
-    time_ranges = [
-        ('08:00-10:00', 8, 0, 10, 0),
-        ('10:00-12:00', 10, 0, 12, 0),
-        ('12:00-14:00', 12, 0, 14, 0),
-        ('14:00-16:00', 14, 0, 16, 0),
-        ('16:00-18:00', 16, 0, 18, 0),
-        ('18:00-20:00', 18, 0, 20, 0),
-        ('20:00-22:00', 20, 0, 22, 0),
-        ('22:00-00:00', 22, 0, 0, 0),
-        ('00:00-02:00', 0, 0, 2, 0),
-        ('02:00-04:00', 2, 0, 4, 0),
-        ('04:00-06:00', 4, 0, 6, 0),
-        ('06:00-08:00', 6, 0, 8, 0),
+    """
+    MOCK: Retorna lista de strings de bloques horarios simulando lo que antes eran objetos DB.
+    Ya no se guardan en BD.
+    """
+    return [
+        '08:00-10:00', '10:00-12:00', '12:00-14:00', '14:00-16:00',
+        '16:00-18:00', '18:00-20:00', '20:00-22:00', '22:00-00:00',
+        '00:00-02:00', '02:00-04:00', '04:00-06:00', '06:00-08:00'
     ]
-
-    for name, sh, sm, eh, em in time_ranges:
-        slot = DischargeTimeSlot(
-            name=name,
-            start_time=datetime.strptime(f'{sh:02d}:{sm:02d}', '%H:%M').time(),
-            end_time=datetime.strptime(f'{eh:02d}:{em:02d}', '%H:%M').time(),
-            clinic_id=sample_clinic.id,
-            is_active=True
-        )
-        db_session.session.add(slot)
-        slots.append(slot)
-
-    db_session.session.commit()
-    return slots
 
 
 @pytest.fixture
@@ -298,7 +278,7 @@ def sample_patient(db_session, sample_clinic):
 
 @pytest.fixture
 def sample_ticket(db_session, sample_clinic, sample_patient, sample_surgery_normal,
-                  sample_doctor, sample_discharge_slots):
+                  sample_doctor):
     """Crea un ticket de prueba completo."""
     pavilion_end = datetime(2025, 1, 15, 14, 30)  # 15 Ene 2025, 14:30
     fpa, overnight = sample_surgery_normal.base_stay_hours, 1
@@ -316,10 +296,9 @@ def sample_ticket(db_session, sample_clinic, sample_patient, sample_surgery_norm
         initial_fpa=calculated_fpa,
         current_fpa=calculated_fpa,
         overnight_stays=overnight,
-        room='101',
+        bed_number='101',
         status=TICKET_STATUS_VIGENTE,
         created_by='test_user',
-        discharge_slot_id=sample_discharge_slots[0].id,
         surgery_name_snapshot=sample_surgery_normal.name,
         surgery_base_hours_snapshot=sample_surgery_normal.base_stay_hours
     )

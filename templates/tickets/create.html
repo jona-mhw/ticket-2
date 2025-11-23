@@ -6,6 +6,7 @@
 {% block content %}
 <div class="max-w-4xl mx-auto pb-80">
     <form method="POST" class="space-y-8">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <!-- Clinic Selection (Superuser Only) -->
         {% if current_user.is_superuser %}
         <div class="bg-blue-50 border-l-4 border-blue-500 shadow rounded-r-lg p-6">
