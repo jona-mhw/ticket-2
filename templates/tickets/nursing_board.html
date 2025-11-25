@@ -958,29 +958,28 @@
     }
 
     .empty-actions .btn-secondary {
-        background: white;
-        color: #374151;
-        border: 1px solid #d1d5db;
+        background: #6b7280;
+        color: white;
     }
 
     .empty-actions .btn-secondary:hover {
-        background: #f9fafb;
+        background: #4b5563;
     }
-</style>
+    </style>
 
-<script>
-    // REAL-TIME COUNTDOWN UPDATES
+    <script>
+    // Load color thresholds from API
     let colorThresholds = {
         green: 8,
         yellow: 4,
         red: 2
     };
 
-    // Load color thresholds from API
     async function loadColorThresholds() {
         try {
             const response = await fetch('{{ url_for("admin.get_color_thresholds_api") }}');
             const data = await response.json();
+
             colorThresholds = {
                 green: data.green_threshold_hours,
                 yellow: data.yellow_threshold_hours,
@@ -990,11 +989,13 @@
         } catch (error) {
             console.error('Error al cargar umbrales de colores:', error);
             // Usar valores por defecto si hay error
+            colorThresholds = { green: 8, yellow: 4, red: 2 };
         }
     }
 
     function updateCountdowns() {
         const now = new Date();
+
         document.querySelectorAll('[data-countdown-target]').forEach(countdownEl => {
             const card = countdownEl.closest('.patient-card');
             const fpaIso = card.dataset.fpa;
@@ -1029,11 +1030,15 @@
 
             // Update urgency class dynamically using configurable thresholds
             countdownEl.classList.remove('countdown-normal', 'countdown-warning', 'countdown-critical');
-            if (totalHours < colorThresholds.red) {
+
+            // Ensure colorThresholds exists
+            const thresholds = colorThresholds || { green: 8, yellow: 4, red: 2 };
+
+            if (totalHours < thresholds.red) {
                 countdownEl.classList.add('countdown-critical');
-            } else if (totalHours < colorThresholds.yellow) {
+            } else if (totalHours < thresholds.yellow) {
                 countdownEl.classList.add('countdown-warning');
-            } else if (totalHours < colorThresholds.green) {
+            } else if (totalHours < thresholds.green) {
                 countdownEl.classList.add('countdown-warning');
             } else {
                 countdownEl.classList.add('countdown-normal');
@@ -1044,6 +1049,7 @@
     // EDITABLE ROOM - INLINE EDITING
     function updateScheduledCountdowns() {
         const now = new Date();
+
         document.querySelectorAll('[data-scheduled-fpa]').forEach(el => {
             const fpaIso = el.dataset.scheduledFpa;
             if (!fpaIso) return;
@@ -1062,6 +1068,7 @@
             const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
 
             let display = 'Activo en: ';
+
             if (days > 0) {
                 display += `${days}d ${hours}h`;
             } else if (hours > 0) {
@@ -1071,7 +1078,43 @@
             } else {
                 display = 'Activo en menos de un minuto';
             }
+
             el.textContent = display;
+        });
+    }
+
+    // REAL-TIME SEARCH (filter as you type)
+    const searchInput = document.querySelector('input[name="search"]');
+    const cards = document.querySelectorAll('.patient-card');
+
+    if (searchInput && cards.length > 0) {
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function (e) {
+            clearTimeout(searchTimeout);
+
+            searchTimeout = setTimeout(() => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+
+                if (!searchTerm) {
+                    // Show all cards
+                    cards.forEach(card => {
+                        card.style.display = '';
+                    });
+                    return;
+                }
+
+                // Filter cards
+                cards.forEach(card => {
+                    const cardText = card.textContent.toLowerCase();
+
+                    if (cardText.includes(searchTerm)) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }, 300); // Debounce 300ms
         });
     }
 
@@ -1106,6 +1149,12 @@
                 input.select();
             });
 
+            const exitEditMode = function () {
+                field.classList.remove('editing');
+                display.style.display = 'inline';
+                input.style.display = 'none';
+            };
+
             // Save on Enter or blur
             const saveField = async function () {
                 const newValue = input.value.trim();
@@ -1114,16 +1163,37 @@
                 // If no change, just exit edit mode
                 if (newValue === currentValue) {
                     exitEditMode();
+                    return;
+                }
+
+                // Make AJAX request to update the field
+                try {
+                    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+                    // Use the existing API endpoint
+                    const response = await fetch('{{ url_for("tickets.api_update_bed_location") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            ticket_id: ticketId,
+                            field: fieldName,
+                            value: newValue
+                        })
+                    });
 
                     const data = await response.json();
 
                     if (data.success) {
                         // Update display
-                        display.textContent = data.value;
-                        field.dataset.currentValue = newValue;
+                        display.textContent = newValue || '-';
+                        field.dataset.currentValue=newValue;
 
                         // Visual feedback
                         field.style.background = '#d4edda';
+
                         setTimeout(() => {
                             field.style.background = '';
                         }, 1000);
@@ -1138,12 +1208,6 @@
                 }
 
                 exitEditMode();
-            };
-
-            const exitEditMode = function () {
-                field.classList.remove('editing');
-                display.style.display = 'inline';
-                input.style.display = 'none';
             };
 
             // Enter key to save
@@ -1167,40 +1231,6 @@
                 e.stopPropagation();
             });
         });
-
-        // REAL-TIME SEARCH (filter as you type)
-        const searchInput = document.querySelector('input[name="search"]');
-        const cards = document.querySelectorAll('.patient-card');
-
-        if (searchInput && cards.length > 0) {
-            let searchTimeout;
-
-            searchInput.addEventListener('input', function (e) {
-                clearTimeout(searchTimeout);
-
-                searchTimeout = setTimeout(() => {
-                    const searchTerm = e.target.value.toLowerCase().trim();
-
-                    if (!searchTerm) {
-                        // Show all cards
-                        cards.forEach(card => {
-                            card.style.display = '';
-                        });
-                        return;
-                    }
-
-                    // Filter cards
-                    cards.forEach(card => {
-                        const cardText = card.textContent.toLowerCase();
-                        if (cardText.includes(searchTerm)) {
-                            card.style.display = '';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                }, 300); // Debounce 300ms
-            });
-        }
     });
-</script>
+    </script>
 {% endblock %}
