@@ -681,6 +681,103 @@ def reset_db_qa_minimal_command():
     click.echo(f'  - {Superuser.query.count()} superusers')
     click.echo('  - No other data (users, specialties, surgeries, standardized reasons, etc. must be created manually)')
 
+@click.command('reset-db-local-minimal')
+@with_appcontext
+def reset_db_local_minimal_command():
+    """Resets the database and initializes with minimal LOCAL data (clinics, superusers, and demo users)."""
+    with db.engine.connect() as con:
+        with con.begin():
+            click.echo('Dropping schema public CASCADE...')
+            con.execute(text('DROP SCHEMA public CASCADE;'))
+            click.echo('Recreating schema public...')
+            con.execute(text('CREATE SCHEMA public;'))
+
+    click.echo('Applying database migrations...')
+    alembic_upgrade()
+
+    click.echo('Syncing superusers from SUPERUSER_EMAILS...')
+    _sync_superusers()
+
+    click.echo('Creating clinics...')
+    clinic_names = [
+        "Clínica RedSalud Iquique", "Clínica RedSalud Elqui", "Clínica RedSalud Valparaíso",
+        "Clínica RedSalud Providencia", "Clínica RedSalud Santiago", "Clínica RedSalud Vitacura",
+        "Clínica RedSalud Rancagua", "Clínica RedSalud Mayor Temuco", "Clínica RedSalud Magallanes"
+    ]
+    clinics_to_add = [Clinic(name=name) for name in clinic_names]
+    db.session.add_all(clinics_to_add)
+    db.session.commit()
+    click.echo(f'{len(clinics_to_add)} clinics created.')
+
+    # Get all clinics for user creation
+    all_clinics = Clinic.query.all()
+
+    # Create global admin user (superuser without clinic assignment)
+    click.echo('Creating global admin user...')
+    global_admin_username = 'global_admin'
+    global_admin_email = 'global_admin@tickethome.com'
+    
+    global_admin = User(
+        username=global_admin_username,
+        email=global_admin_email,
+        role=ROLE_ADMIN,
+        password='password123',
+        clinic_id=None  # No clinic assignment - can access all clinics
+    )
+    db.session.add(global_admin)
+    
+    # Add global_admin to Superuser table if not exists
+    if not Superuser.query.filter_by(email=global_admin_email).first():
+        superuser_entry = Superuser(email=global_admin_email)
+        db.session.add(superuser_entry)
+    
+    db.session.commit()
+    click.echo(f'Global admin user created: {global_admin_username}')
+
+    click.echo('Creating demo users for each clinic...')
+    users_created = 0
+    for clinic in all_clinics:
+        prefix = generate_prefix(clinic.name)
+        
+        # Create users for each role
+        for role in [ROLE_ADMIN, ROLE_CLINICAL, ROLE_VISUALIZADOR]:
+            username = f'{role}_{prefix}'
+            user = User(
+                username=username,
+                email=f'{username}@tickethome.com',
+                role=role,
+                password='password123',
+                clinic_id=clinic.id
+            )
+            db.session.add(user)
+            users_created += 1
+    
+    db.session.commit()
+    click.echo(f'{users_created} demo users created.')
+
+    click.echo('\n' + '='*60)
+    click.echo('Database has been reset with LOCAL MINIMAL data.')
+    click.echo('='*60)
+    click.echo('\nDatabase contains:')
+    click.echo(f'  ✓ {Clinic.query.count()} clinics')
+    click.echo(f'  ✓ {Superuser.query.count()} superusers')
+    click.echo(f'  ✓ {User.query.count()} demo users')
+    click.echo('\n  Demo user credentials (password: password123):')
+    click.echo('  ─────────────────────────────────────────────')
+    click.echo('  Global Admin (all clinics):')
+    click.echo('    • global_admin')
+    click.echo('')
+    for clinic in all_clinics[:3]:  # Show first 3 clinics as examples
+        prefix = generate_prefix(clinic.name)
+        click.echo(f'  {clinic.name}:')
+        click.echo(f'    • admin_{prefix}')
+        click.echo(f'    • clinical_{prefix}')
+        click.echo(f'    • visualizador_{prefix}')
+    if len(all_clinics) > 3:
+        click.echo(f'  ... y {len(all_clinics) - 3} clínicas más')
+    click.echo('\n  ⚠ No other data created (specialties, surgeries, patients, tickets)')
+    click.echo('='*60)
+
 def register_commands(app):
     app.cli.add_command(init_db_command)
     app.cli.add_command(reset_db_command)
@@ -692,3 +789,4 @@ def register_commands(app):
     app.cli.add_command(export_local_db_command)
     app.cli.add_command(init_db_qa_minimal_command)
     app.cli.add_command(reset_db_qa_minimal_command)
+    app.cli.add_command(reset_db_local_minimal_command)

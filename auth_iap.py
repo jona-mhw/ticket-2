@@ -111,6 +111,8 @@ class IAPAuthenticator:
             if not email:
                 return None, "No se encontró el email del usuario."
 
+        # Normalize email
+        email = email.lower().strip()
         current_app.logger.info(f"Usuario autenticado por IAP: {email}")
 
         # Buscar el usuario en la base de datos

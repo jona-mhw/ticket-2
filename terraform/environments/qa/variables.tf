@@ -12,3 +12,4 @@ variable "iap_access_group" {}
 variable "reset_db_on_startup" { default = false }
 variable "use_qa_minimal_seed" { default = false }
 variable "superuser_emails" { type = list(string) }
+variable "force_deployment_timestamp" { default = "" }

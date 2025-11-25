@@ -1,0 +1,88 @@
+# Script de Despliegue Manual QA - Ticket Home
+# Copia y pega este bloque completo en tu terminal PowerShell
+
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "🚀 INICIANDO DESPLIEGUE MANUAL QA" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+
+# 1. Configuración de GCloud
+Write-Host "`n🔧 [1/4] Configurando cuenta y proyecto GCloud..." -ForegroundColor Yellow
+gcloud config set account jonathan.segura@redsalud.cl
+gcloud config set project qa-ticket-home-redsalud
+
+# 2. Solicitar correos de superusuario
+Write-Host "`n👥 [2/4] Configuración de Superusuarios" -ForegroundColor Yellow
+$emailsInput = Read-Host "Ingrese los correos de superusuario separados por coma (ej: admin@tickethome.com,jonathan.segura@redsalud.cl)"
+
+$tempTfvarsFile = "superuser_override.tfvars.json"
+
+if (-not [string]::IsNullOrWhiteSpace($emailsInput)) {
+    $emailsArray = $emailsInput -split "," | ForEach-Object { $_.Trim() }
+    # Crear objeto JSON y guardarlo en archivo temporal
+    $jsonContent = @{ superuser_emails = $emailsArray } | ConvertTo-Json -Compress
+    $jsonContent | Out-File -FilePath "terraform/environments/qa/$tempTfvarsFile" -Encoding ASCII
+    Write-Host "Correos configurados en ${tempTfvarsFile}: $jsonContent"
+} else {
+    # Asegurarse de que no exista el archivo de una ejecución anterior
+    if (Test-Path "terraform/environments/qa/$tempTfvarsFile") {
+        Remove-Item "terraform/environments/qa/$tempTfvarsFile"
+    }
+}
+
+# 3. Build y Push Docker
+Write-Host "`n🐳 [3/4] Build y Push de Imagen Docker..." -ForegroundColor Yellow
+$REGION = "southamerica-west1"
+$PROJECT_ID = "qa-ticket-home-redsalud"
+$REPO_NAME = "tickethome-repo"
+$IMAGE_NAME = "ticket-home"
+$TAG = "latest"
+$FULL_IMAGE = "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/${IMAGE_NAME}:$TAG"
+
+# Autenticación Docker
+cmd /c "gcloud auth configure-docker $REGION-docker.pkg.dev --quiet"
+
+# Build
+Write-Host "Construyendo imagen..."
+docker build -t $FULL_IMAGE .
+if ($LASTEXITCODE -ne 0) { Write-Error "❌ Error en docker build"; exit 1 }
+
+# Push
+Write-Host "Subiendo imagen..."
+docker push $FULL_IMAGE
+if ($LASTEXITCODE -ne 0) { Write-Error "❌ Error en docker push"; exit 1 }
+
+# 4. Terraform Apply
+Write-Host "`n🏗️  [4/4] Aplicando cambios con Terraform..." -ForegroundColor Yellow
+Push-Location "terraform/environments/qa"
+
+# Configurar credenciales para Terraform
+$env:GOOGLE_CLOUD_QUOTA_PROJECT = $PROJECT_ID
+$env:GOOGLE_OAUTH_ACCESS_TOKEN = $(gcloud auth print-access-token)
+
+# Ejecutar Terraform
+# Si existe el archivo temporal, Terraform lo cargará automáticamente si termina en .auto.tfvars.json
+# O lo pasamos explícitamente si tiene otro nombre. Usaremos nombre explícito para control.
+$terraformArgs = "-var-file='terraform.tfvars' -var-file='qa-reset-minimal.tfvars'"
+
+if (Test-Path $tempTfvarsFile) {
+    $terraformArgs += " -var-file='$tempTfvarsFile'"
+}
+
+$cmd = "terraform apply $terraformArgs -auto-approve"
+Write-Host "Ejecutando: $cmd"
+Invoke-Expression $cmd
+$exitCode = $LASTEXITCODE
+
+# Limpieza
+if (Test-Path $tempTfvarsFile) {
+    Remove-Item $tempTfvarsFile
+}
+
+if ($exitCode -eq 0) {
+    Write-Host "`n✅ ¡Despliegue completado exitosamente!" -ForegroundColor Green
+    Write-Host "🌍 URL QA: https://qa-ticket-home.mhwdev.dev"
+} else {
+    Write-Error "`n❌ Error en Terraform Apply"
+}
+
+Pop-Location

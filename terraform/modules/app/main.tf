@@ -55,21 +55,6 @@ resource "google_cloud_run_v2_service" "default" {
       }
       env {
         name  = "ENABLE_DEMO_LOGIN"
-        value = var.enable_demo_login
-      }
-      env {
-        name  = "RESET_DB_ON_STARTUP"
-        value = tostring(var.reset_db_on_startup)
-      }
-      env {
-        name  = "USE_QA_MINIMAL_SEED"
-        value = tostring(var.use_qa_minimal_seed)
-      }
-
-      # Conectar variables de entorno a los secrets de Secret Manager
-      env {
-        name = "DATABASE_URL"
-        value_source {
           secret_key_ref {
             secret  = var.secret_database_url_name
             version = "latest"

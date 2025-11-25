@@ -46,4 +46,5 @@ module "app" {
   reset_db_on_startup    = var.reset_db_on_startup
   use_qa_minimal_seed    = var.use_qa_minimal_seed
   superuser_emails       = var.superuser_emails
+  force_deployment_timestamp = var.force_deployment_timestamp
 }

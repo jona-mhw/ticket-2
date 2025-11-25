@@ -164,18 +164,39 @@ def create():
 @login_required
 def api_calculate_fpa():
     """API endpoint to calculate FPA based on surgery and time."""
-    data = request.get_json()
+    data = request.get_json() or {}
     surgery_id = data.get('surgery_id')
     pavilion_end_time_str = data.get('pavilion_end_time')
-    clinic_id = data.get('clinic_id')
+    clinic_id_param = data.get('clinic_id')
 
+    # Determine effective clinic_id
     if not current_user.is_superuser:
+        # Regular users use their assigned clinic
         clinic_id = current_user.clinic_id
-    elif not clinic_id:
-        return jsonify({'error': 'clinic_id es requerido para superusuarios'}), 400
+        if not clinic_id:
+            return jsonify({
+                'error': 'Tu usuario no tiene una clínica asignada.',
+                'debug': f'User: {current_user.username}, Role: {current_user.role}, ClinicID: {current_user.clinic_id}'
+            }), 400
+    elif not clinic_id_param:
+        # Superusers must select a clinic from the dropdown
+        return jsonify({'error': 'Debes seleccionar una clínica primero.'}), 400
+    else:
+        clinic_id = clinic_id_param
 
+    # Validate all required fields
     if not all([surgery_id, pavilion_end_time_str, clinic_id]):
-        return jsonify({'error': 'Faltan datos requeridos'}), 400
+        return jsonify({
+            'error': 'Faltan datos requeridos.',
+            'debug': {
+                'received_surgery_id': surgery_id,
+                'received_time': pavilion_end_time_str,
+                'effective_clinic_id': clinic_id,
+                'param_clinic_id': clinic_id_param,
+                'is_superuser': current_user.is_superuser,
+                'user_clinic_id': current_user.clinic_id
+            }
+        }), 400
 
     try:
         surgery = Surgery.query.filter_by(id=surgery_id, clinic_id=clinic_id).first()

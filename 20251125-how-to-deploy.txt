@@ -1,0 +1,120 @@
+# GUÍA DE DEPLOYMENT QA - Ticket Home
+# Fecha: 2025-11-25
+# Autor: Jonathan Segura
+
+================================================================================
+INSTRUCCIONES PARA DESPLEGAR EN QA (Forma correcta post-fix)
+================================================================================
+
+CONTEXTO:
+---------
+Después de resolver el problema de autenticación IAP de nov-24/25, ahora el
+deployment QA funciona correctamente con las variables de entorno necesarias.
+
+MÉTODO RECOMENDADO: gcloud CLI (Más confiable que Terraform)
+------------------------------------------------------------
+
+1. CONFIGURAR PROYECTO
+   ```
+   gcloud config set account jonathan.segura@redsalud.cl
+   gcloud config set project qa-ticket-home-redsalud
+   ```
+
+2. BUILD Y PUSH DOCKER IMAGE
+   ```
+   $REGION = "southamerica-west1"
+   $PROJECT_ID = "qa-ticket-home-redsalud"
+   $FULL_IMAGE = "$REGION-docker.pkg.dev/$PROJECT_ID/tickethome-repo/ticket-home:latest"
+   
+   # Autenticar Docker
+   gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
+   
+   # Build
+   docker build -t $FULL_IMAGE .
+   
+   # Push
+   docker push $FULL_IMAGE
+   ```
+
+3. ACTUALIZAR CLOUD RUN SERVICE
+
+   OPCIÓN A - Sin resetear DB (deployment normal):
+   ------------------------------------------------
+   gcloud run services update ticket-home \
+     --region=southamerica-west1 \
+     --project=qa-ticket-home-redsalud \
+     --image=southamerica-west1-docker.pkg.dev/qa-ticket-home-redsalud/tickethome-repo/ticket-home:latest
+
+   OPCIÓN B - Con reset de DB (para testing/demos):
+   -------------------------------------------------
+   gcloud run services update ticket-home \
+     --region=southamerica-west1 \
+     --project=qa-ticket-home-redsalud \
+     --image=southamerica-west1-docker.pkg.dev/qa-ticket-home-redsalud/tickethome-repo/ticket-home:latest \
+     --update-env-vars="RESET_DB_ON_STARTUP=true,USE_QA_MINIMAL_SEED=true"
+
+   NOTA: Después del deploy con RESET_DB_ON_STARTUP=true, volver a false:
+   
+   gcloud run services update ticket-home \
+     --region=southamerica-west1 \
+     --project=qa-ticket-home-redsalud \
+     --update-env-vars="RESET_DB_ON_STARTUP=false"
+
+
+VARIABLES DE ENTORNO CRÍTICAS (Ya configuradas en el servicio):
+---------------------------------------------------------------
+✅ GCP_PROJECT_NUMBER=85153475663
+✅ BACKEND_SERVICE_ID=2148322621403404401
+✅ ENVIRONMENT=qa
+✅ ENABLE_IAP=true
+✅ ENABLE_DEMO_LOGIN=false (solo SSO en QA)
+
+Estas NO necesitan actualizarse en cada deploy, solo si cambian.
+
+
+VERIFICAR DEPLOYMENT:
+--------------------
+1. Ver logs en tiempo real:
+   gcloud logging tail --project=qa-ticket-home-redsalud --filter="resource.type=cloud_run_revision AND resource.labels.service_name=ticket-home"
+
+2. Verificar acceso:
+   https://qa-ticket-home.mhwdev.dev
+
+3. Revisar que tu email esté en superusers:
+   gcloud secrets versions access latest --secret=superuser-emails --project=qa-ticket-home-redsalud
+
+
+TROUBLESHOOTING:
+---------------
+Si aparece error 403 "Acceso No Autorizado":
+1. Verificar que estás en el grupo: qa-ticket-home-rs@googlegroups.com
+2. Verificar que el secret superuser-emails tenga tu email
+3. Verificar logs para ver si los superusers se sincronizaron:
+   gcloud logging read "textPayload:superuser AND textPayload:Syncing" --limit=10
+
+Si el contenedor no arranca:
+1. Revisar logs para ver el error específico
+2. Verificar que DATABASE_URL secret exista y sea válido
+3. Verificar que todas las variables de entorno críticas estén configuradas
+
+
+MÉTODO ALTERNATIVO: Terraform (No recomendado por complejidad)
+--------------------------------------------------------------
+Si necesitas usar Terraform:
+
+cd terraform/environments/qa
+
+# Configurar credenciales
+$env:GOOGLE_CLOUD_QUOTA_PROJECT = 'qa-ticket-home-redsalud'
+$env:GOOGLE_OAUTH_ACCESS_TOKEN = $(gcloud auth print-access-token)
+
+# Apply
+terraform apply -var-file='terraform.tfvars' -var-file='qa-reset-minimal.tfvars' -auto-approve
+
+ADVERTENCIA: Terraform ha tenido problemas de permisos con IAP group binding.
+Usar gcloud es más confiable.
+
+
+CONTACTO:
+--------
+Para dudas sobre deployment: jonathan.segura@redsalud.cl
