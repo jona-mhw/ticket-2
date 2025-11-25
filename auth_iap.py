@@ -1,6 +1,6 @@
 from flask import request, current_app, flash
 from flask_login import login_user
-from models import User
+from models import User, db, LoginAudit
 import jwt
 import requests
 import os
@@ -133,6 +133,21 @@ class IAPAuthenticator:
             session['auth_type'] = 'iap'
             session['iap_email'] = email
             current_app.logger.info(f"Login automático exitoso para {email}")
+            
+            # Registrar auditoría de login
+            try:
+                audit_log = LoginAudit(
+                    user_id=user.id,
+                    username=user.username,
+                    clinic_id=user.clinic_id,
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as e:
+                current_app.logger.error(f"Error al registrar auditoría de login IAP: {str(e)}")
+                db.session.rollback()
+            
             return True, f"Inicio de sesión automático exitoso para {email}."
         elif user:
             # Usuario existe pero está inactivo → denegar acceso
@@ -173,6 +188,21 @@ class IAPAuthenticator:
                 from flask import session
                 session['auth_type'] = 'iap'
                 session['iap_email'] = email
+                
+                # Registrar auditoría de login para el nuevo superusuario
+                try:
+                    audit_log = LoginAudit(
+                        user_id=new_user.id,
+                        username=new_user.username,
+                        clinic_id=new_user.clinic_id,
+                        ip_address=request.remote_addr
+                    )
+                    db.session.add(audit_log)
+                    db.session.commit()
+                except Exception as e:
+                    current_app.logger.error(f"Error al registrar auditoría de login para nuevo superusuario: {str(e)}")
+                    db.session.rollback()
+                
                 return True, f"Cuenta de superusuario creada y sesión iniciada para {email}."
 
             else:
