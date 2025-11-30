@@ -3,10 +3,40 @@
 {% block title %}Editar Ticket {{ ticket.id }} - Ticket Home{% endblock %}
 {% block page_title %}Editar Ticket <span class="text-secondary font-mono">{{ ticket.id }}</span>{% endblock %}
 
+{% block extra_css %}
+<style>
+    fieldset:disabled {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    fieldset:disabled input,
+    fieldset:disabled select {
+        background-color: #f3f4f6 !important;
+        cursor: not-allowed !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto">
+    {% if ticket_is_readonly %}
+    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-800 rounded">
+        <div class="flex items-center">
+            <svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div>
+                <h4 class="font-bold">Ticket No Editable</h4>
+                <p class="text-sm">{{ readonly_reason }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <form method="POST" class="space-y-8">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <fieldset {% if ticket_is_readonly %}disabled{% endif %}>
         <!-- Patient Information -->
         <div class="bg-white shadow rounded-lg p-6 border-l-4 border-secondary">
             <h3 class="text-lg font-medium text-gray-900 mb-6">Información del Paciente</h3>
@@ -82,11 +112,13 @@
             </div>
         </div>
 
+        </fieldset>
+
         <div class="flex justify-end space-x-4">
             <a href="{{ url_for('tickets.detail', ticket_id=ticket.id) }}" class="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Cancelar
             </a>
-            <button type="submit" class="px-6 py-2 bg-primary hover:bg-opacity-90 text-white rounded-md text-sm font-medium">
+            <button type="submit" class="px-6 py-2 bg-primary hover:bg-opacity-90 text-white rounded-md text-sm font-medium" {% if ticket_is_readonly %}disabled{% endif %}>
                 Guardar Cambios
             </button>
         </div>

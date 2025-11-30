@@ -154,8 +154,12 @@
             <div class="bed-location-header"
                 style="border-bottom: none; background: transparent; padding: 0; width: 100%;">
                 <!-- Bed Number Field -->
-                <div class="bed-field editable-field" data-ticket-id="{{ ticket.id }}" data-field="bed_number"
-                    data-current-value="{{ ticket.bed_number or '' }}" title="Clic para editar cama">
+                <div class="bed-field {% if ticket.status != 'Anulado' and ticket.urgency_level != 'expired' %}editable-field{% endif %}"
+                    data-ticket-id="{{ ticket.id }}" data-field="bed_number"
+                    data-current-value="{{ ticket.bed_number or '' }}"
+                    data-ticket-status="{{ ticket.status }}"
+                    data-ticket-urgency="{{ ticket.urgency_level }}"
+                    title="{% if ticket.status == 'Anulado' %}Ticket anulado - no editable{% elif ticket.urgency_level == 'expired' %}Ticket vencido - no editable{% else %}Clic para editar cama{% endif %}">
                     <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
@@ -168,8 +172,12 @@
                 </div>
 
                 <!-- Location Field -->
-                <div class="location-field editable-field" data-ticket-id="{{ ticket.id }}" data-field="location"
-                    data-current-value="{{ ticket.location or '' }}" title="Clic para editar ubicación">
+                <div class="location-field {% if ticket.status != 'Anulado' and ticket.urgency_level != 'expired' %}editable-field{% endif %}"
+                    data-ticket-id="{{ ticket.id }}" data-field="location"
+                    data-current-value="{{ ticket.location or '' }}"
+                    data-ticket-status="{{ ticket.status }}"
+                    data-ticket-urgency="{{ ticket.urgency_level }}"
+                    title="{% if ticket.status == 'Anulado' %}Ticket anulado - no editable{% elif ticket.urgency_level == 'expired' %}Ticket vencido - no editable{% else %}Clic para editar ubicación{% endif %}">
                     <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
@@ -639,17 +647,36 @@
         display: flex;
         align-items: center;
         gap: 0.25rem;
-        cursor: pointer;
         padding: 0.25rem 0.5rem;
         border-radius: 0.375rem;
         transition: all 0.2s;
         border: 1px solid transparent;
     }
 
-    .bed-field:hover,
-    .location-field:hover {
+    /* Campos editables */
+    .bed-field.editable-field,
+    .location-field.editable-field {
+        cursor: pointer;
+    }
+
+    .bed-field.editable-field:hover,
+    .location-field.editable-field:hover {
         background: #f3f4f6;
         border-color: #d1d5db;
+    }
+
+    /* Campos NO editables (anulados/vencidos) */
+    .bed-field:not(.editable-field),
+    .location-field:not(.editable-field) {
+        cursor: not-allowed;
+        opacity: 0.6;
+        background: #f9fafb;
+    }
+
+    .bed-field:not(.editable-field):hover,
+    .location-field:not(.editable-field):hover {
+        background: #f9fafb;
+        border-color: transparent;
     }
 
     .field-icon {

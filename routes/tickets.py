@@ -560,6 +560,14 @@ def api_update_bed_location():
     if not ticket:
         return jsonify({'error': 'Ticket no encontrado'}), 404
 
+    # Bloquear edición de tickets Anulados o Vencidos
+    if ticket.status == 'Anulado':
+        return jsonify({'error': 'No se puede editar un ticket anulado'}), 403
+
+    # Verificar si el ticket está vencido (FPA ya pasó)
+    if ticket.current_fpa and ticket.current_fpa < datetime.now():
+        return jsonify({'error': 'No se puede editar un ticket vencido'}), 403
+
     try:
         # Actualizar el campo correspondiente
         if field == 'bed_number':

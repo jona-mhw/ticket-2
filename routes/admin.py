@@ -28,8 +28,23 @@ def edit_ticket(ticket_id):
     if not current_user.is_superuser:
         query = query.filter_by(clinic_id=current_user.clinic_id)
     ticket = query.first_or_404()
-    
+
+    # Bloquear edición de tickets Anulados o Vencidos
+    from datetime import datetime
+    ticket_is_readonly = False
+    readonly_reason = ""
+
+    if ticket.status == 'Anulado':
+        ticket_is_readonly = True
+        readonly_reason = "Este ticket está anulado y no puede ser modificado."
+    elif ticket.current_fpa and ticket.current_fpa < datetime.now():
+        ticket_is_readonly = True
+        readonly_reason = "Este ticket está vencido y no puede ser modificado."
+
     if request.method == 'POST':
+        if ticket_is_readonly:
+            flash(readonly_reason, 'error')
+            return redirect(url_for('tickets.detail', ticket_id=ticket.id))
         try:
             # --- Patient Data ---
             patient = ticket.patient
@@ -109,11 +124,13 @@ def edit_ticket(ticket_id):
     doctors = doctors_query.all()
     annulment_reasons = reasons_query.all()
     
-    return render_template('admin/edit_ticket.html', 
+    return render_template('admin/edit_ticket.html',
                            ticket=ticket,
                            surgeries=surgeries,
                            doctors=doctors,
-                           annulment_reasons=annulment_reasons)
+                           annulment_reasons=annulment_reasons,
+                           ticket_is_readonly=ticket_is_readonly,
+                           readonly_reason=readonly_reason)
 
 @admin_bp.route('/tickets')
 @login_required
