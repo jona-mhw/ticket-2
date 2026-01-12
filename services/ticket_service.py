@@ -80,6 +80,9 @@ class TicketService:
         # Generate ticket ID
         ticket_id = TicketService.generate_ticket_id(ticket_data['clinic'])
 
+        # Issue #87: medical_discharge_date is now automatically set to initial_fpa.date()
+        # (no more manual override allowed)
+
         # Create ticket
         ticket = Ticket(
             id=ticket_id,
@@ -88,7 +91,7 @@ class TicketService:
             doctor_id=ticket_data.get('doctor_id'),
             clinic_id=ticket_data['clinic'].id,
             pavilion_end_time=ticket_data['pavilion_end_time'],
-            medical_discharge_date=ticket_data['medical_discharge_date'],
+            medical_discharge_date=ticket_data['initial_fpa'].date(),
             system_calculated_fpa=system_fpa,
             initial_fpa=initial_fpa,
             current_fpa=current_fpa,
@@ -99,8 +102,6 @@ class TicketService:
             created_by=user.username,
             surgery_name_snapshot=ticket_data['surgery'].name,
             surgery_base_hours_snapshot=ticket_data['surgery'].base_stay_hours,
-            initial_reason=ticket_data.get('initial_reason'),
-            initial_justification=ticket_data.get('initial_justification')
         )
 
         db.session.add(ticket)

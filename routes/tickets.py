@@ -73,43 +73,27 @@ def create():
                 request.form.get('pavilion_end_time'),
                 '%Y-%m-%dT%H:%M'
             )
-            medical_discharge_date = datetime.strptime(
-                request.form.get('medical_discharge_date'),
-                '%Y-%m-%d'
-            ).date()
 
             # Calculate system FPA (automatic calculation)
+            # Issue #87: Always use system-calculated FPA - no manual override allowed
             # Issue #63: The form sends 'pavilion_end_time' but it represents the Surgery Time (Start Time)
             # We pass this time to the calculator which now handles admission time calculation.
-            from datetime import time
             system_fpa, _ = FPACalculator.calculate(pavilion_end_time, surgery)
 
-            # Determine if medical discharge date is different from system calculation
-            # If different, use medical date as FPA (Issue #40)
-            if medical_discharge_date != system_fpa.date():
-                # Convert medical date to datetime with default time block (18:00)
-                # This ensures the medical decision overrides the automatic calculation
-                medical_fpa_datetime = datetime.combine(medical_discharge_date, time(18, 0))
-                initial_fpa = medical_fpa_datetime
-                current_fpa = medical_fpa_datetime
-            else:
-                # If dates match, use system calculated FPA (includes correct time)
-                initial_fpa = system_fpa
-                current_fpa = system_fpa
+            # Always use the system calculated FPA
+            initial_fpa = system_fpa
+            current_fpa = system_fpa
 
             ticket_data = {
                 'patient': patient,
                 'surgery': surgery,
                 'clinic': clinic,
                 'pavilion_end_time': pavilion_end_time,
-                'medical_discharge_date': medical_discharge_date,
                 'initial_fpa': initial_fpa,
                 'current_fpa': current_fpa,
                 'doctor_id': int(request.form.get('doctor_id')) if request.form.get('doctor_id') else None,
                 'bed_number': request.form.get('room', '').strip() or None,
                 'location': request.form.get('location', '').strip() or None,
-                'initial_reason': request.form.get('initial_reason'),
-                'initial_justification': request.form.get('initial_justification')
             }
 
             # Create ticket using service
