@@ -5,11 +5,47 @@
 
 {% block content %}
 <div class="space-y-6">
+    <!-- Clinic Filter for Superuser - Issue #88 -->
+    {% if current_user.is_superuser %}
+    <div class="bg-blue-50 border-l-4 border-blue-500 shadow rounded-r-lg p-6">
+        <h3 class="text-lg font-medium text-blue-900 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                </path>
+            </svg>
+            Filtrar por Clínica
+        </h3>
+        <form method="GET" action="{{ url_for('dashboard.index') }}" class="flex gap-2">
+            <!-- Pass existing filters -->
+            <input type="hidden" name="date_from" value="{{ request.args.get('date_from', '') }}">
+            <input type="hidden" name="date_to" value="{{ request.args.get('date_to', '') }}">
+            <input type="hidden" name="surgery_id" value="{{ request.args.get('surgery_id', '') }}">
+
+            <select name="clinic_id"
+                class="px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 flex-1"
+                onchange="this.form.submit()">
+                <option value="">Ver todas las clínicas</option>
+                {% for clinic in clinics %}
+                <option value="{{ clinic.id }}" {% if request.args.get('clinic_id')|int == clinic.id %}selected{% endif %}>
+                    {{ clinic.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    {% endif %}
+
     <!-- Filters Section - Issue #89 -->
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Filtros Avanzados</h3>
             <form method="GET" action="{{ url_for('dashboard.index') }}" class="space-y-4">
+                <!-- Preserve clinic filter if superuser -->
+                {% if current_user.is_superuser and request.args.get('clinic_id') %}
+                <input type="hidden" name="clinic_id" value="{{ request.args.get('clinic_id') }}">
+                {% endif %}
+
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <!-- Date Range Filters -->
                     <div>

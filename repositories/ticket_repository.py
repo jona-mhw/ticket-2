@@ -72,13 +72,26 @@ class TicketRepository:
          .join(Surgery, Ticket.surgery_id == Surgery.id)\
          .outerjoin(Doctor, Ticket.doctor_id == Doctor.id)
 
-        # Apply clinic filter for non-superusers
+        # Apply clinic filter
+        # Issue #88: For non-superusers, always filter by their clinic
+        # For superusers, optionally filter by selected clinic if provided
         if not current_user.is_superuser:
             query = query.filter(
                 Ticket.clinic_id == current_user.clinic_id,
                 Patient.clinic_id == current_user.clinic_id,
                 Surgery.clinic_id == current_user.clinic_id
             )
+        elif current_user.is_superuser and filters.get('clinic_id'):
+            # Superuser selected a specific clinic to filter
+            try:
+                clinic_id = int(filters['clinic_id'])
+                query = query.filter(
+                    Ticket.clinic_id == clinic_id,
+                    Patient.clinic_id == clinic_id,
+                    Surgery.clinic_id == clinic_id
+                )
+            except (ValueError, TypeError):
+                pass
 
         # Status filter
         if filters.get('status'):

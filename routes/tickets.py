@@ -400,7 +400,8 @@ def nursing_board():
         'status': request.args.get('status', ''),
         'search': request.args.get('search', ''),
         'room': request.args.get('room', ''),
-        'urgency': request.args.get('urgency', '')
+        'urgency': request.args.get('urgency', ''),
+        'clinic_id': request.args.get('clinic_id', '') if current_user.is_superuser else ''  # Issue #88
     }
 
     query = TicketRepository.build_filtered_query(filters, current_user)
@@ -448,10 +449,16 @@ def nursing_board():
         'scheduled': len([t for t in tickets if t.urgency_level == 'scheduled'])
     }
 
+    # Issue #88: Get all clinics for the filter dropdown (for superusers only)
+    clinics = []
+    if current_user.is_superuser:
+        clinics = Clinic.query.filter_by(is_active=True).order_by(Clinic.name).all()
+
     return render_template('tickets/nursing_board.html',
                          tickets=tickets,
                          filters=filters,
-                         stats=stats)
+                         stats=stats,
+                         clinics=clinics)
 
 
 @tickets_bp.route('/nursing-list')
@@ -464,7 +471,8 @@ def nursing_list():
         'status': request.args.get('status', ''),
         'search': request.args.get('search', ''),
         'room': request.args.get('room', ''),
-        'urgency': request.args.get('urgency', '')
+        'urgency': request.args.get('urgency', ''),
+        'clinic_id': request.args.get('clinic_id', '') if current_user.is_superuser else ''  # Issue #88
     }
 
     visible_columns = request.args.getlist('cols') or [
@@ -508,11 +516,17 @@ def nursing_list():
         'scheduled': len([t for t in tickets if t.urgency_level == 'scheduled'])
     }
 
+    # Issue #88: Get all clinics for the filter dropdown (for superusers only)
+    clinics = []
+    if current_user.is_superuser:
+        clinics = Clinic.query.filter_by(is_active=True).order_by(Clinic.name).all()
+
     return render_template('tickets/nursing_list.html',
                          tickets=tickets,
                          filters=filters,
                          stats=stats,
-                         visible_columns=visible_columns)
+                         visible_columns=visible_columns,
+                         clinics=clinics)
 
 
 @tickets_bp.route('/api/update-bed-location', methods=['POST'])

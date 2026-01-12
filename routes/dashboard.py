@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from models import Ticket, Surgery, FpaModification, db, TICKET_STATUS_VIGENTE, TICKET_STATUS_ANULADO
+from models import Ticket, Surgery, FpaModification, Clinic, db, TICKET_STATUS_VIGENTE, TICKET_STATUS_ANULADO
 from sqlalchemy import func
 from datetime import datetime, timedelta
 import json
@@ -20,15 +20,23 @@ def index():
     start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Issue #89: Handle date range and surgery filters
+    # Issue #88: Handle clinic filter for superusers
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
     surgery_id = request.args.get('surgery_id')
+    clinic_id = request.args.get('clinic_id') if current_user.is_superuser else None
 
     # Build base queries with clinic filtering for non-superusers
     def apply_clinic_filter(query):
-        """Apply clinic filter only for non-superusers"""
+        """Apply clinic filter only for non-superusers, or selected clinic for superusers"""
         if not current_user.is_superuser:
             return query.filter(Ticket.clinic_id == current_user.clinic_id)
+        elif clinic_id:
+            # Superuser selected a specific clinic
+            try:
+                return query.filter(Ticket.clinic_id == int(clinic_id))
+            except (ValueError, TypeError):
+                pass
         return query
 
     def apply_date_range_filter(query):
@@ -125,6 +133,11 @@ def index():
         surgeries_query = surgeries_query.filter_by(clinic_id=current_user.clinic_id)
     surgeries = surgeries_query.filter_by(is_active=True).order_by(Surgery.name).all()
 
+    # Get all clinics for the filter dropdown (for superusers only)
+    clinics = []
+    if current_user.is_superuser:
+        clinics = Clinic.query.filter_by(is_active=True).order_by(Clinic.name).all()
+
     # Surgery stats
     surgery_stats_query = db.session.query(
         Surgery.name,
@@ -203,4 +216,5 @@ def index():
                          surgery_stats=surgery_stats,
                          modification_stats=modification_stats,
                          chart_data=json.dumps(chart_data),
-                         surgeries=surgeries)
+                         surgeries=surgeries,
+                         clinics=clinics)
