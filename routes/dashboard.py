@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from models import Ticket, Surgery, FpaModification, db, TICKET_STATUS_VIGENTE, TICKET_STATUS_ANULADO
 from sqlalchemy import func
@@ -19,6 +19,11 @@ def index():
     start_of_week = now - timedelta(days=now.weekday())
     start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    # Issue #89: Handle date range and surgery filters
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    surgery_id = request.args.get('surgery_id')
+
     # Build base queries with clinic filtering for non-superusers
     def apply_clinic_filter(query):
         """Apply clinic filter only for non-superusers"""
@@ -26,34 +31,67 @@ def index():
             return query.filter(Ticket.clinic_id == current_user.clinic_id)
         return query
 
-    # KPIs - Issue #86: Redefined KPI criteria
+    def apply_date_range_filter(query):
+        """Apply date range filters if provided"""
+        if date_from:
+            try:
+                start_date = datetime.strptime(date_from, '%Y-%m-%d')
+                query = query.filter(Ticket.created_at >= start_date)
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                end_date = datetime.strptime(date_to, '%Y-%m-%d')
+                # Include the entire end date
+                end_date = end_date.replace(hour=23, minute=59, second=59)
+                query = query.filter(Ticket.created_at <= end_date)
+            except ValueError:
+                pass
+        return query
+
+    def apply_surgery_filter(query):
+        """Apply surgery filter if provided"""
+        if surgery_id:
+            try:
+                query = query.filter(Ticket.surgery_id == int(surgery_id))
+            except (ValueError, TypeError):
+                pass
+        return query
+
+    # KPIs - Issue #86: Redefined KPI criteria, Issue #89: Apply filters
+    # Base query with clinic and filter filters applied
+    def base_query():
+        q = Ticket.query
+        q = apply_clinic_filter(q)
+        q = apply_date_range_filter(q)
+        q = apply_surgery_filter(q)
+        return q
+
     # 1. Vigentes: Tickets with time remaining (discharge_date > now), ordered DESC
-    active_tickets_count = apply_clinic_filter(Ticket.query.filter(
+    active_tickets_count = base_query().filter(
         Ticket.status == TICKET_STATUS_VIGENTE,
         Ticket.current_fpa > now
-    )).count()
+    ).count()
 
     # 2. Creados Hoy: Tickets created today (00:01 - 23:59)
     today_start = now.replace(hour=0, minute=1, second=0, microsecond=0)
     today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-    created_today_count = apply_clinic_filter(Ticket.query.filter(
+    created_today_count = base_query().filter(
         Ticket.created_at >= today_start,
         Ticket.created_at <= today_end
-    )).count()
+    ).count()
 
     # 3. Vencidos: Tickets that reached their discharge date (discharge_date <= now), ordered DESC
-    overdue_tickets_count = apply_clinic_filter(Ticket.query.filter(
+    overdue_tickets_count = base_query().filter(
         Ticket.status == TICKET_STATUS_VIGENTE,
         Ticket.current_fpa <= now
-    )).count()
+    ).count()
 
     # 4. Anulados: Tickets with annulled status
-    annulled_tickets_count = apply_clinic_filter(Ticket.query.filter_by(status=TICKET_STATUS_ANULADO)).count()
+    annulled_tickets_count = base_query().filter_by(status=TICKET_STATUS_ANULADO).count()
 
     # Total tickets for other calculations
-    total_tickets_query = Ticket.query
-    if not current_user.is_superuser:
-        total_tickets_query = total_tickets_query.filter_by(clinic_id=current_user.clinic_id)
+    total_tickets_query = base_query()
 
     kpis = {
         'vigentes': active_tickets_count,
@@ -78,10 +116,14 @@ def index():
 
     kpis['near_deadline'] = near_deadline
 
-    recent_tickets_query = Ticket.query
-    if not current_user.is_superuser:
-        recent_tickets_query = recent_tickets_query.filter_by(clinic_id=current_user.clinic_id)
+    recent_tickets_query = base_query()
     recent_tickets = recent_tickets_query.order_by(Ticket.created_at.desc()).limit(8).all()
+
+    # Get all surgeries for the filter dropdown
+    surgeries_query = Surgery.query
+    if not current_user.is_superuser:
+        surgeries_query = surgeries_query.filter_by(clinic_id=current_user.clinic_id)
+    surgeries = surgeries_query.filter_by(is_active=True).order_by(Surgery.name).all()
 
     # Surgery stats
     surgery_stats_query = db.session.query(
@@ -90,6 +132,25 @@ def index():
     ).join(Ticket)
     if not current_user.is_superuser:
         surgery_stats_query = surgery_stats_query.filter(Ticket.clinic_id == current_user.clinic_id)
+    # Apply filters to surgery stats
+    if date_from:
+        try:
+            start_date = datetime.strptime(date_from, '%Y-%m-%d')
+            surgery_stats_query = surgery_stats_query.filter(Ticket.created_at >= start_date)
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            end_date = datetime.strptime(date_to, '%Y-%m-%d')
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+            surgery_stats_query = surgery_stats_query.filter(Ticket.created_at <= end_date)
+        except ValueError:
+            pass
+    if surgery_id:
+        try:
+            surgery_stats_query = surgery_stats_query.filter(Ticket.surgery_id == int(surgery_id))
+        except (ValueError, TypeError):
+            pass
     surgery_stats = surgery_stats_query.group_by(Surgery.id, Surgery.name).order_by(func.count(Ticket.id).desc()).limit(5).all()
 
     # Weekly trend
@@ -141,4 +202,5 @@ def index():
                          recent_tickets=recent_tickets,
                          surgery_stats=surgery_stats,
                          modification_stats=modification_stats,
-                         chart_data=json.dumps(chart_data))
+                         chart_data=json.dumps(chart_data),
+                         surgeries=surgeries)
