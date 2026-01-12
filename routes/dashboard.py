@@ -26,24 +26,43 @@ def index():
             return query.filter(Ticket.clinic_id == current_user.clinic_id)
         return query
 
-    # KPIs
-    overdue_tickets_count = apply_clinic_filter(Ticket.query.filter(
-        Ticket.status == TICKET_STATUS_VIGENTE,
-        Ticket.current_fpa < now
-    )).count()
-
+    # KPIs - Issue #86: Redefined KPI criteria
+    # 1. Vigentes: Tickets with time remaining (discharge_date > now), ordered DESC
     active_tickets_count = apply_clinic_filter(Ticket.query.filter(
         Ticket.status == TICKET_STATUS_VIGENTE,
-        Ticket.current_fpa >= now
+        Ticket.current_fpa > now
     )).count()
 
+    # 2. Creados Hoy: Tickets created today (00:01 - 23:59)
+    today_start = now.replace(hour=0, minute=1, second=0, microsecond=0)
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+    created_today_count = apply_clinic_filter(Ticket.query.filter(
+        Ticket.created_at >= today_start,
+        Ticket.created_at <= today_end
+    )).count()
+
+    # 3. Vencidos: Tickets that reached their discharge date (discharge_date <= now), ordered DESC
+    overdue_tickets_count = apply_clinic_filter(Ticket.query.filter(
+        Ticket.status == TICKET_STATUS_VIGENTE,
+        Ticket.current_fpa <= now
+    )).count()
+
+    # 4. Anulados: Tickets with annulled status
+    annulled_tickets_count = apply_clinic_filter(Ticket.query.filter_by(status=TICKET_STATUS_ANULADO)).count()
+
+    # Total tickets for other calculations
     total_tickets_query = Ticket.query
     if not current_user.is_superuser:
         total_tickets_query = total_tickets_query.filter_by(clinic_id=current_user.clinic_id)
 
     kpis = {
+        'vigentes': active_tickets_count,
+        'creados_hoy': created_today_count,
+        'vencidos': overdue_tickets_count,
+        'anulados': annulled_tickets_count,
+        # Legacy names for backward compatibility
         'active_tickets': active_tickets_count,
-        'annulled_tickets': apply_clinic_filter(Ticket.query.filter_by(status='Anulado')).count(),
+        'annulled_tickets': annulled_tickets_count,
         'overdue_tickets': overdue_tickets_count,
         'total_tickets': total_tickets_query.count(),
         'monthly_tickets': apply_clinic_filter(Ticket.query.filter(Ticket.created_at >= start_of_month)).count(),
