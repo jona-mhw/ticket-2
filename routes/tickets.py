@@ -404,8 +404,24 @@ def nursing_board():
         'clinic_id': request.args.get('clinic_id', '') if current_user.is_superuser else ''  # Issue #88
     }
 
+    # Issue #90: Handle sort parameters (default: discharge_date desc)
+    sort_by = request.args.get('sort_by', 'discharge_date')
+    sort_dir = request.args.get('sort_dir', 'desc')
+
     query = TicketRepository.build_filtered_query(filters, current_user)
-    query = query.order_by(Ticket.current_fpa.asc())
+
+    # Apply sorting based on parameters
+    if sort_by == 'created_at':
+        if sort_dir == 'asc':
+            query = query.order_by(Ticket.created_at.asc())
+        else:
+            query = query.order_by(Ticket.created_at.desc())
+    else:  # Default to discharge_date (current_fpa)
+        if sort_dir == 'asc':
+            query = query.order_by(Ticket.current_fpa.asc())
+        else:
+            query = query.order_by(Ticket.current_fpa.desc())
+
     tickets = query.all()
 
     # Calculate urgency levels
@@ -458,7 +474,9 @@ def nursing_board():
                          tickets=tickets,
                          filters=filters,
                          stats=stats,
-                         clinics=clinics)
+                         clinics=clinics,
+                         sort_by=sort_by,
+                         sort_dir=sort_dir)
 
 
 @tickets_bp.route('/nursing-list')

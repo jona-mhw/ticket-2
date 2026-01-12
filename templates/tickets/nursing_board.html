@@ -130,6 +130,36 @@
             </div>
         </div>
 
+        <!-- Sort Controls - Issue #90 -->
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ordenar por:</span>
+            <form method="GET" class="flex items-center gap-2">
+                <!-- Pass existing filters -->
+                {% if filters.urgency %}
+                <input type="hidden" name="urgency" value="{{ filters.urgency }}">
+                {% endif %}
+                {% if filters.status %}
+                <input type="hidden" name="status" value="{{ filters.status }}">
+                {% endif %}
+                {% if filters.search %}
+                <input type="hidden" name="search" value="{{ filters.search }}">
+                {% endif %}
+                {% if filters.clinic_id %}
+                <input type="hidden" name="clinic_id" value="{{ filters.clinic_id }}">
+                {% endif %}
+
+                <select name="sort_by" class="px-2 py-1 border border-gray-300 rounded text-sm" onchange="this.form.submit()">
+                    <option value="discharge_date" {% if sort_by == 'discharge_date' %}selected{% endif %}>Fecha Alta</option>
+                    <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Fecha Creación</option>
+                </select>
+
+                <select name="sort_dir" class="px-2 py-1 border border-gray-300 rounded text-sm" onchange="this.form.submit()">
+                    <option value="desc" {% if sort_dir == 'desc' %}selected{% endif %}>⬇️ Descendente</option>
+                    <option value="asc" {% if sort_dir == 'asc' %}selected{% endif %}>⬆️ Ascendente</option>
+                </select>
+            </form>
+        </div>
+
         <!-- Search Filter -->
         <div class="flex items-center gap-2 ml-auto">
             <form method="GET" class="flex items-center gap-2">
@@ -138,6 +168,15 @@
                 {% endif %}
                 {% if filters.status %}
                 <input type="hidden" name="status" value="{{ filters.status }}">
+                {% endif %}
+                {% if sort_by %}
+                <input type="hidden" name="sort_by" value="{{ sort_by }}">
+                {% endif %}
+                {% if sort_dir %}
+                <input type="hidden" name="sort_dir" value="{{ sort_dir }}">
+                {% endif %}
+                {% if filters.clinic_id %}
+                <input type="hidden" name="clinic_id" value="{{ filters.clinic_id }}">
                 {% endif %}
                 <div class="relative">
                     <input type="search" name="search" value="{{ filters.search }}"
