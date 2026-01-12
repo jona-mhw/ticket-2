@@ -146,6 +146,10 @@ class StandardizedReason(db.Model):
     clinic_id = db.Column(db.Integer, db.ForeignKey('clinic.id'), nullable=False)
 
 class Patient(db.Model):
+    __table_args__ = (
+        db.UniqueConstraint('rut', 'clinic_id', name='uq_patient_rut_clinic'),
+    )
+
     id = db.Column(db.Integer, primary_key=True)
     rut = db.Column(db.String(12), nullable=False, index=True)
     primer_nombre = db.Column(db.String(100), nullable=False)
