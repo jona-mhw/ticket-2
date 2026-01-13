@@ -22,6 +22,11 @@ if [ -n "$DATABASE_URL" ]; then
     echo "🔄 Aplicando migraciones de base de datos..."
     flask db upgrade 2>/dev/null || echo "⚠️  Advertencia: No se pudieron aplicar todas las migraciones"
     echo "✅ Migraciones procesadas"
+
+    echo ""
+    echo "🔄 Sincronizando superusers..."
+    flask sync-superusers 2>/dev/null || echo "⚠️  Advertencia: No se pudieron sincronizar superusers"
+    echo "✅ Superusers sincronizados"
 fi
 
 echo ""
