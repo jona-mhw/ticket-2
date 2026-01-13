@@ -5,7 +5,6 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copia el archivo de requisitos e instala las dependencias
-# Se hace por separado para aprovechar el caché de Docker si no cambian las dependencias
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -25,8 +24,6 @@ COPY validators ./validators
 COPY templates ./templates
 COPY static ./static
 COPY migrations ./migrations
-COPY .env.production .env
-
 
 # Copia y da permisos al script de inicio
 COPY startup.sh .
@@ -39,7 +36,6 @@ RUN apt-get update && apt-get install -y dos2unix && \
     rm -rf /var/lib/apt/lists/*
 
 # Expone el puerto en el que Cloud Run escuchará
-# La variable $PORT es proporcionada por el entorno de Cloud Run
 EXPOSE 8080
 
 # Define el script de inicio como el punto de entrada del contenedor
