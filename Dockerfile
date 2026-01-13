@@ -5,10 +5,10 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copia el archivo de requisitos e instala las dependencias
-COPY requirements.txt requirements.txt
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia los archivos y directorios de la aplicación de forma explícita
+# Copia los archivos y directorios de la aplicación
 COPY app.py .
 COPY config.py .
 COPY models.py .
@@ -24,19 +24,13 @@ COPY validators ./validators
 COPY templates ./templates
 COPY static ./static
 COPY migrations ./migrations
-
-# Copia y da permisos al script de inicio
 COPY startup.sh .
-# Convierte line endings de Windows (CRLF) a Unix (LF) y da permisos de ejecución
-RUN apt-get update && apt-get install -y dos2unix && \
-    dos2unix startup.sh && \
-    chmod +x startup.sh && \
-    apt-get remove -y dos2unix && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+
+# Da permisos de ejecución al startup script
+RUN chmod +x startup.sh
 
 # Expone el puerto en el que Cloud Run escuchará
 EXPOSE 8080
 
 # Define el script de inicio como el punto de entrada del contenedor
-ENTRYPOINT ["/bin/bash", "/app/startup.sh"]
+ENTRYPOINT ["sh", "/app/startup.sh"]
