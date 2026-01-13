@@ -5,8 +5,6 @@ steps:
       - 'build'
       - '-t'
       - 'southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo/ticket-home:latest'
-      - '-t'
-      - 'southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo/ticket-home:${SHORT_SHA}'
       - '.'
 
   # Step 2: Push to Artifact Registry
@@ -14,11 +12,6 @@ steps:
     args: 
       - 'push'
       - 'southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo/ticket-home:latest'
-
-  - name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'push'
-      - 'southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo/ticket-home:${SHORT_SHA}'
 
   # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -33,7 +26,6 @@ steps:
 
 images:
   - 'southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo/ticket-home:latest'
-  - 'southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo/ticket-home:${SHORT_SHA}'
 
 options:
   machineType: 'E2_HIGHCPU_8'
