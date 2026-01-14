@@ -2,7 +2,7 @@
 set -e
 
 echo "=========================================="
-echo "🚀 TICKET-HOME - CLOUD RUN STARTUP"
+echo "TICKET-HOME - CLOUD RUN STARTUP"
 echo "=========================================="
 
 # Configurar puerto
@@ -10,27 +10,44 @@ PORT=${PORT:-8080}
 
 # Verificar DATABASE_URL
 if [ -z "$DATABASE_URL" ]; then
-    echo "⚠️  ADVERTENCIA: DATABASE_URL no configurada"
+    echo "ADVERTENCIA: DATABASE_URL no configurada"
     echo "Continuando...el servicio puede fallar sin esta variable"
 fi
 
-echo "✅ Iniciando aplicación Flask"
+echo "Iniciando aplicacion Flask"
 
-# Aplicar migraciones (si DATABASE_URL está disponible)
+# Aplicar migraciones y seed (si DATABASE_URL esta disponible)
 if [ -n "$DATABASE_URL" ]; then
-    echo ""
-    echo "🔄 Aplicando migraciones de base de datos..."
-    flask db upgrade 2>/dev/null || echo "⚠️  Advertencia: No se pudieron aplicar todas las migraciones"
-    echo "✅ Migraciones procesadas"
 
-    echo ""
-    echo "🔄 Sincronizando superusers..."
-    flask sync-superusers 2>/dev/null || echo "⚠️  Advertencia: No se pudieron sincronizar superusers"
-    echo "✅ Superusers sincronizados"
+    # Verificar si hay que resetear la BD
+    if [ "$RESET_DB_ON_STARTUP" = "true" ]; then
+        echo ""
+        echo "RESET_DB_ON_STARTUP=true detectado"
+        echo "Reseteando base de datos..."
+
+        if [ "$USE_QA_MINIMAL_SEED" = "true" ]; then
+            echo "USE_QA_MINIMAL_SEED=true - Usando seed minimal (solo clinicas + superusers)"
+            flask reset-db-qa-minimal 2>&1 || echo "Advertencia: Error en reset-db-qa-minimal"
+        else
+            echo "Usando seed completo con datos demo"
+            flask reset-db 2>&1 || echo "Advertencia: Error en reset-db"
+        fi
+        echo "Reset de base de datos completado"
+    else
+        echo ""
+        echo "Aplicando migraciones de base de datos..."
+        flask db upgrade 2>/dev/null || echo "Advertencia: No se pudieron aplicar todas las migraciones"
+        echo "Migraciones procesadas"
+
+        echo ""
+        echo "Sincronizando superusers..."
+        flask sync-superusers 2>/dev/null || echo "Advertencia: No se pudieron sincronizar superusers"
+        echo "Superusers sincronizados"
+    fi
 fi
 
 echo ""
-echo "🌐 Iniciando Gunicorn en puerto $PORT"
+echo "Iniciando Gunicorn en puerto $PORT"
 echo "=========================================="
 
 # Iniciar Gunicorn

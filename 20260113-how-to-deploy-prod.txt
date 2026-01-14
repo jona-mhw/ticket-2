@@ -1,0 +1,201 @@
+# GUIA DE DEPLOYMENT PROD - Ticket Home
+# Fecha: 2026-01-13
+# Autor: Jonathan Segura
+# Proyecto GCP: prod-ticket-home-redsalud
+
+================================================================================
+INSTRUCCIONES PARA DESPLEGAR EN PRODUCCION (Sin Docker Desktop - Build en GCP)
+================================================================================
+
+CONTEXTO:
+---------
+Este documento describe como desplegar la aplicacion Ticket Home al ambiente
+de produccion "prod-ticket-home-redsalud" usando gcloud CLI.
+
+IMPORTANTE: El proyecto "qa-ticket-home-redsalud" NO debe ser modificado.
+
+================================================================================
+VALORES DEL PROYECTO PROD (Ya obtenidos)
+================================================================================
+
+PROJECT_ID            = prod-ticket-home-redsalud
+PROJECT_NUMBER        = 215530940953
+BACKEND_SERVICE_ID    = 6272989829851487586
+REGION                = southamerica-west1
+SERVICE_NAME          = ticket-home
+ARTIFACT_REGISTRY     = tickethome-repo-prod
+VPC_CONNECTOR         = prod-conn
+
+Secretos en Secret Manager:
+- prod-database-url      (DATABASE_URL)
+- prod-secret-key        (SECRET_KEY)
+- prod-superuser-emails  (SUPERUSER_EMAILS)
+
+URL del servicio (con IAP - usar esta):
+https://prod-ticket-home.mhwdev.dev
+
+URL directa Cloud Run (sin IAP - solo para debug):
+https://ticket-home-215530940953.southamerica-west1.run.app
+
+================================================================================
+PASO 1: CONFIGURAR PROYECTO Y AUTENTICACION
+================================================================================
+
+# Configurar cuenta y proyecto
+gcloud config set account jonathan.segura@redsalud.cl
+gcloud config set project prod-ticket-home-redsalud
+
+# Verificar configuracion
+gcloud config list
+
+# Autenticar Docker con Artifact Registry
+gcloud auth configure-docker southamerica-west1-docker.pkg.dev --quiet
+
+================================================================================
+PASO 2: BUILD EN LA NUBE (Sin Docker Desktop)
+================================================================================
+
+# Desde el directorio raiz del proyecto (donde esta el Dockerfile)
+cd C:\Users\jonathan.segura\Desktop\20260113-ticket
+
+# Build usando Cloud Build (se ejecuta en GCP, no necesita Docker local)
+gcloud builds submit . --tag southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest --project=prod-ticket-home-redsalud
+
+# Este comando:
+# 1. Sube el codigo a GCP
+# 2. Ejecuta el build del Dockerfile en Cloud Build
+# 3. Pushea la imagen a Artifact Registry
+# Tiempo estimado: 3-5 minutos
+
+================================================================================
+PASO 3: DEPLOY A CLOUD RUN
+================================================================================
+
+OPCION A - Deployment Normal (sin resetear BD):
+-----------------------------------------------
+gcloud run services update ticket-home ^
+  --region=southamerica-west1 ^
+  --project=prod-ticket-home-redsalud ^
+  --image=southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest
+
+
+OPCION B - Deployment con Reset de BD (CUIDADO - Solo para setup inicial):
+---------------------------------------------------------------------------
+gcloud run services update ticket-home ^
+  --region=southamerica-west1 ^
+  --project=prod-ticket-home-redsalud ^
+  --image=southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest ^
+  --update-env-vars="RESET_DB_ON_STARTUP=true,USE_QA_MINIMAL_SEED=true"
+
+IMPORTANTE: Despues del deploy con RESET_DB_ON_STARTUP=true, volver a false:
+
+gcloud run services update ticket-home ^
+  --region=southamerica-west1 ^
+  --project=prod-ticket-home-redsalud ^
+  --update-env-vars="RESET_DB_ON_STARTUP=false"
+
+================================================================================
+CONFIGURACION INICIAL DE VARIABLES DE ENTORNO (Solo primera vez)
+================================================================================
+
+Si es la primera vez o necesitas reconfigurar las variables:
+
+gcloud run services update ticket-home ^
+  --region=southamerica-west1 ^
+  --project=prod-ticket-home-redsalud ^
+  --set-env-vars="ENVIRONMENT=production" ^
+  --set-env-vars="FLASK_ENV=production" ^
+  --set-env-vars="FLASK_DEBUG=false" ^
+  --set-env-vars="ENABLE_IAP=true" ^
+  --set-env-vars="ENABLE_DEMO_LOGIN=false" ^
+  --set-env-vars="GCP_PROJECT_NUMBER=215530940953" ^
+  --set-env-vars="BACKEND_SERVICE_ID=6272989829851487586" ^
+  --set-env-vars="LOG_LEVEL=INFO"
+
+Configurar referencias a secretos:
+
+gcloud run services update ticket-home ^
+  --region=southamerica-west1 ^
+  --project=prod-ticket-home-redsalud ^
+  --set-secrets="DATABASE_URL=prod-database-url:latest" ^
+  --set-secrets="SECRET_KEY=prod-secret-key:latest" ^
+  --set-secrets="SUPERUSER_EMAILS=prod-superuser-emails:latest"
+
+Configurar VPC Connector (IMPORTANTE - requerido para conectar a Cloud SQL):
+
+gcloud run services update ticket-home ^
+  --region=southamerica-west1 ^
+  --project=prod-ticket-home-redsalud ^
+  --vpc-connector=prod-conn ^
+  --vpc-egress=private-ranges-only
+
+================================================================================
+SCRIPT RAPIDO DE DEPLOYMENT (Copiar y pegar)
+================================================================================
+
+# === DEPLOY COMPLETO EN UNA LINEA ===
+gcloud config set project prod-ticket-home-redsalud && gcloud builds submit . --tag southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest && gcloud run services update ticket-home --region=southamerica-west1 --image=southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest
+
+================================================================================
+VERIFICAR DEPLOYMENT
+================================================================================
+
+1. Ver logs en tiempo real:
+   gcloud logging tail --project=prod-ticket-home-redsalud --filter="resource.type=cloud_run_revision AND resource.labels.service_name=ticket-home"
+
+2. Ver URL del servicio:
+   gcloud run services describe ticket-home --region=southamerica-west1 --project=prod-ticket-home-redsalud --format="value(status.url)"
+
+3. Verificar superusers configurados:
+   gcloud secrets versions access latest --secret=prod-superuser-emails --project=prod-ticket-home-redsalud
+
+4. Ver estado del servicio:
+   gcloud run services describe ticket-home --region=southamerica-west1 --project=prod-ticket-home-redsalud
+
+5. Ver variables de entorno actuales:
+   gcloud run services describe ticket-home --region=southamerica-west1 --project=prod-ticket-home-redsalud --format="yaml(spec.template.spec.containers[0].env)"
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Error: "Cloud Build API not enabled"
+------------------------------------
+gcloud services enable cloudbuild.googleapis.com --project=prod-ticket-home-redsalud
+
+Error 403 "Acceso No Autorizado" al acceder a la app:
+-----------------------------------------------------
+1. Verificar que tu email este en el grupo IAP de produccion
+2. Verificar que el secret prod-superuser-emails tenga tu email:
+   gcloud secrets versions access latest --secret=prod-superuser-emails --project=prod-ticket-home-redsalud
+3. Revisar logs:
+   gcloud logging read "textPayload:superuser OR textPayload:IAP" --limit=20 --project=prod-ticket-home-redsalud
+
+Error: Container no arranca
+---------------------------
+1. Revisar logs detallados:
+   gcloud logging read "resource.type=cloud_run_revision" --limit=50 --project=prod-ticket-home-redsalud
+
+2. Verificar DATABASE_URL:
+   gcloud run services describe ticket-home --region=southamerica-west1 --project=prod-ticket-home-redsalud --format="yaml(spec.template.spec.containers[0].env)"
+
+================================================================================
+COMPARATIVA QA vs PROD
+================================================================================
+
+| Configuracion        | QA                          | PROD                              |
+|---------------------|-----------------------------|------------------------------------|
+| Project ID          | qa-ticket-home-redsalud     | prod-ticket-home-redsalud          |
+| PROJECT_NUMBER      | 85153475663                 | 215530940953                       |
+| BACKEND_SERVICE_ID  | 2148322621403404401         | 6272989829851487586                |
+| Service Name        | ticket-home                 | ticket-home                        |
+| Artifact Registry   | tickethome-repo             | tickethome-repo-prod               |
+| Secret DB URL       | tickethome-db-url           | prod-database-url                  |
+| Secret Key          | tickethome-secret-key       | prod-secret-key                    |
+| Secret Superusers   | superuser-emails            | prod-superuser-emails              |
+| ENVIRONMENT         | qa                          | production                         |
+
+================================================================================
+CONTACTO
+================================================================================
+Para dudas sobre deployment: jonathan.segura@redsalud.cl

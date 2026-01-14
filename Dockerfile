@@ -26,8 +26,8 @@ COPY static ./static
 COPY migrations ./migrations
 COPY startup.sh .
 
-# Da permisos de ejecución al startup script
-RUN chmod +x startup.sh
+# Convierte a formato Unix (elimina \r) y da permisos de ejecución
+RUN sed -i 's/\r$//' startup.sh && chmod +x startup.sh
 
 # Expone el puerto en el que Cloud Run escuchará
 EXPOSE 8080
