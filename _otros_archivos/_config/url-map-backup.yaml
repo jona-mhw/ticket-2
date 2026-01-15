@@ -1,7 +1,0 @@
-creationTimestamp: '2025-10-13T18:16:43.385-07:00'
-defaultService: https://www.googleapis.com/compute/v1/projects/dev-ticket-home-redsalud/global/backendServices/ticket-home-backend
-fingerprint: bPAstM7uYsI=
-id: 497945304331459220
-kind: compute#urlMap
-name: ticket-home-url-map
-selfLink: https://www.googleapis.com/compute/v1/projects/dev-ticket-home-redsalud/global/urlMaps/ticket-home-url-map

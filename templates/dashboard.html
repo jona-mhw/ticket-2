@@ -5,16 +5,17 @@
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Clinic Filter for Superuser - Issue #88 -->
+    <!-- Clinic Filter for Superuser - Issue #88: Filtro de clínica para superusuario -->
     {% if current_user.is_superuser %}
     <div class="bg-blue-50 border-l-4 border-blue-500 shadow rounded-r-lg p-6">
-        <h3 class="text-lg font-medium text-blue-900 mb-4 flex items-center gap-2">
+        <h3 class="text-lg font-medium text-blue-900 mb-4 flex items-center gap-2" title="Issue #88: Permite al superusuario filtrar datos por clínica específica o ver todas las clínicas">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
                 </path>
             </svg>
             Filtrar por Clínica
+            <span class="text-xs text-blue-600 font-normal">(Solo superusuario)</span>
         </h3>
         <form method="GET" action="{{ url_for('dashboard.index') }}" class="flex gap-2">
             <!-- Pass existing filters -->
@@ -36,10 +37,13 @@
     </div>
     {% endif %}
 
-    <!-- Filters Section - Issue #89 -->
+    <!-- Filters Section - Issue #89: Filtros de rango de fechas y cirugía -->
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Filtros Avanzados</h3>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" title="Issue #89: Filtros acumulativos por rango de fechas y tipo de cirugía. Los KPIs se actualizan según los filtros aplicados.">
+                Filtros Avanzados
+                <span class="text-xs text-gray-500 font-normal ml-2">(Los filtros se combinan entre sí)</span>
+            </h3>
             <form method="GET" action="{{ url_for('dashboard.index') }}" class="space-y-4">
                 <!-- Preserve clinic filter if superuser -->
                 {% if current_user.is_superuser and request.args.get('clinic_id') %}
@@ -47,23 +51,23 @@
                 {% endif %}
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <!-- Date Range Filters -->
+                    <!-- Date Range Filters - Filtra por fecha de creación del ticket -->
                     <div>
-                        <label for="date_from" class="block text-sm font-medium text-gray-700">Fecha Inicio</label>
+                        <label for="date_from" class="block text-sm font-medium text-gray-700" title="Filtra tickets creados desde esta fecha">Fecha Inicio</label>
                         <input type="date" id="date_from" name="date_from"
                             value="{{ request.args.get('date_from', '') }}"
                             class="mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 w-full">
                     </div>
                     <div>
-                        <label for="date_to" class="block text-sm font-medium text-gray-700">Fecha Fin</label>
+                        <label for="date_to" class="block text-sm font-medium text-gray-700" title="Filtra tickets creados hasta esta fecha">Fecha Fin</label>
                         <input type="date" id="date_to" name="date_to"
                             value="{{ request.args.get('date_to', '') }}"
                             class="mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 w-full">
                     </div>
 
-                    <!-- Surgery Filter -->
+                    <!-- Surgery Filter - Filtra por tipo de cirugía -->
                     <div>
-                        <label for="surgery_filter" class="block text-sm font-medium text-gray-700">Cirugía</label>
+                        <label for="surgery_filter" class="block text-sm font-medium text-gray-700" title="Filtra tickets por tipo de cirugía realizada">Cirugía</label>
                         <select id="surgery_filter" name="surgery_id"
                             class="mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 w-full">
                             <option value="">Todas las cirugías</option>
