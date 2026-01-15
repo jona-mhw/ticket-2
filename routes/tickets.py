@@ -451,19 +451,30 @@ def nursing_board():
     tickets.sort(key=lambda t: (urgency_priority.get(t.urgency_level, 99),
                                t.current_fpa if t.current_fpa else datetime.max))
 
-    # Filter by urgency if specified
-    if filters['urgency']:
-        tickets = [t for t in tickets if t.urgency_level == filters['urgency']]
-
-    # Calculate stats
-    stats = {
+    # Calculate stats BEFORE filtering (para mostrar totales correctos)
+    all_tickets_stats = {
         'total': len(tickets),
         'critical': len([t for t in tickets if t.urgency_level == 'critical']),
         'warning': len([t for t in tickets if t.urgency_level == 'warning']),
         'normal': len([t for t in tickets if t.urgency_level == 'normal']),
         'expired': len([t for t in tickets if t.urgency_level == 'expired']),
-        'scheduled': len([t for t in tickets if t.urgency_level == 'scheduled'])
+        'scheduled': len([t for t in tickets if t.urgency_level == 'scheduled']),
+        'annulled': len([t for t in tickets if t.status == 'Anulado'])
     }
+
+    # Filter by status type (nuevo sistema simplificado)
+    if filters['status'] == 'Vigente':
+        # Vigentes = normal + warning + critical + scheduled (todos menos expired)
+        tickets = [t for t in tickets if t.urgency_level in ['normal', 'warning', 'critical', 'scheduled'] and t.status != 'Anulado']
+    elif filters['status'] == 'Vencido':
+        # Vencidos = expired
+        tickets = [t for t in tickets if t.urgency_level == 'expired' and t.status != 'Anulado']
+    elif filters['status'] == 'Anulado':
+        # Anulados por status del ticket
+        tickets = [t for t in tickets if t.status == 'Anulado']
+
+    # Stats para el template
+    stats = all_tickets_stats
 
     # Issue #88: Get all clinics for the filter dropdown (for superusers only)
     clinics = []
