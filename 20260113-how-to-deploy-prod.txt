@@ -31,6 +31,10 @@ Secretos en Secret Manager:
 - prod-secret-key        (SECRET_KEY)
 - prod-superuser-emails  (SUPERUSER_EMAILS)
 
+IAP Access:
+- Grupo de Google: ticket-home.acceso-iap@redsalud.cl
+- Los usuarios deben pertenecer a este grupo para acceder
+
 URL del servicio (con IAP - usar esta):
 https://prod-ticket-home.mhwdev.dev
 
@@ -165,11 +169,17 @@ gcloud services enable cloudbuild.googleapis.com --project=prod-ticket-home-reds
 
 Error 403 "Acceso No Autorizado" al acceder a la app:
 -----------------------------------------------------
-1. Verificar que tu email este en el grupo IAP de produccion
-2. Verificar que el secret prod-superuser-emails tenga tu email:
+1. Verificar que tu email pertenezca al grupo de Google: ticket-home.acceso-iap@redsalud.cl
+2. Verificar que el secret prod-superuser-emails tenga tu email (para ser admin):
    gcloud secrets versions access latest --secret=prod-superuser-emails --project=prod-ticket-home-redsalud
 3. Revisar logs:
    gcloud logging read "textPayload:superuser OR textPayload:IAP" --limit=20 --project=prod-ticket-home-redsalud
+
+Ver politica IAP actual:
+   gcloud iap web get-iam-policy --project=prod-ticket-home-redsalud --resource-type=backend-services --service=6272989829851487586
+
+Agregar grupo de Google al IAP:
+   gcloud iap web add-iam-policy-binding --project=prod-ticket-home-redsalud --resource-type=backend-services --service=6272989829851487586 --member="group:ticket-home.acceso-iap@redsalud.cl" --role="roles/iap.httpsResourceAccessor"
 
 Error: Container no arranca
 ---------------------------
