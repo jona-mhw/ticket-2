@@ -43,14 +43,14 @@
 
     <!-- Clinic Filter for Superuser - Issue #88: Filtro de clínica para superusuario -->
     {% if current_user.is_superuser %}
-    <div class="flex items-center gap-2 mt-3">
+    <div class="flex items-center gap-2 mt-3 mb-6 pb-4 border-b border-gray-200">
         <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider" title="Issue #88: Permite al superusuario ver tickets de todas las clínicas o filtrar por una específica">Clínica:</span>
         <form method="GET" action="{{ url_for('tickets.nursing_board') }}" class="flex gap-2">
             <!-- Pass existing filters -->
             <input type="hidden" name="status" value="{{ filters.status if filters.status else '' }}">
             <input type="hidden" name="search" value="{{ filters.search if filters.search else '' }}">
-            <input type="hidden" name="room" value="{{ filters.room if filters.room else '' }}">
-            <input type="hidden" name="urgency" value="{{ filters.urgency if filters.urgency else '' }}">
+            <input type="hidden" name="date_from" value="{{ filters.date_from if filters.date_from else '' }}">
+            <input type="hidden" name="date_to" value="{{ filters.date_to if filters.date_to else '' }}">
 
             <select name="clinic_id" class="px-2 py-1 border border-gray-300 rounded text-sm"
                 onchange="this.form.submit()">
@@ -96,28 +96,44 @@
 
         <!-- Sort Controls - Issue #90: Controles de ordenamiento por fecha -->
         <div class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider" title="Issue #90: Ordenar por Fecha Alta (FPA) o Fecha de Creación del ticket. Descendente = más reciente primero.">Ordenar por:</span>
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider" title="Ordenar por Fecha Alta (FPA) o Fecha de Creación del ticket.">Ordenar:</span>
             <form method="GET" class="flex items-center gap-2">
-                <!-- Pass existing filters -->
-                {% if filters.status %}
-                <input type="hidden" name="status" value="{{ filters.status }}">
-                {% endif %}
-                {% if filters.search %}
-                <input type="hidden" name="search" value="{{ filters.search }}">
-                {% endif %}
-                {% if filters.clinic_id %}
-                <input type="hidden" name="clinic_id" value="{{ filters.clinic_id }}">
-                {% endif %}
+                {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+                {% if filters.search %}<input type="hidden" name="search" value="{{ filters.search }}">{% endif %}
+                {% if filters.clinic_id %}<input type="hidden" name="clinic_id" value="{{ filters.clinic_id }}">{% endif %}
+                {% if filters.date_from %}<input type="hidden" name="date_from" value="{{ filters.date_from }}">{% endif %}
+                {% if filters.date_to %}<input type="hidden" name="date_to" value="{{ filters.date_to }}">{% endif %}
 
-                <select name="sort_by" class="px-2 py-1 border border-gray-300 rounded text-sm" onchange="this.form.submit()" title="Fecha Alta = Fecha Probable de Alta (FPA). Fecha Creación = cuando se creó el ticket.">
-                    <option value="discharge_date" {% if sort_by == 'discharge_date' %}selected{% endif %}>Fecha Alta (FPA)</option>
+                <select name="sort_by" class="px-2 py-1 border border-gray-300 rounded text-sm" onchange="this.form.submit()">
+                    <option value="discharge_date" {% if sort_by == 'discharge_date' %}selected{% endif %}>Fecha Alta</option>
                     <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Fecha Creación</option>
                 </select>
 
-                <select name="sort_dir" class="px-2 py-1 border border-gray-300 rounded text-sm" onchange="this.form.submit()" title="Descendente = más reciente primero. Ascendente = más antiguo primero.">
-                    <option value="desc" {% if sort_dir == 'desc' %}selected{% endif %}>⬇️ Reciente primero</option>
-                    <option value="asc" {% if sort_dir == 'asc' %}selected{% endif %}>⬆️ Antiguo primero</option>
+                <select name="sort_dir" class="px-2 py-1 border border-gray-300 rounded text-sm" onchange="this.form.submit()">
+                    <option value="desc" {% if sort_dir == 'desc' %}selected{% endif %}>⬇️ Reciente</option>
+                    <option value="asc" {% if sort_dir == 'asc' %}selected{% endif %}>⬆️ Antiguo</option>
                 </select>
+            </form>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Rango fechas:</span>
+            <form method="GET" class="flex items-center gap-2">
+                {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+                {% if filters.search %}<input type="hidden" name="search" value="{{ filters.search }}">{% endif %}
+                {% if filters.clinic_id %}<input type="hidden" name="clinic_id" value="{{ filters.clinic_id }}">{% endif %}
+                {% if sort_by %}<input type="hidden" name="sort_by" value="{{ sort_by }}">{% endif %}
+                {% if sort_dir %}<input type="hidden" name="sort_dir" value="{{ sort_dir }}">{% endif %}
+
+                <input type="date" name="date_from" value="{{ filters.date_from }}"
+                    class="px-2 py-1 border border-gray-300 rounded text-sm" title="Fecha desde (creación)">
+                <span class="text-gray-400">-</span>
+                <input type="date" name="date_to" value="{{ filters.date_to }}"
+                    class="px-2 py-1 border border-gray-300 rounded text-sm" title="Fecha hasta (creación)">
+                <button type="submit" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded">
+                    Filtrar
+                </button>
             </form>
         </div>
 

@@ -396,12 +396,18 @@ def nursing_board():
     """Nursing board view - visual cards with urgency levels."""
     session['last_ticket_view'] = 'tickets.nursing_board'
 
+    # Filtro de UI (Vigentes/Vencidos/Anulados) - por defecto Vigentes
+    ui_status_filter = request.args.get('status', 'Vigente')
+
+    # Filtros para el repositorio (NO incluir status de UI para no interferir con BD)
     filters = {
-        'status': request.args.get('status', ''),
+        'status': '',  # No filtrar por status de BD, lo hacemos después
         'search': request.args.get('search', ''),
         'room': request.args.get('room', ''),
-        'urgency': request.args.get('urgency', ''),
-        'clinic_id': request.args.get('clinic_id', '') if current_user.is_superuser else ''  # Issue #88
+        'urgency': '',
+        'clinic_id': request.args.get('clinic_id', '') if current_user.is_superuser else '',
+        'date_from': request.args.get('date_from', ''),
+        'date_to': request.args.get('date_to', '')
     }
 
     # Issue #90: Handle sort parameters (default: discharge_date desc)
@@ -462,16 +468,17 @@ def nursing_board():
         'annulled': len([t for t in tickets if t.status == 'Anulado'])
     }
 
-    # Filter by status type (nuevo sistema simplificado)
-    if filters['status'] == 'Vigente':
-        # Vigentes = normal + warning + critical + scheduled (todos menos expired)
+    # Filter by UI status type (nuevo sistema simplificado)
+    if ui_status_filter == 'Vigente':
+        # Vigentes = normal + warning + critical + scheduled (todos menos expired y anulados)
         tickets = [t for t in tickets if t.urgency_level in ['normal', 'warning', 'critical', 'scheduled'] and t.status != 'Anulado']
-    elif filters['status'] == 'Vencido':
-        # Vencidos = expired
+    elif ui_status_filter == 'Vencido':
+        # Vencidos = expired (no anulados)
         tickets = [t for t in tickets if t.urgency_level == 'expired' and t.status != 'Anulado']
-    elif filters['status'] == 'Anulado':
+    elif ui_status_filter == 'Anulado':
         # Anulados por status del ticket
         tickets = [t for t in tickets if t.status == 'Anulado']
+    # Si es 'Todos' o vacío, no filtrar
 
     # Stats para el template
     stats = all_tickets_stats
@@ -480,6 +487,9 @@ def nursing_board():
     clinics = []
     if current_user.is_superuser:
         clinics = Clinic.query.filter_by(is_active=True).order_by(Clinic.name).all()
+
+    # Agregar ui_status_filter a filters para el template
+    filters['status'] = ui_status_filter
 
     return render_template('tickets/nursing_board.html',
                          tickets=tickets,
