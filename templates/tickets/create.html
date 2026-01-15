@@ -193,34 +193,6 @@
 
 
 
-        <!-- Justification Section (Initially Hidden) -->
-        <div id="justification-section"
-            class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-lg space-y-4 hidden">
-            <h3 class="text-lg font-medium text-yellow-900">Justificación de Cambio de FPA</h3>
-            <p class="text-sm text-yellow-800">
-                La fecha de alta médica que seleccionaste es <strong>diferente</strong> a la sugerida por el sistema.
-                Por favor, proporciona una razón.
-            </p>
-            <div>
-                <label for="initial_reason" class="block text-sm font-medium text-gray-700 mb-1">
-                    Razón de Discrepancia Inicial <span class="text-red-500">*</span>
-                </label>
-                <select id="initial_reason" name="initial_reason"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
-                    <option value="">Seleccione una razón...</option>
-                    <!-- Opciones cargadas dinámicamente por JavaScript según clínica seleccionada -->
-                </select>
-            </div>
-            <div>
-                <label for="initial_justification" class="block text-sm font-medium text-gray-700 mb-1">
-                    Justificación Adicional (Opcional)
-                </label>
-                <textarea id="initial_justification" name="initial_justification" rows="3"
-                    placeholder="Detalles adicionales sobre la decisión médica..."
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"></textarea>
-            </div>
-        </div>
-
         <!-- FPA Preview -->
         <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t-4 border-primary z-10">
             <div class="max-w-4xl mx-auto px-6 py-4">
@@ -261,20 +233,13 @@
         const surgerySelect = document.getElementById('surgery_id');
         const doctorSelect = document.getElementById('doctor_id');
         const pavilionEndTimeInput = document.getElementById('pavilion_end_time');
-        const medicalDischargeDateInput = document.getElementById('medical_discharge_date');
         const fpaPreview = document.getElementById('fpa-preview');
         const submitButton = document.querySelector('form button[type="submit"]');
 
-        const justificationSection = document.getElementById('justification-section');
-        const initialReasonSelect = document.getElementById('initial_reason');
-
-        const allSpecialties = {{ specialties_data | tojson
-    }};
-    const allSurgeries = {{ surgeries_data | tojson }};
-    const allDoctors = {{ doctors_data | tojson }};
-    const allInitialReasons = {{ initial_reasons_data | tojson }};
-    const isSuperuser = {{ 'true' if current_user.is_superuser else 'false' }};
-    let medicalDateManuallySet = false;
+        const allSpecialties = {{ specialties_data | tojson }};
+        const allSurgeries = {{ surgeries_data | tojson }};
+        const allDoctors = {{ doctors_data | tojson }};
+        const isSuperuser = {{ 'true' if current_user.is_superuser else 'false' }};
     let currentClinicId = isSuperuser ? null : {{ current_user.clinic_id if not current_user.is_superuser else 'null' }};
 
     // --- Functions ---
@@ -365,34 +330,6 @@
     }
     }
 
-    function populateInitialReasons() {
-        // For superusers, use currentClinicId (should be set before calling this function)
-        // For regular users, use their clinic_id
-        const clinicId = isSuperuser ? currentClinicId : {{ current_user.clinic_id if not current_user.is_superuser else 'null' }};
-
-    if (!initialReasonSelect) return; // El select puede no existir si no hay discrepancia
-
-    initialReasonSelect.innerHTML = '<option value="">Seleccione una razón...</option>';
-
-    if (isSuperuser && !clinicId) {
-        initialReasonSelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
-        return;
-    }
-
-    // Convert clinicId to number for consistent comparison
-    const clinicIdNum = parseInt(clinicId);
-    const clinicReasons = allInitialReasons.filter(r => r.clinic_id === clinicIdNum);
-
-    if (clinicReasons.length > 0) {
-        clinicReasons.forEach(reason => {
-            const option = new Option(reason.reason, reason.reason);
-            initialReasonSelect.add(option);
-        });
-    } else {
-        initialReasonSelect.innerHTML = '<option value="">No hay razones disponibles</option>';
-    }
-    }
-
     async function updateFpaPreview() {
         const surgeryId = surgerySelect.value;
         const pavilionEndValue = pavilionEndTimeInput.value;
@@ -433,111 +370,53 @@
 
         const data = await response.json();
 
-        // Update helper text and set initial medical date
-        systemFpaHelper.innerHTML = `Sugerencia del sistema: <span class="font-semibold text-gray-700">${data.fpa_display_str}</span>`;
-        if (!medicalDateManuallySet) {
-            medicalDischargeDateInput.value = data.fpa_date_iso;
-        }
+        // Update helper text with calculated FPA
+        systemFpaHelper.innerHTML = `FPA calculada: <span class="font-semibold text-gray-700">${data.fpa_display_str}</span>`;
 
-        // Prepare dates for comparison and preview (Issue #41)
+        // Show FPA preview
         const pavilionDate = new Date(pavilionEndValue);
-        const systemFpaDateOnly = new Date(data.fpa_date_iso + 'T00:00:00');
         const systemFpaDateTime = new Date(data.fpa_date_iso + 'T' + data.fpa_time);
-        const medicalDate = new Date(medicalDischargeDateInput.value + 'T00:00:00');
-        const usingMedicalDate = medicalDate.getTime() !== systemFpaDateOnly.getTime();
+        const daysDiff = Math.ceil((systemFpaDateTime - pavilionDate) / (1000 * 60 * 60 * 24));
 
-        // Show/hide justification section based on date difference
-        if (usingMedicalDate) {
-            justificationSection.style.display = 'block';
-            initialReasonSelect.required = true;
-        } else {
-            justificationSection.style.display = 'none';
-            initialReasonSelect.required = false;
-        }
-
-        // Helper function to format date as DD/MM/YYYY
-        const formatDateDMY = (date) => {
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
-        };
-
-        if (usingMedicalDate) {
-            // Show both: system calculated FPA and medical indicated FPA
-            const medicalDaysDiff = Math.ceil((medicalDate - pavilionDate) / (1000 * 60 * 60 * 24));
-
-            fpaPreview.innerHTML = `
-                    <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-300">
-                        <div class="flex items-center gap-2 mb-3">
-                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                            </svg>
-                            <h4 class="text-sm font-semibold text-yellow-900">FPA Indicado por Médico (Diferente al Calculado)</h4>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-white rounded p-3 border border-gray-300">
-                                <p class="text-xs font-medium text-gray-600 mb-1">FPA Calculada (Sistema)</p>
-                                <p class="text-lg font-bold text-gray-700">${data.fpa_display_str}</p>
-                                <p class="text-xs text-gray-500 mt-1">${data.fpa_date_iso} a las ${data.fpa_time}</p>
-                            </div>
-                            <div class="bg-yellow-100 rounded p-3 border-2 border-yellow-500">
-                                <p class="text-xs font-medium text-yellow-800 mb-1">FPA Indicada (Médico)</p>
-                                <p class="text-lg font-bold text-yellow-900">${formatDateDMY(medicalDate)}</p>
-                                <p class="text-xs text-yellow-700 mt-1">⚠️ Esta fecha será la FPA del ticket</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 pt-3 border-t border-yellow-200">
-                            <p class="text-xs text-yellow-700">
-                                <strong>Estancia indicada:</strong> ${medicalDaysDiff} día${medicalDaysDiff !== 1 ? 's' : ''} desde cirugía hasta alta
-                            </p>
-                        </div>
+        fpaPreview.innerHTML = `
+            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs font-medium text-gray-600 mb-1">FPA Calculada</p>
+                        <p class="text-lg font-bold text-primary">${data.fpa_display_str}</p>
+                        <p class="text-xs text-gray-500 mt-1">${data.fpa_date_iso} a las ${data.fpa_time}</p>
                     </div>
-                `;
-        } else {
-            // Show only system calculated FPA (same as before)
-            const daysDiff = Math.ceil((systemFpaDateTime - pavilionDate) / (1000 * 60 * 60 * 24));
-
-            fpaPreview.innerHTML = `
-                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-xs font-medium text-gray-600 mb-1">FPA Calculada</p>
-                                <p class="text-lg font-bold text-primary">${data.fpa_display_str}</p>
-                                <p class="text-xs text-gray-500 mt-1">${data.fpa_date_iso} a las ${data.fpa_time}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs font-medium text-gray-600 mb-1">Estancia Calculada</p>
-                                <p class="text-lg font-bold text-blue-700">${daysDiff} día${daysDiff !== 1 ? 's' : ''}</p>
-                                <p class="text-xs text-gray-500 mt-1">Desde cirugía hasta alta prevista</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 pt-3 border-t border-blue-200">
-                            <p class="text-xs font-medium text-gray-600 mb-2">Desglose del Cálculo:</p>
-                            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-700">
-                                <span class="px-2 py-1 bg-white rounded border border-gray-300" title="Hora Programada de Cirugía">
-                                    🏥 Cirugía: ${pavilionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                                <span class="text-gray-400">→</span>
-                                <span class="px-2 py-1 bg-yellow-50 rounded border border-yellow-200 font-medium" title="Hora de Ingreso (Calculada)">
-                                    📥 Ingreso: ${data.admission_time_display.split(' ')[1]}
-                                </span>
-                                <span class="text-gray-400">+</span>
-                                <span class="px-2 py-1 bg-white rounded border border-gray-300" title="Estancia Base">
-                                    ⏱️ ${data.surgery_base_stay_hours || 0}h
-                                </span>
-                                <span class="text-gray-400">=</span>
-                                <span class="px-2 py-1 bg-blue-100 rounded border border-blue-300 font-bold text-blue-800">
-                                    🏁 ${data.fpa_display_str}
-                                </span>
-                            </div>
-                            <p class="text-[10px] text-gray-500 mt-1 ml-1 italic">
-                                * El ingreso se calcula 2 horas antes de la cirugía (o a las 06:30 para cirugías de las 08:00).
-                            </p>
-                        </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-600 mb-1">Estancia Calculada</p>
+                        <p class="text-lg font-bold text-blue-700">${daysDiff} día${daysDiff !== 1 ? 's' : ''}</p>
+                        <p class="text-xs text-gray-500 mt-1">Desde cirugía hasta alta prevista</p>
                     </div>
-                `;
-        }
+                </div>
+                <div class="mt-3 pt-3 border-t border-blue-200">
+                    <p class="text-xs font-medium text-gray-600 mb-2">Desglose del Cálculo:</p>
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-gray-700">
+                        <span class="px-2 py-1 bg-white rounded border border-gray-300" title="Hora Programada de Cirugía">
+                            🏥 Cirugía: ${pavilionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <span class="text-gray-400">→</span>
+                        <span class="px-2 py-1 bg-yellow-50 rounded border border-yellow-200 font-medium" title="Hora de Ingreso (Calculada)">
+                            📥 Ingreso: ${data.admission_time_display.split(' ')[1]}
+                        </span>
+                        <span class="text-gray-400">+</span>
+                        <span class="px-2 py-1 bg-white rounded border border-gray-300" title="Estancia Base">
+                            ⏱️ ${data.surgery_base_stay_hours || 0}h
+                        </span>
+                        <span class="text-gray-400">=</span>
+                        <span class="px-2 py-1 bg-blue-100 rounded border border-blue-300 font-bold text-blue-800">
+                            🏁 ${data.fpa_display_str}
+                        </span>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-1 ml-1 italic">
+                        * El ingreso se calcula 2 horas antes de la cirugía (o a las 06:30 para cirugías de las 08:00).
+                    </p>
+                </div>
+            </div>
+        `;
 
     } catch (error) {
         console.error('Error fetching FPA:', error);
@@ -554,7 +433,6 @@
 
             if (selectedValue && selectedValue !== '') {
                 currentClinicId = parseInt(selectedValue);
-                medicalDateManuallySet = false;
 
                 // Reset dependent selects
                 surgerySelect.innerHTML = '<option value="">Primero seleccione una especialidad</option>';
@@ -564,7 +442,6 @@
                 setTimeout(() => {
                     populateSpecialties();
                     populateDoctors();
-                    populateInitialReasons();
                     updateFpaPreview();
                 }, 0);
             } else {
@@ -576,28 +453,18 @@
                 surgerySelect.disabled = true;
                 doctorSelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
                 doctorSelect.disabled = true;
-                if (initialReasonSelect) {
-                    initialReasonSelect.innerHTML = '<option value="">Primero seleccione una clínica</option>';
-                }
             }
         });
     }
 
     specialtySelect.addEventListener('change', () => {
-        medicalDateManuallySet = false;
         populateSurgeries();
         updateFpaPreview();
     });
     surgerySelect.addEventListener('change', () => {
-        medicalDateManuallySet = false;
         updateFpaPreview();
     });
     pavilionEndTimeInput.addEventListener('change', () => {
-        medicalDateManuallySet = false;
-        updateFpaPreview();
-    });
-    medicalDischargeDateInput.addEventListener('change', () => {
-        medicalDateManuallySet = true;
         updateFpaPreview();
     });
 
@@ -609,7 +476,6 @@
     if (!isSuperuser) {
         populateSpecialties();
         populateDoctors();
-        populateInitialReasons();
         populateSurgeries();
         updateFpaPreview();
     }

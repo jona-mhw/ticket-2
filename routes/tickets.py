@@ -407,7 +407,8 @@ def nursing_board():
         'urgency': '',
         'clinic_id': request.args.get('clinic_id', '') if current_user.is_superuser else '',
         'date_from': request.args.get('date_from', ''),
-        'date_to': request.args.get('date_to', '')
+        'date_to': request.args.get('date_to', ''),
+        'surgery': request.args.get('surgery_id', '')
     }
 
     # Issue #90: Handle sort parameters (default: discharge_date desc)
@@ -488,14 +489,22 @@ def nursing_board():
     if current_user.is_superuser:
         clinics = Clinic.query.filter_by(is_active=True).order_by(Clinic.name).all()
 
+    # Get surgeries for filter dropdown
+    if current_user.is_superuser:
+        surgeries = Surgery.query.filter_by(is_active=True).order_by(Surgery.name).all()
+    else:
+        surgeries = Surgery.query.filter_by(clinic_id=current_user.clinic_id, is_active=True).order_by(Surgery.name).all()
+
     # Agregar ui_status_filter a filters para el template
     filters['status'] = ui_status_filter
+    filters['surgery_id'] = request.args.get('surgery_id', '')
 
     return render_template('tickets/nursing_board.html',
                          tickets=tickets,
                          filters=filters,
                          stats=stats,
                          clinics=clinics,
+                         surgeries=surgeries,
                          sort_by=sort_by,
                          sort_dir=sort_dir)
 
