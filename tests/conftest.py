@@ -35,7 +35,7 @@ def app():
     app = create_app()
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    # app.config['WTF_CSRF_ENABLED'] = False # Enable CSRF to ensure csrf_token is in context
+    app.config['WTF_CSRF_ENABLED'] = False # Disable CSRF for testing
     app.config['SERVER_NAME'] = 'localhost.localdomain'
 
     return app
