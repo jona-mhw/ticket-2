@@ -28,7 +28,6 @@ class TicketValidator:
             ('age', 'Edad'),
             ('sex', 'Sexo'),
             ('surgery_id', 'Cirugía'),
-            ('medical_discharge_date', 'Fecha de alta médica'),
             ('pavilion_end_time', 'Hora de fin de pabellón'),
         ]
 
@@ -55,13 +54,8 @@ class TicketValidator:
         except (ValueError, TypeError):
             errors.append('Hora de fin de pabellón inválida')
 
-        try:
-            datetime.strptime(
-                form_data.get('medical_discharge_date', ''),
-                '%Y-%m-%d'
-            )
-        except (ValueError, TypeError):
-            errors.append('Fecha de alta médica inválida')
+        # NOTE: medical_discharge_date validation removed as it is no longer provided by frontend
+        # and is calculated automatically.
 
         return errors
 
