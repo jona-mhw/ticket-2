@@ -72,14 +72,21 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password, password)
     
     def is_admin(self):
-        # Superusers have all admin privileges
-        return self.role == 'admin' or self.is_superuser
+        # Admin role or superuser status
+        if not self.role:
+            return self.is_superuser
+        
+        role_lower = self.role.lower()
+        return role_lower in ['admin', 'superuser', 'superusuario'] or self.is_superuser
 
     @property
     def is_superuser(self):
         if not hasattr(self, '_is_superuser'):
-            # A user is a superuser if they have no clinic_id and their email is in the Superuser table.
-            if self.clinic_id is not None:
+            # Check by role string first (case-insensitive)
+            if self.role and self.role.lower() in ['superuser', 'superusuario']:
+                self._is_superuser = True
+            # Fallback to clinic_id + Superuser table check
+            elif self.clinic_id is not None:
                 self._is_superuser = False
             else:
                 try:
