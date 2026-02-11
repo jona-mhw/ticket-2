@@ -205,6 +205,8 @@ class Ticket(db.Model):
     initial_fpa = db.Column(db.DateTime, nullable=False)
     current_fpa = db.Column(db.DateTime, nullable=False)
     overnight_stays = db.Column(db.Integer, nullable=False)
+    original_overnight_stays = db.Column(db.Integer, nullable=True)
+    original_fpa_date = db.Column(db.Date, nullable=True)
     bed_number = db.Column(db.String(10), nullable=True)
     location = db.Column(db.String(50), nullable=True)
     

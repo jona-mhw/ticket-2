@@ -26,6 +26,18 @@ def index():
     surgery_id = request.args.get('surgery_id')
     clinic_id = request.args.get('clinic_id') if current_user.is_superuser else None
 
+    # Validate surgery belongs to the selected clinic to avoid incorrect filtering (Issue: Reset selection)
+    if surgery_id:
+        try:
+            active_clinic_id = int(clinic_id) if clinic_id else (current_user.clinic_id if not current_user.is_superuser else None)
+            
+            if active_clinic_id:
+                surg = Surgery.query.get(surgery_id)
+                if surg and surg.clinic_id != active_clinic_id:
+                    surgery_id = None # Reset filter if surgery doesn't belong to clinic
+        except (ValueError, TypeError):
+            pass
+
     # Build base queries with clinic filtering for non-superusers
     def apply_clinic_filter(query):
         """Apply clinic filter only for non-superusers, or selected clinic for superusers"""
@@ -131,6 +143,13 @@ def index():
     surgeries_query = Surgery.query
     if not current_user.is_superuser:
         surgeries_query = surgeries_query.filter_by(clinic_id=current_user.clinic_id)
+    elif clinic_id:
+        # If superuser selected a clinic, filter surgeries by that clinic
+        try:
+            surgeries_query = surgeries_query.filter_by(clinic_id=int(clinic_id))
+        except (ValueError, TypeError):
+            pass
+            
     surgeries = surgeries_query.filter_by(is_active=True).order_by(Surgery.name).all()
 
     # Get all clinics for the filter dropdown (for superusers only)

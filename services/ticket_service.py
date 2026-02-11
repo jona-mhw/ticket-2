@@ -96,6 +96,8 @@ class TicketService:
             initial_fpa=initial_fpa,
             current_fpa=current_fpa,
             overnight_stays=overnight_stays,
+            original_overnight_stays=overnight_stays,
+            original_fpa_date=initial_fpa.date(),
             bed_number=ticket_data.get('bed_number'),
             location=ticket_data.get('location'),
             status=ticket_data.get('status', 'Vigente'),

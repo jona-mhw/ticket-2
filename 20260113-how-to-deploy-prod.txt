@@ -36,7 +36,7 @@ IAP Access:
 - Los usuarios deben pertenecer a este grupo para acceder
 
 URL del servicio (con IAP - usar esta):
-https://prod-ticket-home.mhwdev.dev
+https://tickethome.redsalud.cl
 
 URL directa Cloud Run (sin IAP - solo para debug):
 https://ticket-home-215530940953.southamerica-west1.run.app
@@ -60,7 +60,7 @@ PASO 2: BUILD EN LA NUBE (Sin Docker Desktop)
 ================================================================================
 
 # Desde el directorio raiz del proyecto (donde esta el Dockerfile)
-cd C:\Users\jonathan.segura\Desktop\20260113-ticket
+cd .
 
 # Build usando Cloud Build (se ejecuta en GCP, no necesita Docker local)
 gcloud builds submit . --tag southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest --project=prod-ticket-home-redsalud

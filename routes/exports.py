@@ -80,9 +80,12 @@ def create_ticket_pdf_final(ticket):
         # Use TimeBlockHelper for consistency (Issue #77)
         initial_time_block = TimeBlockHelper.get_block_for_time(ticket.initial_fpa)['label']
 
-        story.append(Paragraph(f"Fecha probable de alta original ({ticket.overnight_stays} días de pernocte)", styles['SectionTitle']))
+        # Use original value if available (Issue: Bug fix for recalculated stays)
+        orig_overnight = ticket.original_overnight_stays if ticket.original_overnight_stays is not None else ticket.overnight_stays
+        story.append(Paragraph(f"Fecha probable de alta original ({orig_overnight} días de pernocte)", styles['SectionTitle']))
+        orig_fpa_date = ticket.original_fpa_date if ticket.original_fpa_date else ticket.initial_fpa.date()
         original_fpa_data = [
-            [Paragraph("Fecha:", styles['FieldLabel']), Paragraph(ticket.initial_fpa.strftime('%d/%m/%Y'), styles['FieldValue'])],
+            [Paragraph("Fecha:", styles['FieldLabel']), Paragraph(orig_fpa_date.strftime('%d/%m/%Y'), styles['FieldValue'])],
             [Spacer(1, 0.1*inch)],
             [Paragraph("Hora (entre):", styles['FieldLabel']), Paragraph(initial_time_block, styles['FieldValue'])]
         ]
