@@ -246,12 +246,14 @@
                     data-current-value="{{ ticket.bed_number or '' }}" data-ticket-status="{{ ticket.status }}"
                     data-ticket-urgency="{{ ticket.urgency_level }}"
                     title="{% if ticket.status == 'Anulado' %}Ticket anulado - no editable{% elif ticket.urgency_level == 'expired' %}Ticket vencido - no editable{% else %}Clic para editar cama{% endif %}">
-                    <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                        </path>
-                    </svg>
-                    <span class="field-label">Cama:</span>
+                    <div class="field-meta">
+                        <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        <span class="field-label">Cama</span>
+                    </div>
                     <span class="field-display">{{ ticket.bed_number or '-' }}</span>
                     <input type="text" class="field-input" value="{{ ticket.bed_number or '' }}" placeholder="201"
                         maxlength="10" style="display: none;">
@@ -263,14 +265,16 @@
                     data-current-value="{{ ticket.location or '' }}" data-ticket-status="{{ ticket.status }}"
                     data-ticket-urgency="{{ ticket.urgency_level }}"
                     title="{% if ticket.status == 'Anulado' %}Ticket anulado - no editable{% elif ticket.urgency_level == 'expired' %}Ticket vencido - no editable{% else %}Clic para editar ubicación{% endif %}">
-                    <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                        </path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    <span class="field-label">Ubic:</span>
+                    <div class="field-meta">
+                        <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span class="field-label">Ubic</span>
+                    </div>
                     <span class="field-display" title="{{ ticket.location or 'Sin especificar' }}">{{ ticket.location or
                         '-' }}</span>
                     <input type="text" class="field-input" value="{{ ticket.location or '' }}" placeholder="Piso 3"
@@ -283,11 +287,13 @@
                     data-current-value="{{ ticket.patient.episode_id or '' }}" data-ticket-status="{{ ticket.status }}"
                     data-ticket-urgency="{{ ticket.urgency_level }}"
                     title="{% if ticket.status == 'Anulado' %}Ticket anulado - no editable{% elif ticket.urgency_level == 'expired' %}Ticket vencido - no editable{% else %}Clic para editar ID episodio{% endif %}">
-                    <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-                    </svg>
-                    <span class="field-label">ID Ep:</span>
+                    <div class="field-meta">
+                        <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                        <span class="field-label">ID Ep</span>
+                    </div>
                     <span class="field-display" title="{{ ticket.patient.episode_id or 'Sin asignar' }}">{{
                         ticket.patient.episode_id or '-' }}</span>
                     <input type="text" class="field-input" value="{{ ticket.patient.episode_id or '' }}"
@@ -749,16 +755,22 @@
     .location-field,
     .episode-field {
         display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        padding: 0.25rem 0.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.125rem;
+        padding: 0.4rem 0.5rem;
         border-radius: 0.375rem;
         transition: all 0.2s;
         border: 1px solid transparent;
         min-width: 0;
-        /* Allow shrinking */
         flex: 1;
-        /* Share space equally */
+    }
+
+    .field-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        line-height: 1;
     }
 
     /* Campos editables */
@@ -833,6 +845,7 @@
         border-color: #3b82f6;
     }
 
+    .editable-field.editing .field-meta,
     .editable-field.editing .field-icon,
     .editable-field.editing .field-label,
     .editable-field.editing .field-display {
