@@ -825,24 +825,26 @@
     }
 
     .field-input {
+        width: 100%;
         font-size: 0.75rem;
         font-weight: 600;
         color: #111827;
-        border: 1px solid #3b82f6;
-        border-radius: 0.25rem;
-        padding: 0.25rem 0.375rem;
-        background: white;
+        border: none;
+        background: transparent;
         outline: none;
-        min-width: 60px;
+        padding: 0.125rem 0.25rem;
+        box-sizing: border-box;
     }
 
     .field-input:focus {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        outline: none;
     }
 
     .editable-field.editing {
         background: white;
         border-color: #3b82f6;
+        padding: 0.3rem 0.25rem;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
 
     .editable-field.editing .field-meta,
