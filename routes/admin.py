@@ -138,7 +138,7 @@ def edit_ticket(ticket_id):
 def manage_tickets():
     search_query = request.args.get('search', '')
     filters = {'search': search_query}
-    query = _build_tickets_query(filters)
+    query = TicketRepository.build_filtered_query(filters, current_user)
     tickets = query.order_by(Ticket.created_at.desc()).all()
     return render_template('admin/manage_tickets.html', tickets=tickets, search_query=search_query)
 

@@ -71,15 +71,15 @@
         <div class="flex items-center gap-2">
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado:</span>
             <div class="flex gap-2">
-                <a href="{{ url_for('tickets.nursing_board', search=filters.search if filters.search else '') }}"
-                    class="filter-pill {% if not filters.status %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
+                <a href="{{ url_for('tickets.nursing_board', status='Todos', search=filters.search if filters.search else '') }}"
+                    class="filter-pill {% if filters.status == 'Todos' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
                     <span>Todos</span>
                     <span class="filter-count">{{ stats.total }}</span>
                 </a>
                 <a href="{{ url_for('tickets.nursing_board', status='Vigente', search=filters.search if filters.search else '') }}"
                     class="filter-pill filter-pill-normal {% if filters.status == 'Vigente' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
                     <span>Vigentes</span>
-                    <span class="filter-count">{{ stats.normal + stats.scheduled }}</span>
+                    <span class="filter-count">{{ stats.normal + stats.warning + stats.critical + stats.scheduled }}</span>
                 </a>
                 <a href="{{ url_for('tickets.nursing_board', status='Vencido', search=filters.search if filters.search else '') }}"
                     class="filter-pill filter-pill-expired {% if filters.status == 'Vencido' %}filter-pill-active{% else %}filter-pill-inactive{% endif %}">
