@@ -63,6 +63,11 @@ def edit_ticket(ticket_id):
             patient.age = int(request.form['age'])
             if patient.sex != request.form['sex']: patient_changes.append(f"Sexo de '{patient.sex}' a '{request.form['sex']}'")
             patient.sex = request.form['sex']
+            
+            new_episode_id = request.form.get('episode_id', '').strip()
+            if patient.episode_id != new_episode_id:
+                patient_changes.append(f"ID Episodio de '{patient.episode_id or ''}' a '{new_episode_id}'")
+                patient.episode_id = new_episode_id if new_episode_id else None
 
 
             

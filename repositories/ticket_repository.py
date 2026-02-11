@@ -118,7 +118,8 @@ class TicketRepository:
                     full_name_expr.ilike(f"%{search_query}%"),
                     cleaned_db_rut.ilike(f"%{cleaned_search_rut}%"),
                     Ticket.bed_number.ilike(f"%{search_query}%"),
-                    Ticket.location.ilike(f"%{search_query}%")
+                    Ticket.location.ilike(f"%{search_query}%"),
+                    Patient.episode_id.ilike(f"%{search_query}%")
                 )
             )
 

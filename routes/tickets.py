@@ -583,16 +583,18 @@ def api_update_bed_location():
     """API endpoint to update patient bed number and location from nursing board."""
     data = request.get_json()
     ticket_id = data.get('ticket_id')
-    field = data.get('field')  # 'bed_number' or 'location'
+    field = data.get('field')  # 'bed_number', 'location' or 'episode_id'
     value = data.get('value', '').strip()
 
     if not ticket_id:
         return jsonify({'error': 'ticket_id es requerido'}), 400
 
-    if not field or field not in ['bed_number', 'location']:
-        return jsonify({'error': 'field debe ser bed_number o location'}), 400
+    if not field or field not in ['bed_number', 'location', 'episode_id']:
+        return jsonify({'error': 'field debe ser bed_number, location o episode_id'}), 400
 
     # Validaciones de longitud
+    if field == 'episode_id' and value and len(value) > 50:
+        return jsonify({'error': 'ID de episodio no puede exceder 50 caracteres'}), 400
     if field == 'bed_number' and value and len(value) > 10:
         return jsonify({'error': 'Número de cama no puede exceder 10 caracteres'}), 400
     if field == 'location' and value and len(value) > 50:
@@ -620,10 +622,14 @@ def api_update_bed_location():
             ticket.bed_number = value if value else None
             field_label = 'cama'
             display_value = value if value else 'Sin asignar'
-        else:  # location
+        elif field == 'location':  # location
             ticket.location = value if value else None
             field_label = 'ubicación'
             display_value = value if value else 'Sin especificar'
+        else:  # episode_id
+            ticket.patient.episode_id = value if value else None
+            field_label = 'ID episodio'
+            display_value = value if value else 'Sin asignar'
 
         AuditService.log_action(
             user=current_user,
