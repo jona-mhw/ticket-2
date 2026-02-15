@@ -282,11 +282,11 @@
                 </div>
 
                 <!-- Episode ID Field -->
-                <div class="episode-field {% if ticket.status != 'Anulado' and ticket.urgency_level != 'expired' %}editable-field{% endif %}"
+                <div class="episode-field {% if ticket.status != 'Anulado' %}editable-field{% endif %}"
                     data-ticket-id="{{ ticket.id }}" data-field="episode_id"
                     data-current-value="{{ ticket.patient.episode_id or '' }}" data-ticket-status="{{ ticket.status }}"
                     data-ticket-urgency="{{ ticket.urgency_level }}"
-                    title="{% if ticket.status == 'Anulado' %}Ticket anulado - no editable{% elif ticket.urgency_level == 'expired' %}Ticket vencido - no editable{% else %}Clic para editar ID episodio{% endif %}">
+                    title="{% if ticket.status == 'Anulado' %}Ticket anulado - no editable{% else %}Clic para editar ID episodio{% endif %}">
                     <div class="field-meta">
                         <svg class="w-4 h-4 field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
