@@ -466,7 +466,11 @@ def nursing_board():
         'normal': len([t for t in tickets if t.urgency_level == 'normal']),
         'expired': len([t for t in tickets if t.urgency_level == 'expired']),
         'scheduled': len([t for t in tickets if t.urgency_level == 'scheduled']),
-        'annulled': len([t for t in tickets if t.status == 'Anulado'])
+        'annulled': len([t for t in tickets if t.status == 'Anulado']),
+        'without_episode': len([t for t in tickets if 
+                                (not t.patient.episode_id or t.patient.episode_id.strip() == '') and 
+                                t.status != 'Anulado' and 
+                                t.urgency_level in ['normal', 'warning', 'critical', 'scheduled', 'expired']])
     }
 
     # Filter by UI status type (nuevo sistema simplificado)
@@ -479,6 +483,12 @@ def nursing_board():
     elif ui_status_filter == 'Anulado':
         # Anulados por status del ticket
         tickets = [t for t in tickets if t.status == 'Anulado']
+    elif ui_status_filter == 'SinEpisodio':
+        # Sin ID de episodio: programados, vigentes o vencidos (no anulados)
+        tickets = [t for t in tickets if 
+                   (not t.patient.episode_id or t.patient.episode_id.strip() == '') and 
+                   t.status != 'Anulado' and 
+                   t.urgency_level in ['normal', 'warning', 'critical', 'scheduled', 'expired']]
     # Si es 'Todos' o vacío, no filtrar
 
     # Stats para el template
