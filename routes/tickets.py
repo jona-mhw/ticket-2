@@ -434,10 +434,16 @@ def nursing_board():
     # Calculate urgency levels
     for ticket in tickets:
         if ticket.current_fpa:
-            # Un ticket es programado solo si:
-            # 1. Su hora de fin de pabellón es futura
-            # 2. Y su estado NO ha sido cambiado a 'Vigente' (o cualquier otro estado activo) manualmente
-            ticket.is_scheduled = (datetime.now() < ticket.pavilion_end_time) and (ticket.status != 'Vigente')
+            # Un ticket es programado hasta que llega la hora de admisión (Issue #63)
+            #admission_time = FPACalculator.calculate_admission_time(ticket.pavilion_end_time)
+            # HACK: Al no tener acceso directo al objeto FPACalculator aquí sin importar (o si ya está importado)
+            # Usaremos la lógica directamente para evitar dependencias circulares o problemas de importación
+            # o mejor, nos aseguramos de que FPACalculator esté disponible.
+            from services.fpa_calculator import FPACalculator
+            admission_time = FPACalculator.calculate_admission_time(ticket.pavilion_end_time)
+            
+            ticket.admission_time = admission_time
+            ticket.is_scheduled = datetime.now() < admission_time
             ticket.time_remaining = None if ticket.is_scheduled else calculate_time_remaining(ticket.current_fpa)
 
             if ticket.is_scheduled:
