@@ -1,6 +1,6 @@
 from flask import request, current_app, flash
 from flask_login import login_user
-from models import User, db, LoginAudit
+from models import User, db, LoginAudit, Superuser, ROLE_ADMIN 
 import jwt
 import requests
 import os

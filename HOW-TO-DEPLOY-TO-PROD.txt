@@ -80,7 +80,8 @@ OPCION A - Deployment Normal (sin resetear BD):
 gcloud run services update ticket-home ^
   --region=southamerica-west1 ^
   --project=prod-ticket-home-redsalud ^
-  --image=southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest
+  --image=southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest ^
+  --min-instances=1
 
 
 OPCION B - Deployment con Reset de BD (CUIDADO - Solo para setup inicial):
@@ -89,6 +90,7 @@ gcloud run services update ticket-home ^
   --region=southamerica-west1 ^
   --project=prod-ticket-home-redsalud ^
   --image=southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest ^
+  --min-instances=1 ^
   --update-env-vars="RESET_DB_ON_STARTUP=true,USE_QA_MINIMAL_SEED=true"
 
 IMPORTANTE: Despues del deploy con RESET_DB_ON_STARTUP=true, volver a false:
@@ -138,7 +140,7 @@ SCRIPT RAPIDO DE DEPLOYMENT (Copiar y pegar)
 ================================================================================
 
 # === DEPLOY COMPLETO EN UNA LINEA ===
-gcloud config set project prod-ticket-home-redsalud && gcloud builds submit . --tag southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest && gcloud run services update ticket-home --region=southamerica-west1 --image=southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest
+gcloud config set project prod-ticket-home-redsalud && gcloud builds submit . --tag southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest && gcloud run services update ticket-home --region=southamerica-west1 --image=southamerica-west1-docker.pkg.dev/prod-ticket-home-redsalud/tickethome-repo-prod/ticket-home:latest --min-instances=1
 
 ================================================================================
 VERIFICAR DEPLOYMENT
@@ -209,3 +211,4 @@ COMPARATIVA QA vs PROD
 CONTACTO
 ================================================================================
 Para dudas sobre deployment: jonathan.segura@redsalud.cl
+
