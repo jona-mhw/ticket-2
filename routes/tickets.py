@@ -434,7 +434,10 @@ def nursing_board():
     # Calculate urgency levels
     for ticket in tickets:
         if ticket.current_fpa:
-            ticket.is_scheduled = datetime.now() < ticket.pavilion_end_time
+            # Un ticket es programado solo si:
+            # 1. Su hora de fin de pabellón es futura
+            # 2. Y su estado NO ha sido cambiado a 'Vigente' (o cualquier otro estado activo) manualmente
+            ticket.is_scheduled = (datetime.now() < ticket.pavilion_end_time) and (ticket.status != 'Vigente')
             ticket.time_remaining = None if ticket.is_scheduled else calculate_time_remaining(ticket.current_fpa)
 
             if ticket.is_scheduled:

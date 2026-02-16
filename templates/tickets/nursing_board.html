@@ -356,7 +356,7 @@
                 <span>PROGRAMADO</span>
             </div>
             <div class="scheduled-countdown text-center text-xs text-blue-700 font-semibold mt-1"
-                data-scheduled-fpa="{{ ticket.current_fpa.isoformat() if ticket.current_fpa else '' }}">
+                data-scheduled-fpa="{{ ticket.pavilion_end_time.isoformat() if ticket.pavilion_end_time else '' }}">
                 <!-- JS will populate this -->
             </div>
             {% elif ticket.time_remaining %}
@@ -1216,14 +1216,14 @@
         const now = new Date();
 
         document.querySelectorAll('[data-scheduled-fpa]').forEach(el => {
-            const fpaIso = el.dataset.scheduledFpa;
-            if (!fpaIso) return;
+            const activationIso = el.dataset.scheduledFpa;
+            if (!activationIso) return;
 
-            const fpaDate = new Date(fpaIso);
-            const timeDiff = fpaDate - now;
+            const activationDate = new Date(activationIso);
+            const timeDiff = activationDate - now;
 
             if (timeDiff <= 0) {
-                el.textContent = 'Ticket ya activo';
+                el.textContent = 'A punto de activarse...';
                 el.classList.add('text-green-600');
                 return;
             }
@@ -1231,6 +1231,7 @@
             const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
 
             let display = 'Activo en: ';
 
@@ -1239,9 +1240,9 @@
             } else if (hours > 0) {
                 display += `${hours}h ${minutes}m`;
             } else if (minutes > 0) {
-                display += `${minutes}m`;
+                display += `${minutes}m ${seconds}s`;
             } else {
-                display = 'Activo en menos de un minuto';
+                display += `${seconds}s`;
             }
 
             el.textContent = display;
@@ -1293,7 +1294,7 @@
 
         // Scheduled countdown updates
         updateScheduledCountdowns();
-        setInterval(updateScheduledCountdowns, 60000); // Update every minute
+        setInterval(updateScheduledCountdowns, 1000); // Update every second for better live feel
 
         // Setup inline editing for room badges
         // Setup inline editing for bed and location fields (Issue #49)
