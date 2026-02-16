@@ -285,8 +285,12 @@ def update_fpa(ticket_id):
         # IMPORTANTE: El FPA representa el FIN del bloque horario
         # Ejemplo: bloque "14:00 - 16:00" → FPA = 16:00 → se calcula como bloque 14:00-16:00
         new_fpa = datetime.combine(new_fpa_date, end_time)
-        reason = request.form.get('reason')
-        justification = request.form.get('justification', '').strip()
+        # Validar que el nuevo FPA no sea anterior al ingreso
+        from services.fpa_calculator import FPACalculator
+        admission_time = FPACalculator.calculate_admission_time(ticket.pavilion_end_time)
+        if new_fpa < admission_time:
+            flash(f'La nueva fecha de alta ({new_fpa.strftime("%d/%m/%Y %H:%M")}) no puede ser anterior a la hora de admisión ({admission_time.strftime("%d/%m/%Y %H:%M")}).', 'error')
+            return redirect(url_for('tickets.detail', ticket_id=ticket_id))
 
         # Use service to modify
         TicketService.modify_fpa(ticket, new_fpa, reason, justification, current_user)
@@ -443,7 +447,9 @@ def nursing_board():
             admission_time = FPACalculator.calculate_admission_time(ticket.pavilion_end_time)
             
             ticket.admission_time = admission_time
-            ticket.is_scheduled = datetime.now() < admission_time
+            # Un ticket es programado si su hora de admisión es futura
+            # El cambio a estado visual "activo" ocurre automáticamente al llegar esa hora
+            ticket.is_scheduled = (datetime.now() < admission_time)
             ticket.time_remaining = None if ticket.is_scheduled else calculate_time_remaining(ticket.current_fpa)
 
             if ticket.is_scheduled:

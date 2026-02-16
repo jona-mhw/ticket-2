@@ -7,29 +7,36 @@
 <div class="space-y-6">
     <!-- Header Actions -->
     <div class="flex justify-between items-center">
-        <a href="{{ url_for(session.get('last_ticket_view', 'tickets.nursing_board')) }}" 
-           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        <a href="{{ url_for(session.get('last_ticket_view', 'tickets.nursing_board')) }}"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
             <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
             Volver al listado
         </a>
-        
+
         <div class="flex space-x-3">
             {% if current_user.is_admin() %}
             <a href="{{ url_for('admin.edit_ticket', ticket_id=ticket.id) }}"
-               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-secondary hover:bg-opacity-90">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
+                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-secondary hover:bg-opacity-90">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z">
+                    </path>
+                </svg>
                 Editar Ticket
             </a>
             {% endif %}
 
             {% if ticket.status != 'Anulado' %}
             <!-- Export PDF button -->
-            <a href="{{ url_for('exports.export_pdf', ticket_id=ticket.id) }}" 
-               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <a href="{{ url_for('exports.export_pdf', ticket_id=ticket.id) }}"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                    </path>
                 </svg>
                 Exportar e Imprimir
             </a>
@@ -38,18 +45,22 @@
     </div>
 
     <!-- Medical Override Alert (if applicable) -->
-    {% if ticket.initial_medical_discharge_date and ticket.initial_medical_discharge_date != ticket.initial_fpa.date() %}
+    {% if ticket.initial_medical_discharge_date and ticket.initial_medical_discharge_date != ticket.initial_fpa.date()
+    %}
     <div class="bg-yellow-50 border-l-4 border-yellow-400 shadow rounded-r-lg p-6">
         <div class="flex">
             <div class="flex-shrink-0">
                 <svg class="h-8 w-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                    </path>
                 </svg>
             </div>
             <div class="ml-4 flex-1">
                 <h3 class="text-lg font-semibold text-yellow-800">Fecha de Alta Médica Diferente a la Calculada</h3>
                 <div class="mt-2 text-sm text-yellow-700">
-                    <p class="font-medium">El médico indicó una fecha de alta diferente al cálculo automático del sistema:</p>
+                    <p class="font-medium">El médico indicó una fecha de alta diferente al cálculo automático del
+                        sistema:</p>
                     <div class="mt-3 grid grid-cols-2 gap-4">
                         <div class="bg-white rounded-lg p-3 border border-yellow-200">
                             <p class="text-xs text-gray-600">FPA Calculada (Sistema)</p>
@@ -57,7 +68,8 @@
                         </div>
                         <div class="bg-yellow-100 rounded-lg p-3 border-2 border-yellow-400">
                             <p class="text-xs text-yellow-800">FPA Indicada (Médico)</p>
-                            <p class="text-lg font-bold text-yellow-900">{{ ticket.initial_medical_discharge_date.strftime('%d/%m/%Y') }}</p>
+                            <p class="text-lg font-bold text-yellow-900">{{
+                                ticket.initial_medical_discharge_date.strftime('%d/%m/%Y') }}</p>
                         </div>
                     </div>
                     {% if ticket.initial_modification_reason %}
@@ -82,39 +94,41 @@
                 {{ ticket.status }}
             </span>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
                 <dt class="text-sm font-medium text-gray-500">ID del Ticket</dt>
                 <dd class="mt-1 text-sm font-semibold text-gray-900">{{ ticket.id }}</dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">Creado por</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.created_by }}</dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">Fecha de creación</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.created_at | datetime_local }}</dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">FPA Inicial</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.initial_fpa.strftime('%d/%m/%Y %H:%M') }}</dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">FPA Actual</dt>
-                <dd class="mt-1 text-sm font-semibold {% if ticket.current_fpa != ticket.initial_fpa %}text-orange-600{% else %}text-gray-900{% endif %}">
+                <dd
+                    class="mt-1 text-sm font-semibold {% if ticket.current_fpa != ticket.initial_fpa %}text-orange-600{% else %}text-gray-900{% endif %}">
                     <div class="text-sm text-gray-900">{{ ticket.current_fpa.strftime('%d/%m/%Y') }}</div>
                     <div class="text-sm text-gray-500">{{ ticket.calculated_discharge_time_block }}</div>
                     {% if ticket.get_modification_count() > 0 %}
-                    <span class="text-xs text-orange-600">({{ ticket.get_modification_count() }} modificación(es))</span>
+                    <span class="text-xs text-orange-600">({{ ticket.get_modification_count() }}
+                        modificación(es))</span>
                     {% endif %}
                 </dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">Noches de estancia</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.overnight_stays }}</dd>
@@ -125,23 +139,23 @@
     <!-- Patient Information -->
     <div class="bg-white shadow rounded-lg p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Información del Paciente</h3>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
                 <dt class="text-sm font-medium text-gray-500">Nombre</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.patient.full_name }}</dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">RUT</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.patient.rut }}</dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">Edad</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.patient.age }} años</dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">Sexo</dt>
                 <dd class="mt-1 text-sm text-gray-900">
@@ -150,7 +164,7 @@
                     {% else %}{{ ticket.patient.sex }}{% endif %}
                 </dd>
             </div>
-            
+
             <!-- Bed Number and Location (Issue #49) -->
             {% if ticket.bed_number %}
             <div>
@@ -165,7 +179,7 @@
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.location }}</dd>
             </div>
             {% endif %}
-            
+
             {% if ticket.patient.episode_id %}
             <div class="md:col-span-2">
                 <dt class="text-sm font-medium text-gray-500">ID del Episodio</dt>
@@ -188,7 +202,8 @@
 
             <div>
                 <dt class="text-sm font-medium text-gray-500">Médico Tratante</dt>
-                <dd class="mt-1 text-sm text-gray-900">{{ ticket.attending_doctor.name if ticket.attending_doctor else 'No asignado' }}</dd>
+                <dd class="mt-1 text-sm text-gray-900">{{ ticket.attending_doctor.name if ticket.attending_doctor else
+                    'No asignado' }}</dd>
             </div>
 
             <div>
@@ -201,8 +216,10 @@
                 <dt class="text-sm font-medium text-gray-500">Criterios de Ajuste</dt>
                 <dd class="mt-1">
                     {% for adjustment in adjustment_details %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mr-2 mb-1">
-                        {{ adjustment.name }} ({% if adjustment.hours_adjustment >= 0 %}+{% endif %}{{ adjustment.hours_adjustment }}h)
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mr-2 mb-1">
+                        {{ adjustment.name }} ({% if adjustment.hours_adjustment >= 0 %}+{% endif %}{{
+                        adjustment.hours_adjustment }}h)
                     </span>
                     {% endfor %}
                 </dd>
@@ -214,48 +231,65 @@
         <div class="mt-6 pt-6 border-t border-gray-200">
             <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
                 <svg class="h-5 w-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                    </path>
                 </svg>
                 Cálculo del FPA Inicial
             </h4>
             <div class="bg-gray-50 rounded-lg p-4 space-y-3">
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-gray-600">1. Horas base de la cirugía:</span>
-                    <span class="font-semibold text-gray-900">{{ ticket.surgery_base_hours_snapshot or ticket.surgery.base_stay_hours }}h</span>
+                    <span class="font-semibold text-gray-900">{{ ticket.surgery_base_hours_snapshot or
+                        ticket.surgery.base_stay_hours }}h</span>
                 </div>
 
                 {% if adjustment_details %}
                 {% set total_adjustment = namespace(hours=0) %}
                 {% for adjustment in adjustment_details %}
-                    {% set total_adjustment.hours = total_adjustment.hours + adjustment.hours_adjustment %}
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600">2. Ajuste ({{ adjustment.name }}):</span>
-                        <span class="font-semibold {% if adjustment.hours_adjustment >= 0 %}text-green-600{% else %}text-orange-600{% endif %}">
-                            {% if adjustment.hours_adjustment >= 0 %}+{% endif %}{{ adjustment.hours_adjustment }}h
-                        </span>
-                    </div>
+                {% set total_adjustment.hours = total_adjustment.hours + adjustment.hours_adjustment %}
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600">2. Ajuste ({{ adjustment.name }}):</span>
+                    <span
+                        class="font-semibold {% if adjustment.hours_adjustment >= 0 %}text-green-600{% else %}text-orange-600{% endif %}">
+                        {% if adjustment.hours_adjustment >= 0 %}+{% endif %}{{ adjustment.hours_adjustment }}h
+                    </span>
+                </div>
                 {% endfor %}
                 <div class="border-t border-gray-300 pt-2 flex justify-between items-center text-sm">
                     <span class="text-gray-600 font-medium">Total de horas:</span>
-                    <span class="font-bold text-gray-900">{{ (ticket.surgery_base_hours_snapshot or ticket.surgery.base_stay_hours) + total_adjustment.hours }}h</span>
+                    <span class="font-bold text-gray-900">{{ (ticket.surgery_base_hours_snapshot or
+                        ticket.surgery.base_stay_hours) + total_adjustment.hours }}h</span>
                 </div>
                 {% else %}
                 <div class="border-t border-gray-300 pt-2 flex justify-between items-center text-sm">
                     <span class="text-gray-600 font-medium">Total de horas:</span>
-                    <span class="font-bold text-gray-900">{{ ticket.surgery_base_hours_snapshot or ticket.surgery.base_stay_hours }}h</span>
+                    <span class="font-bold text-gray-900">{{ ticket.surgery_base_hours_snapshot or
+                        ticket.surgery.base_stay_hours }}h</span>
                 </div>
                 {% endif %}
 
                 <div class="mt-3 pt-3 border-t border-gray-300">
                     <div class="flex items-start space-x-2 text-xs text-gray-600">
-                        <svg class="h-4 w-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <svg class="h-4 w-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <p class="flex-1">
-                            <strong>Fórmula:</strong> FPA = Fecha/Hora de Admisión + Horas Totales de Estancia
+                            <strong>Lógica de Ingreso:</strong> Admisión = Hora de Cirugía - 2h (Excepción: 08:00 ->
+                            06:30)
                             <br>
-                            <strong>Resultado:</strong> {{ ticket.pavilion_end_time.strftime('%d/%m/%Y %H:%M') }} + {{ (ticket.surgery_base_hours_snapshot or ticket.surgery.base_stay_hours) + (total_adjustment.hours if adjustment_details else 0) }}h =
-                            <span class="font-semibold text-primary">{{ ticket.initial_fpa.strftime('%d/%m/%Y %H:%M') }}</span>
+                            <strong>Fórmula de Alta:</strong> FPA = Hora de Admisión + Horas de Estancia Base + Ajustes
+                            <br>
+                            <strong>Resultado:</strong> {{ ticket.pavilion_end_time.strftime('%d/%m/%Y %H:%M') }}
+                            (Cirugía) -> <span class="font-semibold text-blue-700">{{
+                                ticket.admission_time.strftime('%H:%M') if ticket.admission_time else 'Calculando...'
+                                }}</span> (Admisión) + {{ (ticket.surgery_base_hours_snapshot or
+                            ticket.surgery.base_stay_hours) + (total_adjustment.hours if adjustment_details else 0) }}h
+                            =
+                            <span class="font-semibold text-primary">{{ ticket.initial_fpa.strftime('%d/%m/%Y %H:%M')
+                                }}</span>
                         </p>
                     </div>
                 </div>
@@ -264,9 +298,12 @@
                 <div class="mt-2 p-2 bg-blue-50 rounded border-l-2 border-blue-400">
                     <p class="text-xs text-blue-700">
                         <svg class="inline h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <strong>Cirugía Ambulatoria:</strong> Si la admisión es antes de las {{ ticket.surgery.ambulatory_cutoff_hour or '14' }}:00h y el FPA calculado es el mismo día, se ajusta automáticamente al día siguiente a las 08:00h.
+                        <strong>Cirugía Ambulatoria:</strong> Si la admisión es antes de las {{
+                        ticket.surgery.ambulatory_cutoff_hour or '14' }}:00h y el FPA calculado es el mismo día, se
+                        ajusta automáticamente al día siguiente a las 08:00h.
                     </p>
                 </div>
                 {% endif %}
@@ -294,7 +331,9 @@
                         </p>
                     </div>
                     <svg class="h-10 w-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
                     </svg>
                 </div>
                 <p class="text-xs text-blue-600 mt-2">
@@ -311,7 +350,8 @@
                         <p class="font-semibold text-gray-900">{{ ticket.current_fpa.strftime('%d/%m/%Y') }}</p>
                     </div>
                     <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
                     <div>
                         <p class="text-gray-600">Después:</p>
@@ -329,10 +369,11 @@
                             Nueva Fecha de Alta <span class="text-red-500">*</span>
                         </label>
                         <input type="date" id="new_fpa_date" name="new_fpa_date" required
-                               value="{{ ticket.current_fpa.strftime('%Y-%m-%d') }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                               onchange="updatePreview()">
-                        <p class="mt-1 text-xs text-gray-500">Seleccione la nueva fecha probable de alta del paciente</p>
+                            value="{{ ticket.current_fpa.strftime('%Y-%m-%d') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                            onchange="updatePreview()">
+                        <p class="mt-1 text-xs text-gray-500">Seleccione la nueva fecha probable de alta del paciente
+                        </p>
                     </div>
 
                     <div>
@@ -340,7 +381,7 @@
                             Rango Horario de Alta <span class="text-red-500">*</span>
                         </label>
                         <select id="discharge_end_hour" name="discharge_end_hour" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                             <option value="">Seleccionar rango horario</option>
                             {% for block in discharge_time_slots %}
                             <option value="{{ block.value }}">
@@ -348,7 +389,8 @@
                             </option>
                             {% endfor %}
                         </select>
-                        <p class="mt-1 text-xs text-gray-500">Seleccione el horario estimado de alta (Issue #54: Bloques dinámicos)</p>
+                        <p class="mt-1 text-xs text-gray-500">Seleccione el horario estimado de alta (Issue #54: Bloques
+                            dinámicos)</p>
                     </div>
 
                     <div>
@@ -356,7 +398,7 @@
                             Razón de Modificación <span class="text-red-500">*</span>
                         </label>
                         <select id="reason" name="reason" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                             <option value="">Seleccionar razón</option>
                             {% for reason in modification_reasons %}
                             <option value="{{ reason.reason }}">{{ reason.reason }}</option>
@@ -370,21 +412,23 @@
                             Justificación Adicional (opcional)
                         </label>
                         <textarea id="justification" name="justification" rows="3"
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                                  placeholder="Agregue detalles adicionales si es necesario..."></textarea>
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Agregue detalles adicionales si es necesario..."></textarea>
                         <p class="mt-1 text-xs text-gray-500">Información adicional sobre la modificación</p>
                     </div>
 
                     <div class="flex space-x-2">
                         <button type="submit"
-                                class="flex-1 bg-warning hover:bg-opacity-90 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors shadow-sm">
-                            <svg class="inline h-5 w-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            class="flex-1 bg-warning hover:bg-opacity-90 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors shadow-sm">
+                            <svg class="inline h-5 w-5 mr-2 -mt-1" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
                             </svg>
                             Confirmar Modificación
                         </button>
                         <button type="button" onclick="window.location.reload()"
-                                class="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm font-medium transition-colors">
+                            class="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm font-medium transition-colors">
                             Cancelar
                         </button>
                     </div>
@@ -399,19 +443,20 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="space-y-4">
                     <div>
-                        <label for="annulled_reason" class="block text-sm font-medium text-gray-700 mb-1">Razón de Anulación</label>
+                        <label for="annulled_reason" class="block text-sm font-medium text-gray-700 mb-1">Razón de
+                            Anulación</label>
                         <select id="annulled_reason" name="annulled_reason" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
                             <option value="">Seleccionar razón</option>
                             {% for reason in annulment_reasons %}
                             <option value="{{ reason.reason }}">{{ reason.reason }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    
-                    <button type="submit" 
-                            onclick="return confirm('¿Está seguro que desea anular este ticket? Esta acción no se puede deshacer.')"
-                            class="w-full bg-danger hover:bg-opacity-90 text-white px-4 py-2 rounded-md text-sm font-medium">
+
+                    <button type="submit"
+                        onclick="return confirm('¿Está seguro que desea anular este ticket? Esta acción no se puede deshacer.')"
+                        class="w-full bg-danger hover:bg-opacity-90 text-white px-4 py-2 rounded-md text-sm font-medium">
                         Anular Ticket
                     </button>
                 </div>
@@ -426,11 +471,13 @@
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-medium text-gray-900 flex items-center">
                 <svg class="h-6 w-6 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 Historial de Modificaciones de FPA
             </h3>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+            <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                 {{ ticket.modifications|length }} modificación{% if ticket.modifications|length != 1 %}es{% endif %}
             </span>
         </div>
@@ -444,26 +491,35 @@
                 <div class="relative flex items-start space-x-4">
                     <!-- Timeline dot -->
                     <div class="relative flex items-center justify-center">
-                        <div class="h-16 w-16 rounded-full bg-orange-100 border-4 border-white shadow flex items-center justify-center">
+                        <div
+                            class="h-16 w-16 rounded-full bg-orange-100 border-4 border-white shadow flex items-center justify-center">
                             <svg class="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
                             </svg>
                         </div>
                     </div>
 
                     <!-- Content card -->
-                    <div class="flex-1 bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-5 shadow-sm">
+                    <div
+                        class="flex-1 bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-5 shadow-sm">
                         <div class="flex items-start justify-between mb-3">
                             <div>
                                 <p class="text-sm font-semibold text-gray-900">
-                                    <svg class="inline h-4 w-4 mr-1 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    <svg class="inline h-4 w-4 mr-1 text-gray-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+                                        </path>
                                     </svg>
                                     {{ modification.modified_by }}
                                 </p>
                                 <p class="text-xs text-gray-600 mt-1">
-                                    <svg class="inline h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    <svg class="inline h-3 w-3 mr-1" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     {{ modification.modified_at.strftime('%d/%m/%Y a las %H:%M') }}
                                 </p>
@@ -475,26 +531,34 @@
                             <div class="flex items-center justify-between">
                                 <div class="text-center flex-1">
                                     <p class="text-xs text-gray-600 mb-1">FPA Anterior</p>
-                                    <p class="text-lg font-bold text-gray-900">{{ modification.previous_fpa.strftime('%d/%m/%Y') }}</p>
-                                    <p class="text-xs text-gray-500">{{ modification.previous_fpa.strftime('%H:%M') }}</p>
+                                    <p class="text-lg font-bold text-gray-900">{{
+                                        modification.previous_fpa.strftime('%d/%m/%Y') }}</p>
+                                    <p class="text-xs text-gray-500">{{ modification.previous_fpa.strftime('%H:%M') }}
+                                    </p>
                                 </div>
                                 <div class="flex-shrink-0 px-4">
-                                    <svg class="h-8 w-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                    <svg class="h-8 w-8 text-orange-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                                     </svg>
                                 </div>
                                 <div class="text-center flex-1">
                                     <p class="text-xs text-orange-700 mb-1 font-medium">Nueva FPA</p>
-                                    <p class="text-lg font-bold text-orange-900">{{ modification.new_fpa.strftime('%d/%m/%Y') }}</p>
+                                    <p class="text-lg font-bold text-orange-900">{{
+                                        modification.new_fpa.strftime('%d/%m/%Y') }}</p>
                                     <p class="text-xs text-orange-700">{{ modification.new_fpa.strftime('%H:%M') }}</p>
                                 </div>
                             </div>
-                            {% set days_diff = ((modification.new_fpa - modification.previous_fpa).total_seconds() / 86400) | round(1) %}
+                            {% set days_diff = ((modification.new_fpa - modification.previous_fpa).total_seconds() /
+                            86400) | round(1) %}
                             <div class="mt-3 pt-3 border-t border-gray-200 text-center">
                                 <p class="text-xs text-gray-600">
                                     Diferencia:
-                                    <span class="font-bold {% if days_diff > 0 %}text-green-600{% elif days_diff < 0 %}text-red-600{% else %}text-gray-600{% endif %}">
-                                        {% if days_diff > 0 %}+{% endif %}{{ days_diff }} día{% if days_diff != 1 and days_diff != -1 %}s{% endif %}
+                                    <span
+                                        class="font-bold {% if days_diff > 0 %}text-green-600{% elif days_diff < 0 %}text-red-600{% else %}text-gray-600{% endif %}">
+                                        {% if days_diff > 0 %}+{% endif %}{{ days_diff }} día{% if days_diff != 1 and
+                                        days_diff != -1 %}s{% endif %}
                                     </span>
                                 </p>
                             </div>
@@ -504,8 +568,11 @@
                         <div class="space-y-2">
                             <div class="bg-white rounded p-3 border border-orange-100">
                                 <p class="text-xs font-medium text-gray-700 mb-1">
-                                    <svg class="inline h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                    <svg class="inline h-3 w-3 mr-1" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z">
+                                        </path>
                                     </svg>
                                     Razón:
                                 </p>
@@ -514,8 +581,11 @@
                             {% if modification.justification %}
                             <div class="bg-white rounded p-3 border border-orange-100">
                                 <p class="text-xs font-medium text-gray-700 mb-1">
-                                    <svg class="inline h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    <svg class="inline h-3 w-3 mr-1" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
                                     </svg>
                                     Justificación adicional:
                                 </p>
@@ -535,18 +605,19 @@
     {% if ticket.status in ['Anulado'] %}
     <div class="bg-white shadow rounded-lg p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Anulación</h3>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <dt class="text-sm font-medium text-gray-500">Fecha de Anulación</dt>
-                <dd class="mt-1 text-sm text-gray-900">{{ ticket.annulled_at.strftime('%d/%m/%Y %H:%M') if ticket.annulled_at else 'N/A' }}</dd>
+                <dd class="mt-1 text-sm text-gray-900">{{ ticket.annulled_at.strftime('%d/%m/%Y %H:%M') if
+                    ticket.annulled_at else 'N/A' }}</dd>
             </div>
-            
+
             <div>
                 <dt class="text-sm font-medium text-gray-500">Anulado por</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.annulled_by or 'N/A' }}</dd>
             </div>
-            
+
             <div class="md:col-span-2">
                 <dt class="text-sm font-medium text-gray-500">Razón de Anulación</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ ticket.annulled_reason or 'N/A' }}</dd>
@@ -561,63 +632,91 @@
 
 {% block extra_js %}
 <script>
-// Current FPA for calculations (with time to avoid timezone issues)
-const currentFpa = new Date('{{ ticket.current_fpa.strftime("%Y-%m-%d") }}T00:00:00');
+    // Current FPA for calculations (with time to avoid timezone issues)
+    const currentFpa = new Date('{{ ticket.current_fpa.strftime("%Y-%m-%d") }}T00:00:00');
 
-// Format date as DD/MM/YYYY
-function formatDateDMY(date) {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-}
+    // Format date as DD/MM/YYYY
+    function formatDateDMY(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
 
-// Format date as YYYY-MM-DD for input
-function formatDateYMD(date) {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${year}-${month}-${day}`;
-}
+    // Format date as YYYY-MM-DD for input
+    function formatDateYMD(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${year}-${month}-${day}`;
+    }
 
-// Calculate days difference
-function daysDifference(date1, date2) {
-    const diffTime = date2 - date1;
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-}
+    // Calculate days difference
+    function daysDifference(date1, date2) {
+        const diffTime = date2 - date1;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    }
 
-// Update preview when date changes
-function updatePreview() {
-    const newDateInput = document.getElementById('new_fpa_date');
-    const newDate = new Date(newDateInput.value + 'T00:00:00');
+    // Admisión del ticket para validación
+    const admissionTime = new Date('{{ (ticket.admission_time or ticket.pavilion_end_time).isoformat() }}');
 
-    if (newDateInput.value) {
+    // Update preview when date changes
+    function updatePreview() {
+        const newDateInput = document.getElementById('new_fpa_date');
+        const hourInput = document.getElementById('discharge_end_hour');
+        const submitBtn = document.querySelector('#fpa-form button[type="submit"]');
+
+        if (!newDateInput.value || !hourInput.value) {
+            document.getElementById('fpa-comparison').classList.add('hidden');
+            return;
+        }
+
+        const [year, month, day] = newDateInput.value.split('-').map(Number);
+        const hour = parseInt(hourInput.value);
+
+        // Crear objeto fecha para el nuevo FPA (fin del bloque)
+        const newFpa = new Date(year, month - 1, day, hour, 0, 0);
+
         const comparison = document.getElementById('fpa-comparison');
         const newFpaPreview = document.getElementById('new-fpa-preview');
         const daysDiff = document.getElementById('days-diff');
 
-        newFpaPreview.textContent = formatDateDMY(newDate);
+        newFpaPreview.textContent = formatDateDMY(newFpa) + ' ' + hour + ':00';
 
-        const diff = daysDifference(currentFpa, newDate);
-        let diffText = '';
-        if (diff > 0) {
-            diffText = `<span class="font-bold text-green-700">+${diff} día${diff !== 1 ? 's' : ''}</span> (extensión)`;
-        } else if (diff < 0) {
-            diffText = `<span class="font-bold text-orange-700">${diff} día${diff !== -1 ? 's' : ''}</span> (reducción)`;
+        if (newFpa < admissionTime) {
+            daysDiff.innerHTML = '<span class="font-bold text-red-600">Error: La fecha de alta no puede ser anterior a la admisión.</span>';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
         } else {
-            diffText = `<span class="font-bold text-gray-700">0 días</span> (sin cambio)`;
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            const diff = daysDifference(currentFpa, newFpa);
+            let diffText = '';
+            if (diff > 0) {
+                diffText = `<span class="font-bold text-green-700">+${diff} día${diff !== 1 ? 's' : ''}</span> (extensión)`;
+            } else if (diff < 0) {
+                diffText = `<span class="font-bold text-orange-700">${diff} día${diff !== -1 ? 's' : ''}</span> (reducción)`;
+            } else {
+                diffText = `<span class="font-bold text-gray-700">0 días</span> (sin cambio)`;
+            }
+            daysDiff.innerHTML = 'Diferencia: ' + diffText;
         }
-        daysDiff.innerHTML = 'Diferencia: ' + diffText;
 
         comparison.classList.remove('hidden');
     }
-}
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Update preview (value is already set in HTML by Jinja2)
-    updatePreview();
-});
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const hourInput = document.getElementById('discharge_end_hour');
+        const dateInput = document.getElementById('new_fpa_date');
+
+        hourInput.addEventListener('change', updatePreview);
+        dateInput.addEventListener('change', updatePreview);
+
+        // Update preview initially
+        updatePreview();
+    });
 </script>
 {% endblock %}
