@@ -4,6 +4,7 @@ Admin Routes - Controllers for admin operations
 This module contains route handlers (controllers) for administrative tasks.
 Uses centralized decorators and services from refactored architecture.
 """
+import logging
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort, send_file
 from flask_login import login_required, current_user
 from models import (
@@ -13,10 +14,13 @@ from models import (
 )
 from datetime import datetime, time
 from utils import admin_required, superuser_required
+from utils.datetime_utils import utcnow
 from services import AuditService, UserService
 from repositories import TicketRepository, AuditRepository
 import openpyxl
 from io import BytesIO
+
+logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -37,7 +41,7 @@ def edit_ticket(ticket_id):
     if ticket.status == 'Anulado':
         ticket_is_readonly = True
         readonly_reason = "Este ticket está anulado y no puede ser modificado."
-    elif ticket.current_fpa and ticket.current_fpa < datetime.now():
+    elif ticket.current_fpa and ticket.current_fpa < utcnow():
         ticket_is_readonly = True
         readonly_reason = "Este ticket está vencido y no puede ser modificado."
 
@@ -114,7 +118,8 @@ def edit_ticket(ticket_id):
             return redirect(url_for('tickets.detail', ticket_id=ticket.id))
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al actualizar el ticket: {str(e)}', 'error')
+            logger.error(f'Error al actualizar ticket {ticket_id}: {e}', exc_info=True)
+            flash('Error al actualizar el ticket. Contacte al administrador.', 'error')
 
     surgeries_query = Surgery.query.filter_by(is_active=True)
     doctors_query = Doctor.query.filter_by(is_active=True)
@@ -284,7 +289,8 @@ def create_user():
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al crear usuario: {str(e)}', 'error')
+        logger.error(f'Error al crear usuario: {e}', exc_info=True)
+        flash('Error al crear usuario. Contacte al administrador.', 'error')
 
     return redirect(url_for('admin.users'))
 
@@ -310,7 +316,8 @@ def toggle_user(user_id):
         
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al cambiar estado del usuario: {str(e)}', 'error')
+        logger.error(f'Error al cambiar estado del usuario: {e}', exc_info=True)
+        flash('Error al cambiar estado del usuario. Contacte al administrador.', 'error')
     
     return redirect(url_for('admin.users'))
 
@@ -423,7 +430,8 @@ def edit_user(user_id):
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al actualizar usuario: {str(e)}', 'error')
+        logger.error(f'Error al actualizar usuario: {e}', exc_info=True)
+        flash('Error al actualizar usuario. Contacte al administrador.', 'error')
 
     return redirect(url_for('admin.users'))
 
@@ -489,7 +497,8 @@ def create_specialty():
             flash('Especialidad creada exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al crear especialidad: {str(e)}', 'error')
+        logger.error(f'Error al crear especialidad: {e}', exc_info=True)
+        flash('Error al crear especialidad. Contacte al administrador.', 'error')
 
     # Redirect back with clinic filter if present
     clinic_filter = request.form.get('clinic_id') if current_user.is_superuser else current_user.clinic_id
@@ -513,7 +522,8 @@ def toggle_specialty(specialty_id):
         flash(f'Especialidad {specialty.name} {status} exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al cambiar estado de la especialidad: {str(e)}', 'error')
+        logger.error(f'Error al cambiar estado de la especialidad: {e}', exc_info=True)
+        flash('Error al cambiar estado de la especialidad. Contacte al administrador.', 'error')
 
     return redirect(url_for('admin.master_data', clinic_id=clinic_filter))
 
@@ -535,7 +545,8 @@ def create_surgery():
             flash('Cirugía creada exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al crear cirugía: {str(e)}', 'error')
+        logger.error(f'Error al crear cirugía: {e}', exc_info=True)
+        flash('Error al crear cirugía. Contacte al administrador.', 'error')
 
     # Redirect back with clinic filter if present
     clinic_filter = request.form.get('clinic_id') if current_user.is_superuser else current_user.clinic_id
@@ -559,7 +570,8 @@ def toggle_surgery(surgery_id):
         flash(f'Cirugía {surgery.name} {status} exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al cambiar estado de la cirugía: {str(e)}', 'error')
+        logger.error(f'Error al cambiar estado de la cirugía: {e}', exc_info=True)
+        flash('Error al cambiar estado de la cirugía. Contacte al administrador.', 'error')
 
     return redirect(url_for('admin.master_data', clinic_id=clinic_filter))
 
@@ -581,7 +593,8 @@ def create_adjustment():
             flash('Criterio de ajuste creado exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al crear criterio de ajuste: {str(e)}', 'error')
+        logger.error(f'Error al crear criterio de ajuste: {e}', exc_info=True)
+        flash('Error al crear criterio de ajuste. Contacte al administrador.', 'error')
     return redirect(url_for('admin.master_data'))
 
 @admin_bp.route('/master-data/adjustment/<int:adjustment_id>/toggle', methods=['POST'])
@@ -599,7 +612,8 @@ def toggle_adjustment(adjustment_id):
         flash(f'Criterio de ajuste {adjustment.name} {status} exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al cambiar estado del criterio: {str(e)}', 'error')
+        logger.error(f'Error al cambiar estado del criterio: {e}', exc_info=True)
+        flash('Error al cambiar estado del criterio. Contacte al administrador.', 'error')
     return redirect(url_for('admin.master_data'))
 
 @admin_bp.route('/master-data/reason', methods=['POST'])
@@ -619,7 +633,8 @@ def create_reason():
             flash('Razón estandarizada creada exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al crear razón estandarizada: {str(e)}', 'error')
+        logger.error(f'Error al crear razón estandarizada: {e}', exc_info=True)
+        flash('Error al crear razón estandarizada. Contacte al administrador.', 'error')
 
     # Redirect back with clinic filter if present
     clinic_filter = request.form.get('clinic_id') if current_user.is_superuser else current_user.clinic_id
@@ -643,7 +658,8 @@ def toggle_reason(reason_id):
         flash(f'Razón estandarizada {status} exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al cambiar estado de la razón: {str(e)}', 'error')
+        logger.error(f'Error al cambiar estado de la razón: {e}', exc_info=True)
+        flash('Error al cambiar estado de la razón. Contacte al administrador.', 'error')
 
     return redirect(url_for('admin.master_data', clinic_id=clinic_filter))
 
@@ -665,7 +681,8 @@ def create_doctor():
             flash('Médico creado exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al crear médico: {str(e)}', 'error')
+        logger.error(f'Error al crear médico: {e}', exc_info=True)
+        flash('Error al crear médico. Contacte al administrador.', 'error')
 
     # Redirect back with clinic filter if present
     clinic_filter = request.form.get('clinic_id') if current_user.is_superuser else current_user.clinic_id
@@ -689,7 +706,8 @@ def toggle_doctor(doctor_id):
         flash(f'Médico {doctor.name} {status} exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al cambiar estado del médico: {str(e)}', 'error')
+        logger.error(f'Error al cambiar estado del médico: {e}', exc_info=True)
+        flash('Error al cambiar estado del médico. Contacte al administrador.', 'error')
 
     return redirect(url_for('admin.master_data', clinic_id=clinic_filter))
 
@@ -770,7 +788,8 @@ def export_full_database_action():
         )
 
     except Exception as e:
-        flash(f'Ocurrió un error al generar el archivo Excel: {str(e)}', 'error')
+        logger.error(f'Ocurrió un error al generar el archivo Excel: {e}', exc_info=True)
+        flash('Ocurrió un error al generar el archivo Excel. Contacte al administrador.', 'error')
         return redirect(url_for('admin.index'))
 
 
@@ -867,7 +886,8 @@ def save_color_thresholds():
         flash('Configuración de umbrales guardada exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al guardar configuración: {str(e)}', 'error')
+        logger.error(f'Error al guardar configuración: {e}', exc_info=True)
+        flash('Error al guardar configuración. Contacte al administrador.', 'error')
 
     return redirect(url_for('admin.color_thresholds'))
 

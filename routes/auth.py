@@ -75,7 +75,7 @@ def demo_login():
                 db.session.add(audit_log)
                 db.session.commit()
             except Exception as e:
-                flash(f'Error al registrar auditoría: {str(e)}', 'warning')
+                current_app.logger.error(f'Error al registrar auditoría de login: {e}', exc_info=True)
                 db.session.rollback()
 
             flash(f'¡Bienvenido, {user.username}!', 'success')

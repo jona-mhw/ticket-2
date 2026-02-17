@@ -61,8 +61,8 @@
         </form>
         {% endif %}
         
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+        <div>
+            <table id="specialtiesTable" class="w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
@@ -103,8 +103,8 @@
             </div>
         </form>
         {% endif %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+        <div>
+            <table id="surgeriesTable" class="w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
@@ -150,8 +150,8 @@
             </div>
         </form>
         {% endif %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+        <div>
+            <table id="reasonsTable" class="w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón</th>
@@ -189,8 +189,8 @@
             </div>
         </form>
         {% endif %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+        <div>
+            <table id="doctorsTable" class="w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
@@ -224,14 +224,37 @@
             clinicFilter.addEventListener('change', function() {
                 const selectedClinicId = this.value;
                 if (selectedClinicId) {
-                    // Reload page with selected clinic filter
                     window.location.href = "{{ url_for('admin.master_data') }}?clinic_id=" + selectedClinicId;
                 } else {
-                    // Reload page without filter
                     window.location.href = "{{ url_for('admin.master_data') }}";
                 }
             });
         }
+
+        // Initialize DataTables on master-data tables
+        var dtConfig = {
+            paging: false,
+            searching: false,
+            info: false,
+            ordering: true,
+            autoWidth: false,
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+            }
+        };
+
+        $('#specialtiesTable').DataTable($.extend({}, dtConfig, {
+            columnDefs: [{ orderable: false, targets: -1 }]
+        }));
+        $('#surgeriesTable').DataTable($.extend({}, dtConfig, {
+            columnDefs: [{ orderable: false, targets: -1 }]
+        }));
+        $('#reasonsTable').DataTable($.extend({}, dtConfig, {
+            columnDefs: [{ orderable: false, targets: -1 }]
+        }));
+        $('#doctorsTable').DataTable($.extend({}, dtConfig, {
+            columnDefs: [{ orderable: false, targets: -1 }]
+        }));
     });
 </script>
 

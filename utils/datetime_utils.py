@@ -1,7 +1,20 @@
 """
 DateTime Utilities - Helper functions for date and time operations
+
+DECISIÓN DE TIMEZONE (2026-02-16):
+    La aplicación almacena y compara todos los datetimes en UTC (naive).
+    Cloud Run usa UTC por defecto, por lo que datetime.utcnow() es consistente.
+    La conversión a hora Chile (America/Santiago) solo ocurre en la capa de presentación
+    mediante el filtro Jinja2 'datetime_local' definido en app.py.
+    Los usuarios ingresan horas locales (Chile) que se almacenan tal cual como naive UTC,
+    lo cual funciona correctamente porque el servidor opera en UTC.
 """
 from datetime import datetime
+
+
+def utcnow():
+    """Return current UTC time. Single source of truth for 'now' across the app."""
+    return datetime.utcnow()
 
 
 def calculate_time_remaining(fpa):
@@ -18,7 +31,7 @@ def calculate_time_remaining(fpa):
     if not fpa:
         return None
 
-    now = datetime.now()
+    now = utcnow()
     if fpa <= now:
         return {'days': 0, 'hours': 0, 'minutes': 0, 'seconds': 0, 'expired': True}
 

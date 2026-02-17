@@ -21,6 +21,12 @@ if [ -n "$DATABASE_URL" ]; then
 
     # Verificar si hay que resetear la BD
     if [ "$RESET_DB_ON_STARTUP" = "true" ]; then
+        # Bloquear reset en producción
+        if [ "$ENVIRONMENT" = "production" ]; then
+            echo "ERROR: RESET_DB_ON_STARTUP no está permitido en producción. Abortando."
+            exit 1
+        fi
+
         echo ""
         echo "RESET_DB_ON_STARTUP=true detectado"
         echo "Reseteando base de datos..."
@@ -36,12 +42,12 @@ if [ -n "$DATABASE_URL" ]; then
     else
         echo ""
         echo "Aplicando migraciones de base de datos..."
-        flask db upgrade 2>/dev/null || echo "Advertencia: No se pudieron aplicar todas las migraciones"
+        flask db upgrade 2>&1 || { echo "ERROR: Las migraciones de base de datos fallaron. Abortando."; exit 1; }
         echo "Migraciones procesadas"
 
         echo ""
         echo "Sincronizando superusers..."
-        flask sync-superusers 2>/dev/null || echo "Advertencia: No se pudieron sincronizar superusers"
+        flask sync-superusers 2>&1 || echo "Advertencia: No se pudieron sincronizar superusers"
         echo "Superusers sincronizados"
     fi
 fi
@@ -55,7 +61,7 @@ exec gunicorn \
     --bind 0.0.0.0:$PORT \
     --workers 1 \
     --threads 8 \
-    --timeout 0 \
+    --timeout 120 \
     --graceful-timeout 300 \
     --log-level info \
     --access-logfile - \

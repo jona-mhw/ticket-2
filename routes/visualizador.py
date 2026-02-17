@@ -35,31 +35,9 @@ def dashboard():
 
     tickets = query.all()
 
-    # Calcular tiempo restante y clasificar por urgencia
+    # Calcular tiempo restante y clasificar por urgencia (método centralizado)
     for ticket in tickets:
-        if ticket.current_fpa:
-            if datetime.now() < ticket.pavilion_end_time:
-                ticket.is_scheduled = True
-                ticket.time_remaining = None
-                ticket.urgency_level = 'scheduled'
-            else:
-                ticket.is_scheduled = False
-                ticket.time_remaining = calculate_time_remaining(ticket.current_fpa)
-
-                # Clasificar urgencia
-                if ticket.time_remaining and ticket.time_remaining['expired']:
-                    ticket.urgency_level = 'expired'
-                elif ticket.time_remaining:
-                    total_hours = ticket.time_remaining['days'] * 24 + ticket.time_remaining['hours']
-                    if total_hours <= 1:
-                        ticket.urgency_level = 'critical'
-                    elif total_hours <= 6:
-                        ticket.urgency_level = 'warning'
-                    else:
-                        ticket.urgency_level = 'normal'
-        else:
-            ticket.time_remaining = None
-            ticket.urgency_level = 'unknown'
+        ticket.compute_state()
 
     # Ordenar: vigentes (normal) primero, luego por FPA
     urgency_priority = {'normal': 0, 'warning': 1, 'critical': 2, 'scheduled': 3, 'expired': 4, 'unknown': 5}

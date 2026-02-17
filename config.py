@@ -6,20 +6,34 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # Detectar entorno y cargar archivo .env correspondiente
 environment = os.environ.get('ENVIRONMENT', 'local')
 
+import logging as _logging
+_config_logger = _logging.getLogger('config')
+
+VALID_ENVIRONMENTS = ('local', 'qa', 'production')
+
+if environment not in VALID_ENVIRONMENTS:
+    _config_logger.warning(
+        f"ENVIRONMENT='{environment}' no es un valor reconocido. "
+        f"Valores válidos: {VALID_ENVIRONMENTS}. Comportándose como 'local'."
+    )
+
 if environment == 'local':
     # Desarrollo local: cargar .env.local
     env_file = os.path.join(basedir, '.env.local')
     if os.path.exists(env_file):
         load_dotenv(env_file)
-        print(f"[LOCAL] Loaded LOCAL environment from {env_file}")
+        _config_logger.info(f"[LOCAL] Loaded LOCAL environment from {env_file}")
 elif environment == 'production':
     # Producción: cargar .env.production (solo configs no sensibles)
     env_file = os.path.join(basedir, '.env.production')
     if os.path.exists(env_file):
         load_dotenv(env_file)
-        print(f"[PROD] Loaded PRODUCTION environment from {env_file}")
-else:
-    print(f"[WARN] Unknown environment: {environment}")
+        _config_logger.info(f"[PROD] Loaded PRODUCTION environment from {env_file}")
+elif environment == 'qa':
+    env_file = os.path.join(basedir, '.env.qa')
+    if os.path.exists(env_file):
+        load_dotenv(env_file)
+        _config_logger.info(f"[QA] Loaded QA environment from {env_file}")
 
 class Config:
     # Configuración de Flask

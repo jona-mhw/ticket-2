@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, render_template, redirect, url_for, flash, request, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
@@ -129,6 +130,12 @@ def create_app():
         local_tz = pytz.timezone('America/Santiago')
         local_dt = dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
         return local_dt.strftime(fmt)
+
+    # Error handlers
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        app.logger.error(f'Error 500: {e}', exc_info=True)
+        return render_template('errors/500.html'), 500
 
     # Security headers middleware
     @app.after_request

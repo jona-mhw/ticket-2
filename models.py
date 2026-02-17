@@ -241,6 +241,50 @@ class Ticket(db.Model):
         from services.fpa_calculator import FPACalculator
         return FPACalculator.calculate(pavilion_end_time, surgery)
     
+    def compute_state(self):
+        """
+        Centralized ticket state computation. Single source of truth for
+        is_scheduled, time_remaining, urgency_level, and admission_time.
+
+        Populates transient attributes on the ticket instance:
+            - admission_time (datetime)
+            - is_scheduled (bool)
+            - time_remaining (dict or None)
+            - urgency_level (str: 'scheduled', 'expired', 'critical', 'warning', 'normal', 'unknown')
+        """
+        from services.fpa_calculator import FPACalculator
+        from utils.datetime_utils import calculate_time_remaining, utcnow
+
+        if not self.current_fpa:
+            self.admission_time = None
+            self.is_scheduled = False
+            self.time_remaining = None
+            self.urgency_level = 'unknown'
+            return self
+
+        now = utcnow()
+        admission_time = FPACalculator.calculate_admission_time(self.pavilion_end_time)
+        self.admission_time = admission_time
+        self.is_scheduled = now < admission_time
+        self.time_remaining = None if self.is_scheduled else calculate_time_remaining(self.current_fpa)
+
+        if self.is_scheduled:
+            self.urgency_level = 'scheduled'
+        elif self.time_remaining and self.time_remaining['expired']:
+            self.urgency_level = 'expired'
+        elif self.time_remaining:
+            total_hours = self.time_remaining['days'] * 24 + self.time_remaining['hours']
+            if total_hours <= 1:
+                self.urgency_level = 'critical'
+            elif total_hours <= 6:
+                self.urgency_level = 'warning'
+            else:
+                self.urgency_level = 'normal'
+        else:
+            self.urgency_level = 'unknown'
+
+        return self
+
     def can_be_modified(self):
         return self.status == 'Vigente'
     

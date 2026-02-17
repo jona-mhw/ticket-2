@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from models import Ticket, Surgery, FpaModification, Clinic, db, TICKET_STATUS_VIGENTE, TICKET_STATUS_ANULADO
+from models import Ticket, Surgery, FpaModification, Clinic, Doctor, db, TICKET_STATUS_VIGENTE, TICKET_STATUS_ANULADO
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from utils.datetime_utils import utcnow
 import json
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -14,7 +15,7 @@ def index():
     if not (current_user.is_admin() or current_user.is_superuser):
         flash('Acceso denegado. Solo administradores y superusuarios pueden acceder al dashboard.', 'error')
         return redirect(url_for('tickets.nursing_board'))
-    now = datetime.now()
+    now = utcnow()
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     start_of_week = now - timedelta(days=now.weekday())
     start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -185,25 +186,39 @@ def index():
             pass
     surgery_stats = surgery_stats_query.group_by(Surgery.id, Surgery.name).order_by(func.count(Ticket.id).desc()).limit(5).all()
 
-    # Weekly trend
-    weekly_trend = []
-    for i in range(7):
-        day = now - timedelta(days=6-i)
-        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
-        day_end = day_start + timedelta(days=1)
-
-        day_tickets_query = Ticket.query.filter(
-            Ticket.created_at >= day_start,
-            Ticket.created_at < day_end
-        )
-        if not current_user.is_superuser:
-            day_tickets_query = day_tickets_query.filter(Ticket.clinic_id == current_user.clinic_id)
-        day_tickets = day_tickets_query.count()
-
-        weekly_trend.append({
-            'date': day.strftime('%d/%m'),
-            'tickets': day_tickets
-        })
+    # Doctors with most FPA modifications (respects all active filters)
+    doctor_mods_query = db.session.query(
+        Doctor.name, func.count(FpaModification.id).label('mod_count')
+    ).join(Ticket, FpaModification.ticket_id == Ticket.id
+    ).join(Doctor, Ticket.doctor_id == Doctor.id)
+    if not current_user.is_superuser:
+        doctor_mods_query = doctor_mods_query.filter(Ticket.clinic_id == current_user.clinic_id)
+    elif clinic_id:
+        try:
+            doctor_mods_query = doctor_mods_query.filter(Ticket.clinic_id == int(clinic_id))
+        except (ValueError, TypeError):
+            pass
+    if date_from:
+        try:
+            start_date = datetime.strptime(date_from, '%Y-%m-%d')
+            doctor_mods_query = doctor_mods_query.filter(Ticket.created_at >= start_date)
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            end_date = datetime.strptime(date_to, '%Y-%m-%d')
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+            doctor_mods_query = doctor_mods_query.filter(Ticket.created_at <= end_date)
+        except ValueError:
+            pass
+    if surgery_id:
+        try:
+            doctor_mods_query = doctor_mods_query.filter(Ticket.surgery_id == int(surgery_id))
+        except (ValueError, TypeError):
+            pass
+    doctor_modifications = doctor_mods_query.group_by(
+        Doctor.id, Doctor.name
+    ).order_by(func.count(FpaModification.id).desc()).limit(10).all()
 
     # Modification stats
     total_mods_query = FpaModification.query
@@ -225,7 +240,6 @@ def index():
     }
 
     chart_data = {
-        'weekly_trend': weekly_trend,
         'surgery_distribution': [{'surgery': s.name, 'count': s.ticket_count} for s in surgery_stats]
     }
 
@@ -234,6 +248,7 @@ def index():
                          recent_tickets=recent_tickets,
                          surgery_stats=surgery_stats,
                          modification_stats=modification_stats,
+                         doctor_modifications=doctor_modifications,
                          chart_data=json.dumps(chart_data),
                          surgeries=surgeries,
                          clinics=clinics)

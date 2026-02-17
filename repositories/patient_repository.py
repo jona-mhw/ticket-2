@@ -1,6 +1,7 @@
 """
 Patient Repository - Data access layer for Patients
 """
+from sqlalchemy.exc import IntegrityError
 from models import db, Patient
 
 
@@ -25,6 +26,7 @@ class PatientRepository:
     def get_or_create(rut, clinic_id):
         """
         Get existing patient or create new one.
+        Handles concurrent creation race condition via IntegrityError.
 
         Args:
             rut (str): Patient RUT

@@ -4,6 +4,7 @@ Tickets Routes - Controllers for ticket management
 This module contains route handlers (controllers) for ticket operations.
 All business logic has been moved to the services layer.
 """
+import logging
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_required, current_user
 from models import (
@@ -18,8 +19,10 @@ from services import TicketService, FPACalculator, AuditService
 from repositories import TicketRepository, PatientRepository
 from validators import TicketValidator
 from dto import TicketDTO
-from utils import calculate_time_remaining
+from utils import calculate_time_remaining, utcnow
 from utils.time_blocks import TimeBlockHelper
+
+logger = logging.getLogger(__name__)
 
 tickets_bp = Blueprint('tickets', __name__)
 
@@ -105,7 +108,8 @@ def create():
 
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al crear el ticket: {str(e)}', 'error')
+            logger.error(f'Error al crear ticket: {e}', exc_info=True)
+            flash('Error al crear el ticket. Contacte al administrador.', 'error')
             return redirect(url_for('tickets.create'))
 
     # GET request - load form data
@@ -207,7 +211,8 @@ def api_calculate_fpa():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f'Error en cálculo FPA API: {e}', exc_info=True)
+        return jsonify({'error': 'Error interno al calcular FPA.'}), 500
 
 
 @tickets_bp.route('/<ticket_id>')
@@ -231,6 +236,9 @@ def detail(ticket_id):
 
     modification_reasons = reasons_query.filter_by(category='modification').all()
     annulment_reasons = reasons_query.filter_by(category='annulment').all()
+
+    # Compute transient state attributes (admission_time, urgency_level, etc.)
+    ticket.compute_state()
 
     # Issue #54: Generar bloques dinámicamente con TimeBlockHelper
     discharge_time_slots = TimeBlockHelper.get_all_blocks()
@@ -272,6 +280,8 @@ def update_fpa(ticket_id):
 
     try:
         new_fpa_date = datetime.strptime(request.form.get('new_fpa_date'), '%Y-%m-%d').date()
+        reason = request.form.get('reason', '')
+        justification = request.form.get('justification', '')
 
         # Issue #54: Usar discharge_end_hour directamente en vez de buscar en BD
         discharge_end_hour = request.form.get('discharge_end_hour')
@@ -307,7 +317,8 @@ def update_fpa(ticket_id):
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al modificar FPA: {str(e)}', 'error')
+        logger.error(f'Error al modificar FPA ticket {ticket_id}: {e}', exc_info=True)
+        flash('Error al modificar FPA. Contacte al administrador.', 'error')
 
     return redirect(url_for('tickets.detail', ticket_id=ticket_id))
 
@@ -344,7 +355,8 @@ def annul_ticket(ticket_id):
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al anular el ticket: {str(e)}', 'error')
+        logger.error(f'Error al anular ticket {ticket_id}: {e}', exc_info=True)
+        flash('Error al anular el ticket. Contacte al administrador.', 'error')
 
     return redirect(url_for('tickets.detail', ticket_id=ticket_id))
 
@@ -375,8 +387,7 @@ def list():
     # Add time remaining data
     for ticket in tickets:
         if ticket.status == 'Vigente' and ticket.current_fpa:
-            ticket.is_scheduled = datetime.now() < ticket.pavilion_end_time
-            ticket.time_remaining = None if ticket.is_scheduled else calculate_time_remaining(ticket.current_fpa)
+            ticket.compute_state()
         else:
             ticket.time_remaining = None
 
@@ -435,38 +446,9 @@ def nursing_board():
 
     tickets = query.all()
 
-    # Calculate urgency levels
+    # Calculate urgency levels using centralized method
     for ticket in tickets:
-        if ticket.current_fpa:
-            # Un ticket es programado hasta que llega la hora de admisión (Issue #63)
-            #admission_time = FPACalculator.calculate_admission_time(ticket.pavilion_end_time)
-            # HACK: Al no tener acceso directo al objeto FPACalculator aquí sin importar (o si ya está importado)
-            # Usaremos la lógica directamente para evitar dependencias circulares o problemas de importación
-            # o mejor, nos aseguramos de que FPACalculator esté disponible.
-            from services.fpa_calculator import FPACalculator
-            admission_time = FPACalculator.calculate_admission_time(ticket.pavilion_end_time)
-            
-            ticket.admission_time = admission_time
-            # Un ticket es programado si su hora de admisión es futura
-            # El cambio a estado visual "activo" ocurre automáticamente al llegar esa hora
-            ticket.is_scheduled = (datetime.now() < admission_time)
-            ticket.time_remaining = None if ticket.is_scheduled else calculate_time_remaining(ticket.current_fpa)
-
-            if ticket.is_scheduled:
-                ticket.urgency_level = 'scheduled'
-            elif ticket.time_remaining and ticket.time_remaining['expired']:
-                ticket.urgency_level = 'expired'
-            elif ticket.time_remaining:
-                total_hours = ticket.time_remaining['days'] * 24 + ticket.time_remaining['hours']
-                if total_hours <= 1:
-                    ticket.urgency_level = 'critical'
-                elif total_hours <= 6:
-                    ticket.urgency_level = 'warning'
-                else:
-                    ticket.urgency_level = 'normal'
-        else:
-            ticket.time_remaining = None
-            ticket.urgency_level = 'unknown'
+        ticket.compute_state()
 
     # Sort by urgency
     urgency_priority = {'normal': 0, 'warning': 1, 'critical': 2, 'scheduled': 3, 'expired': 4, 'unknown': 5}
@@ -556,22 +538,9 @@ def nursing_list():
     query = query.order_by(Ticket.current_fpa.asc())
     tickets = query.all()
 
-    # Calculate urgency (same logic as nursing_board)
+    # Calculate urgency using centralized method
     for ticket in tickets:
-        if ticket.current_fpa:
-            ticket.is_scheduled = datetime.now() < ticket.pavilion_end_time
-            ticket.time_remaining = None if ticket.is_scheduled else calculate_time_remaining(ticket.current_fpa)
-
-            if ticket.is_scheduled:
-                ticket.urgency_level = 'scheduled'
-            elif ticket.time_remaining and ticket.time_remaining['expired']:
-                ticket.urgency_level = 'expired'
-            elif ticket.time_remaining:
-                total_hours = ticket.time_remaining['days'] * 24 + ticket.time_remaining['hours']
-                ticket.urgency_level = 'critical' if total_hours <= 1 else 'warning' if total_hours <= 6 else 'normal'
-        else:
-            ticket.time_remaining = None
-            ticket.urgency_level = 'unknown'
+        ticket.compute_state()
 
     urgency_priority = {'normal': 0, 'warning': 1, 'critical': 2, 'scheduled': 3, 'expired': 4, 'unknown': 5}
     tickets.sort(key=lambda t: (urgency_priority.get(t.urgency_level, 99),
@@ -639,7 +608,7 @@ def api_update_bed_location():
 
     # Verificar si el ticket está vencido (FPA ya pasó)
     # Permisión especial: episode_id SI se puede editar aunque esté vencido (pero NO anulado)
-    if ticket.current_fpa and ticket.current_fpa < datetime.now():
+    if ticket.current_fpa and ticket.current_fpa < utcnow():
         if field != 'episode_id':
             return jsonify({'error': 'No se puede editar cama o ubicación de un ticket vencido'}), 403
 
@@ -674,7 +643,8 @@ def api_update_bed_location():
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        logger.error(f'Error al actualizar bed/location ticket {ticket_id}: {e}', exc_info=True)
+        return jsonify({'error': 'Error interno. Contacte al administrador.'}), 500
 
 
 @tickets_bp.route('/manage-my-tickets')

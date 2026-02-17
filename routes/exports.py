@@ -147,17 +147,13 @@ def create_ticket_pdf_final(ticket):
         buffer.seek(0)
     
     except Exception as e:
-        import traceback
+        import logging
+        logging.getLogger(__name__).error(f'Error al generar PDF ticket {ticket.id}: {e}', exc_info=True)
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
         c.drawString(72, 800, "Error al generar el PDF.")
         c.drawString(72, 780, f"Ticket ID: {ticket.id}")
-        c.drawString(72, 760, f"Error: {str(e)}")
-        tb_str = traceback.format_exc()
-        y = 740
-        for line in tb_str.split('\n'):
-            c.drawString(72, y, line)
-            y -= 15
+        c.drawString(72, 760, "Contacte al administrador para mas detalles.")
         c.showPage()
         c.save()
         buffer.seek(0)
