@@ -136,11 +136,14 @@ class TicketService:
         if not ticket.can_be_modified():
             raise ValueError("El ticket no puede ser modificado (no está vigente)")
 
+        # Save previous FPA before updating ticket (needed for audit log)
+        previous_fpa = ticket.current_fpa
+
         # Create modification record
         modification = FpaModification(
             ticket_id=ticket.id,
             clinic_id=ticket.clinic_id,
-            previous_fpa=ticket.current_fpa,
+            previous_fpa=previous_fpa,
             new_fpa=new_fpa,
             reason=reason,
             justification=justification,
@@ -155,7 +158,7 @@ class TicketService:
         # Log modification
         AuditService.log_action(
             user=user,
-            action=f"Modificó FPA de {ticket.current_fpa} a {new_fpa}. Razón: {reason}",
+            action=f"Modificó FPA de {previous_fpa} a {new_fpa}. Razón: {reason}",
             target_id=ticket.id,
             target_type='Ticket'
         )

@@ -97,13 +97,31 @@ def edit_ticket(ticket_id):
             # NOTE: pavilion_end_time is intentionally not modifiable
             # It's set at ticket creation and should remain unchanged
 
-            if ticket.surgery_id != int(request.form['surgery_id']): ticket_changes.append(f"Cirugía ID de '{ticket.surgery_id}' a '{request.form['surgery_id']}'")
-            ticket.surgery_id = int(request.form['surgery_id'])
+            new_surgery_id = int(request.form['surgery_id'])
+            # Validate surgery belongs to the ticket's clinic (BUG-7 fix)
+            if new_surgery_id != ticket.surgery_id:
+                valid_surgery = Surgery.query.filter_by(
+                    id=new_surgery_id, clinic_id=ticket.clinic_id
+                ).first()
+                if not valid_surgery:
+                    flash('La cirugía seleccionada no pertenece a la clínica del ticket.', 'error')
+                    return redirect(url_for('tickets.detail', ticket_id=ticket.id))
+                ticket_changes.append(f"Cirugía ID de '{ticket.surgery_id}' a '{new_surgery_id}'")
+                ticket.surgery_id = new_surgery_id
 
             doctor_id = request.form.get('doctor_id')
             new_doctor_id = int(doctor_id) if doctor_id else None
-            if ticket.doctor_id != new_doctor_id: ticket_changes.append(f"Doctor ID de '{ticket.doctor_id}' a '{new_doctor_id}'")
-            ticket.doctor_id = new_doctor_id
+            # Validate doctor belongs to the ticket's clinic (BUG-7 fix)
+            if new_doctor_id is not None and new_doctor_id != ticket.doctor_id:
+                valid_doctor = Doctor.query.filter_by(
+                    id=new_doctor_id, clinic_id=ticket.clinic_id
+                ).first()
+                if not valid_doctor:
+                    flash('El médico seleccionado no pertenece a la clínica del ticket.', 'error')
+                    return redirect(url_for('tickets.detail', ticket_id=ticket.id))
+            if ticket.doctor_id != new_doctor_id:
+                ticket_changes.append(f"Doctor ID de '{ticket.doctor_id}' a '{new_doctor_id}'")
+                ticket.doctor_id = new_doctor_id
 
             if ticket_changes:
                 AuditService.log_action(

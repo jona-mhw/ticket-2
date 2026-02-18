@@ -7,6 +7,7 @@ All business logic has been moved to the services layer.
 import logging
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_required, current_user
+from sqlalchemy.exc import IntegrityError
 from models import (
     db, Ticket, Patient, Surgery, Specialty, Clinic,
     StandardizedReason, Doctor,
@@ -71,6 +72,18 @@ def create():
                 clinic_id=clinic_id
             ).first_or_404()
 
+            # Validate doctor belongs to same clinic (BUG-6 fix)
+            doctor_id = None
+            doctor_id_raw = request.form.get('doctor_id')
+            if doctor_id_raw:
+                doctor = Doctor.query.filter_by(
+                    id=int(doctor_id_raw), clinic_id=clinic_id
+                ).first()
+                if not doctor:
+                    flash('El médico seleccionado no pertenece a esta clínica.', 'error')
+                    return redirect(url_for('tickets.create'))
+                doctor_id = doctor.id
+
             # Prepare ticket data
             pavilion_end_time = datetime.strptime(
                 request.form.get('pavilion_end_time'),
@@ -94,7 +107,7 @@ def create():
                 'pavilion_end_time': pavilion_end_time,
                 'initial_fpa': initial_fpa,
                 'current_fpa': current_fpa,
-                'doctor_id': int(request.form.get('doctor_id')) if request.form.get('doctor_id') else None,
+                'doctor_id': doctor_id,
                 'bed_number': request.form.get('room', '').strip() or None,
                 'location': request.form.get('location', '').strip() or None,
             }
@@ -105,6 +118,12 @@ def create():
 
             flash(f'Ticket {ticket.id} creado exitosamente.', 'success')
             return redirect(url_for('tickets.detail', ticket_id=ticket.id))
+
+        except IntegrityError:
+            # Race condition: patient was created concurrently by another request
+            db.session.rollback()
+            flash('Error al crear el ticket: el paciente ya fue registrado simultáneamente. Intente nuevamente.', 'error')
+            return redirect(url_for('tickets.create'))
 
         except Exception as e:
             db.session.rollback()
@@ -203,7 +222,6 @@ def api_calculate_fpa():
         return jsonify({
             'fpa_date_iso': system_fpa.date().isoformat(),
             'fpa_time': system_fpa.strftime('%H:%M'),
-            'fpa_display_str': f"{system_fpa.strftime('%d/%m/%Y')} (Bloque: {block['label']})",
             'fpa_display_str': f"{system_fpa.strftime('%d/%m/%Y')} (Bloque: {block['label']})",
             'surgery_base_stay_hours': surgery.base_stay_hours,
             'admission_time_iso': admission_time.isoformat(),
@@ -305,12 +323,9 @@ def update_fpa(ticket_id):
         # Use service to modify
         TicketService.modify_fpa(ticket, new_fpa, reason, justification, current_user)
 
-        # Recalculate overnight stays
-        time_diff = new_fpa - ticket.pavilion_end_time
-        overnight_stays = max(0, time_diff.days)
-        if time_diff.seconds > 0:
-            overnight_stays += 1
-        ticket.overnight_stays = overnight_stays
+        # Recalculate overnight stays using admission_time as reference (not pavilion_end_time)
+        days_diff = (new_fpa.date() - admission_time.date()).days
+        ticket.overnight_stays = max(0, days_diff)
 
         db.session.commit()
         flash('FPA modificada exitosamente.', 'success')

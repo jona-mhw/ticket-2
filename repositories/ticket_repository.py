@@ -98,7 +98,7 @@ class TicketRepository:
             if filters['status'] == 'Vigente':
                 query = query.filter(
                     Ticket.status == 'Vigente',
-                    Ticket.current_fpa > datetime.now()
+                    Ticket.current_fpa > datetime.utcnow()
                 )
             else:
                 query = query.filter(
